@@ -49,14 +49,9 @@ function criarGrafico() {
 
     const ctx = document.getElementById("graficoVendas");
 
-    const gradiente = ctx.getContext("2d").createLinearGradient(0, 0, 0, 420);
-
-    gradiente.addColorStop(0, "rgba(59,130,246,.45)");
-    gradiente.addColorStop(1, "rgba(59,130,246,0)");
-
     grafico = new Chart(ctx, {
 
-        type: "line",
+        type: "bar",
 
         data: {
 
@@ -73,25 +68,15 @@ function criarGrafico() {
                     5,8,10,13,18,22,28,31,36,34,38,35,40
                 ],
 
-                borderColor: "#3b82f6",
+                backgroundColor: "#3b82f6",
 
-                backgroundColor: gradiente,
+                borderRadius: 8,
 
-                fill: true,
+                borderSkipped: false,
 
-                borderWidth: 2,
+                barPercentage: 0.7,
 
-                tension: 0.45,
-
-                pointRadius: 0,
-
-                pointHoverRadius: 7,
-
-                pointHoverBackgroundColor: "#ffffff",
-
-                pointHoverBorderColor: "#3b82f6",
-
-                pointHoverBorderWidth: 3
+                categoryPercentage: 0.8
 
             }]
 
@@ -105,11 +90,6 @@ function criarGrafico() {
 
             animation: {
                 duration: 2500
-            },
-
-            interaction: {
-                intersect: false,
-                mode: "index"
             },
 
             plugins: {
@@ -139,7 +119,7 @@ function criarGrafico() {
                 x: {
 
                     grid: {
-                        color: "rgba(255,255,255,.05)"
+                        display: false
                     },
 
                     ticks: {
@@ -157,7 +137,7 @@ function criarGrafico() {
                         color: "#cbd5e1",
 
                         callback(v) {
-                            return v + "GB";
+                            return v + " GB";
                         }
 
                     },
