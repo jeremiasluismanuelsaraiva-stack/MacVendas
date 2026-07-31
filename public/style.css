@@ -265,53 +265,84 @@ td{
 .processo{
     border-left:5px solid #f59e0b;
 }/* ===========================
-   TEMA VERMELHO ESCURO
+   TEMA PREMIUM PRETO/VERMELHO
 =========================== */
 
 body{
-    background:#120607 !important;
+    background:#080808 !important;
 }
 
 .sidebar{
-    background:#1a080a !important;
+    background:#111111 !important;
+    border-right:1px solid #2b0b0b;
 }
 
 .logo{
-    color:#b11226 !important;
+    color:#d90429 !important;
+    text-shadow:0 0 12px rgba(217,4,41,.35);
 }
 
 .menu li:hover{
-    background:#2b0d12 !important;
+    background:#1b1b1b !important;
+    border-left:4px solid #d90429;
 }
 
 .card,
 .grafico,
 .tabela{
-    background:#220b10 !important;
+    background:#161616 !important;
+    border:1px solid #2b0b0b;
+}
+
+.card h3,
+.pedido-titulo,
+.dispositivo-titulo{
+    color:#9ca3af !important;
 }
 
 th{
-    background:#330d14 !important;
+    background:#1d1d1d !important;
 }
 
 td{
-    border-bottom:1px solid #3e1018 !important;
+    border-bottom:1px solid #2b0b0b !important;
 }
 
 .pedido-item,
 .dispositivo-item{
-    background:#18070a !important;
-    border:1px solid #3e1018 !important;
+    background:#101010 !important;
+    border:1px solid #2b0b0b !important;
 }
 
 .pedido-item:hover{
-    border-color:#4b2345 !important;
+    border-color:#d90429 !important;
+    box-shadow:0 0 12px rgba(217,4,41,.25);
+}
+
+.ok{
+    background:#16a34a !important;
+}
+
+.proc{
+    background:#f59e0b !important;
+}
+
+.cancel{
+    background:#d90429 !important;
+}
+
+.livre{
+    border-left:5px solid #16a34a !important;
 }
 
 .ocupado{
-    border-left:5px solid #b11226 !important;
+    border-left:5px solid #d90429 !important;
 }
 
 .pendente{
-    border-left:5px solid #2d4f8b !important;
+    border-left:5px solid #991b1b !important;
+}
+
+.processo{
+    border-left:5px solid #f59e0b !important;
 }
