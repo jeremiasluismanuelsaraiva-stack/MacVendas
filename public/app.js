@@ -1,4 +1,10 @@
-let grafico;
+// =========================
+// DASHBOARD
+// =========================
+
+let graficoHoje;
+let graficoDias;
+let graficoMeses;
 
 // =========================
 // DASHBOARD
@@ -42,10 +48,6 @@ async function carregarTabela() {
 
 }
 
-let graficoHoje;
-let graficoDias;
-let graficoMeses;
-
 // =========================
 // GRÁFICO HOJE
 // =========================
@@ -55,32 +57,24 @@ function criarGraficoHoje() {
 
     graficoHoje = new Chart(ctx, {
         type: "bar",
-
         data: {
             labels: ["00","02","04","06","08","10","12","14","16","18","20","22","24"],
             datasets: [{
-                label: "GB Vendidos",
                 data: [5,8,10,13,18,22,28,31,36,34,38,35,40],
                 backgroundColor: "#3b82f6",
                 borderRadius: 8,
                 borderSkipped: false,
                 barThickness: 8,
-                maxBarThickness: 8,
-                barPercentage: 0.35,
-                categoryPercentage: 0.45
+                maxBarThickness: 8
             }]
         },
-
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
+            plugins:{
+                legend:{display:false}
             }
         }
-
     });
 
 }
@@ -92,31 +86,25 @@ function criarGraficoDias() {
 
     const ctx = document.getElementById("graficoDias");
 
-    graficoDias = new Chart(ctx, {
-        type: "line",
-
-        data: {
-            labels: ["1","5","10","15","20","25","30"],
-            datasets: [{
-                label: "GB",
-                data: [30,45,52,48,60,72,90],
-                borderColor: "#22c55e",
-                backgroundColor: "#22c55e",
-                tension: 0.4,
-                fill: false
+    graficoDias = new Chart(ctx,{
+        type:"line",
+        data:{
+            labels:["1","5","10","15","20","25","30"],
+            datasets:[{
+                data:[30,45,52,48,60,72,90],
+                borderColor:"#22c55e",
+                backgroundColor:"#22c55e",
+                tension:.4,
+                fill:false
             }]
         },
-
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
+        options:{
+            responsive:true,
+            maintainAspectRatio:false,
+            plugins:{
+                legend:{display:false}
             }
         }
-
     });
 
 }
@@ -126,34 +114,29 @@ function criarGraficoDias() {
 // =========================
 function criarGraficoMeses() {
 
-    const ctx = document.getElementById("graficoMeses");
+    const ctx=document.getElementById("graficoMeses");
 
-    graficoMeses = new Chart(ctx, {
-        type: "bar",
-
-        data: {
-            labels: ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],
-            datasets: [{
-                label: "GB",
-                data: [120,150,180,170,210,240,270,260,300,320,340,380],
-                backgroundColor: "#ef4444",
-                borderRadius: 8
+    graficoMeses=new Chart(ctx,{
+        type:"bar",
+        data:{
+            labels:["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],
+            datasets:[{
+                data:[120,150,180,170,210,240,270,260,300,320,340,380],
+                backgroundColor:"#ef4444",
+                borderRadius:8
             }]
         },
-
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
+        options:{
+            responsive:true,
+            maintainAspectRatio:false,
+            plugins:{
+                legend:{display:false}
             }
         }
-
     });
 
 }
+
 // =========================
 // DATA
 // =========================
@@ -163,10 +146,11 @@ new Date().toLocaleString("pt-PT");
 // =========================
 // INICIAR
 // =========================
-criarGrafico();
+criarGraficoHoje();
+criarGraficoDias();
+criarGraficoMeses();
 
 carregarDashboard();
-
 carregarTabela();
 
 // =========================
@@ -175,7 +159,6 @@ carregarTabela();
 setInterval(() => {
 
     carregarDashboard();
-
     carregarTabela();
 
 }, 5000);
