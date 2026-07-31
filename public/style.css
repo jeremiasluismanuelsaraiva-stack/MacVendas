@@ -36,6 +36,8 @@ body{
     border-radius:10px;
     cursor:pointer;
     transition:.3s;
+    font-size:16px;
+    font-weight:500;
 }
 
 .menu li:hover{
@@ -44,6 +46,8 @@ body{
 
 .menu i{
     width:25px;
+    font-size:18px;
+    margin-right:10px;
 }
 
 .main{
