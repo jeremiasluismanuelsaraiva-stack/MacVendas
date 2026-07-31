@@ -1,1 +1,19 @@
 
+{
+  "name": "sistema-ssd-api",
+  "version": "1.0.0",
+  "description": "API do Sistema SSD",
+  "main": "api/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node api/index.js",
+    "dev": "nodemon api/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
