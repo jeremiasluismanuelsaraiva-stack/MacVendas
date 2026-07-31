@@ -6,13 +6,10 @@
 <title>SISTEMA SSD</title>
 
 <link rel="stylesheet" href="style.css">
-
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </head>
-
 <body>
 
 <div class="sidebar">
@@ -68,17 +65,28 @@
 
         <div class="card">
             <h3>Pedidos</h3>
-            <h1 id="pedidos">--</h1>
+
+            <div class="pedido-box">
+
+                <div class="pedido-item">
+                    <div class="pedido-titulo">Pendentes</div>
+                    <div class="pedido-valor" id="pendentes">0</div>
+                </div>
+
+                <div class="pedido-item">
+                    <div class="pedido-titulo">Em Processamento</div>
+                    <div class="pedido-valor" id="processando">0</div>
+                </div>
+
+            </div>
+
         </div>
 
     </div>
 
     <div class="grafico">
-
         <h2>Gráfico de Vendas</h2>
-
         <canvas id="graficoVendas"></canvas>
-
     </div>
 
     <div class="tabela">
@@ -96,9 +104,7 @@
                 </tr>
             </thead>
 
-            <tbody id="lista">
-
-            </tbody>
+            <tbody id="lista"></tbody>
 
         </table>
 
@@ -107,17 +113,8 @@
 </div>
 
 <script>
-
 document.getElementById("data").innerHTML =
 new Date().toLocaleString("pt-PT");
-
-</script>
-
-<script src="app.js"></script>
-
-</body>
-</html>new Date().toLocaleString("pt-PT");
-
 </script>
 
 <script src="app.js"></script>
