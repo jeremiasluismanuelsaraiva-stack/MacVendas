@@ -70,13 +70,15 @@ function criarGrafico() {
 
                 backgroundColor: "#3b82f6",
 
-                borderRadius: 8,
+borderRadius: 8,
 
-                borderSkipped: false,
+borderSkipped: false,
 
-                barPercentage: 0.7,
+barThickness: 8,
+maxBarThickness: 8,
 
-                categoryPercentage: 0.8
+barPercentage: 0.35,
+categoryPercentage: 0.45
 
             }]
 
