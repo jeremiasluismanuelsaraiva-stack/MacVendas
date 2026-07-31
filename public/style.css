@@ -92,12 +92,21 @@ body{
 
 .grafico{
     background:#1e293b;
-    border-radius:15px;
-    min-height:300px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
+    border-radius:18px;
+    padding:25px;
     margin-bottom:25px;
+    box-shadow:0 10px 25px rgba(0,0,0,.30);
+}
+
+.grafico h2{
+    color:#fff;
+    margin-bottom:20px;
+    font-size:24px;
+}
+
+.grafico canvas{
+    width:100% !important;
+    height:420px !important;
 }
 
 .tabela{
