@@ -42,122 +42,118 @@ async function carregarTabela() {
 
 }
 
+let graficoHoje;
+let graficoDias;
+let graficoMeses;
+
 // =========================
-// GRÁFICO
+// GRÁFICO HOJE
 // =========================
-function criarGrafico() {
+function criarGraficoHoje() {
 
-    const ctx = document.getElementById("graficoVendas");
+    const ctx = document.getElementById("graficoHoje");
 
-    grafico = new Chart(ctx, {
-
+    graficoHoje = new Chart(ctx, {
         type: "bar",
 
         data: {
-
-            labels: [
-                "00","02","04","06","08","10",
-                "12","14","16","18","20","22","24"
-            ],
-
+            labels: ["00","02","04","06","08","10","12","14","16","18","20","22","24"],
             datasets: [{
-
                 label: "GB Vendidos",
-
-                data: [
-                    5,8,10,13,18,22,28,31,36,34,38,35,40
-                ],
-
+                data: [5,8,10,13,18,22,28,31,36,34,38,35,40],
                 backgroundColor: "#3b82f6",
-
-borderRadius: 8,
-
-borderSkipped: false,
-
-barThickness: 8,
-maxBarThickness: 8,
-
-barPercentage: 0.35,
-categoryPercentage: 0.45
-
+                borderRadius: 8,
+                borderSkipped: false,
+                barThickness: 8,
+                maxBarThickness: 8,
+                barPercentage: 0.35,
+                categoryPercentage: 0.45
             }]
-
         },
 
         options: {
-
             responsive: true,
-
             maintainAspectRatio: false,
-
-            animation: {
-                duration: 2500
-            },
-
             plugins: {
-
                 legend: {
                     display: false
-                },
-
-                tooltip: {
-
-                    backgroundColor: "#0f172a",
-
-                    callbacks: {
-
-                        label(context) {
-                            return context.raw + " GB vendidos";
-                        }
-
-                    }
-
                 }
-
-            },
-
-            scales: {
-
-                x: {
-
-                    grid: {
-                        display: false
-                    },
-
-                    ticks: {
-                        color: "#cbd5e1"
-                    }
-
-                },
-
-                y: {
-
-                    beginAtZero: true,
-
-                    ticks: {
-
-                        color: "#cbd5e1",
-
-                        callback(v) {
-                            return v + " GB";
-                        }
-
-                    },
-
-                    grid: {
-                        color: "rgba(255,255,255,.05)"
-                    }
-
-                }
-
             }
-
         }
 
     });
 
 }
 
+// =========================
+// GRÁFICO POR DIA
+// =========================
+function criarGraficoDias() {
+
+    const ctx = document.getElementById("graficoDias");
+
+    graficoDias = new Chart(ctx, {
+        type: "line",
+
+        data: {
+            labels: ["1","5","10","15","20","25","30"],
+            datasets: [{
+                label: "GB",
+                data: [30,45,52,48,60,72,90],
+                borderColor: "#22c55e",
+                backgroundColor: "#22c55e",
+                tension: 0.4,
+                fill: false
+            }]
+        },
+
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+
+    });
+
+}
+
+// =========================
+// GRÁFICO MENSAL
+// =========================
+function criarGraficoMeses() {
+
+    const ctx = document.getElementById("graficoMeses");
+
+    graficoMeses = new Chart(ctx, {
+        type: "bar",
+
+        data: {
+            labels: ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],
+            datasets: [{
+                label: "GB",
+                data: [120,150,180,170,210,240,270,260,300,320,340,380],
+                backgroundColor: "#ef4444",
+                borderRadius: 8
+            }]
+        },
+
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+
+    });
+
+}
 // =========================
 // DATA
 // =========================
