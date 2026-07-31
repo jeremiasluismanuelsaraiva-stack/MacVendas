@@ -1,56 +1,67 @@
-
-
-async function carregarDashboard(){
-
-    const resposta=await fetch("/dashboard");
-
-    const dados=await resposta.json();
-
-    document.getElementById("vendas").innerHTML=dados.vendas;
-
-    document.getElementById("valor").innerHTML=dados.faturamento+" MT";
-
-    document.getElementById("clientes").innerHTML=dados.clientes;
-
-    document.getElementById("disp").innerHTML=dados.dispositivos;
-
+body{
+    background:#0f172a;
+    color:#fff;
+    display:flex;
 }
 
-async function carregarTabela(){
-
-    const resposta=await fetch("/vendas");
-
-    const vendas=await resposta.json();
-
-    let html="";
-
-    vendas.forEach(v=>{
-
-        html+=`
-        <tr>
-            <td>${v.numero}</td>
-            <td>${v.mb}</td>
-            <td>${v.valor} MT</td>
-            <td>${v.status}</td>
-        </tr>
-        `;
-
-    });
-
-    document.getElementById("lista").innerHTML=html;
-
+.sidebar{
+    width:240px;
+    height:100vh;
+    background:#111827;
 }
 
-document.getElementById("data").innerHTML=
-new Date().toLocaleString();
+.card{
+    background:#1e293b;
+    border-radius:15px;
+    padding:20px;
+}
 
-carregarDashboard();
+.grafico{
+    background:#1e293b;
+    border-radius:15px;
+}
 
-carregarTabela();
+.tabela{
+    background:#1e293b;
+    border-radius:15px;
+    padding:20px;
+}
 
-setInterval(()=>{
+th{
+    background:#334155;
+    color:#fff;
+}
 
-carregarDashboard();
-carregarTabela();
+td{
+    border-bottom:1px solid #334155;
+    color:#fff;
+}
 
-},5000);
+.menu li:hover{
+    background:#1f2937;
+}
+
+.logo{
+    color:#3b82f6;
+}
+
+.status{
+    display:inline-block;
+    padding:6px 12px;
+    border-radius:20px;
+    color:#fff;
+    font-size:13px;
+    font-weight:bold;
+}
+
+.ok{
+    background:#16a34a;
+}
+
+.proc{
+    background:#f59e0b;
+}
+
+.cancel{
+    background:#dc2626;
+}
