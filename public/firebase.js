@@ -1,7 +1,6 @@
-
 // =====================================================
 // MACVENDAS - FIREBASE
-// Autenticação de usuários
+// Autenticação + API Key dos usuários
 // =====================================================
 
 import {
@@ -20,6 +19,14 @@ import {
     signInWithPopup
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+import {
+    getDatabase,
+    ref,
+    get,
+    set,
+    update
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
 
 // =====================================================
 // CONFIGURAÇÃO FIREBASE
@@ -27,17 +34,23 @@ import {
 
 const firebaseConfig = {
 
-    apiKey: "AIzaSyA7-uHk2pY578l8ICXmjhDWXTuo0Id-Umc",
+    apiKey:
+        "AIzaSyA7-uHk2pY578l8ICXmjhDWXTuo0Id-Umc",
 
-    authDomain: "playstar-74339.firebaseapp.com",
+    authDomain:
+        "playstar-74339.firebaseapp.com",
 
-    projectId: "playstar-74339",
+    projectId:
+        "playstar-74339",
 
-    storageBucket: "playstar-74339.firebasestorage.app",
+    storageBucket:
+        "playstar-74339.firebasestorage.app",
 
-    messagingSenderId: "516836103698",
+    messagingSenderId:
+        "516836103698",
 
-    appId: "1:516836103698:web:6f26dca949653a877a6acb"
+    appId:
+        "1:516836103698:web:6f26dca949653a877a6acb"
 
 };
 
@@ -46,16 +59,153 @@ const firebaseConfig = {
 // INICIALIZAÇÃO
 // =====================================================
 
-const app = initializeApp(firebaseConfig);
+const app =
+    initializeApp(firebaseConfig);
 
-const auth = getAuth(app);
+const auth =
+    getAuth(app);
+
+const database =
+    getDatabase(app);
+
+
+// =====================================================
+// GERAR API KEY
+// =====================================================
+
+function gerarApiKey() {
+
+    const parte =
+        crypto.randomUUID()
+            .replace(/-/g, "");
+
+    return "mk_" + parte;
+
+}
+
+
+// =====================================================
+// CRIAR REGISTRO DO USUÁRIO
+// =====================================================
+
+async function criarDadosUsuario(
+    user,
+    name = ""
+) {
+
+    try {
+
+        const usuarioRef =
+            ref(
+                database,
+                "users/" + user.uid
+            );
+
+
+        const snapshot =
+            await get(usuarioRef);
+
+
+        // ==========================================
+        // SE JÁ EXISTE
+        // ==========================================
+
+        if (snapshot.exists()) {
+
+            const dados =
+                snapshot.val();
+
+
+            // Se já possui API Key,
+            // não cria outra.
+
+            if (dados.apiKey) {
+
+                return dados.apiKey;
+
+            }
+
+
+            // Usuário antigo sem API Key
+
+            const apiKey =
+                gerarApiKey();
+
+
+            await update(
+                usuarioRef,
+                {
+
+                    apiKey:
+                        apiKey
+
+                }
+            );
+
+
+            return apiKey;
+
+        }
+
+
+        // ==========================================
+        // NOVO USUÁRIO
+        // ==========================================
+
+        const apiKey =
+            gerarApiKey();
+
+
+        await set(
+            usuarioRef,
+            {
+
+                uid:
+                    user.uid,
+
+                email:
+                    user.email || "",
+
+                fullName:
+                    name || user.displayName || "",
+
+                apiKey:
+                    apiKey,
+
+                criadoEm:
+                    new Date().toISOString()
+
+            }
+        );
+
+
+        return apiKey;
+
+
+    }
+    catch (erro) {
+
+        console.error(
+            "Erro ao criar dados do usuário:",
+            erro
+        );
+
+        throw erro;
+
+    }
+
+}
 
 
 // =====================================================
 // CRIAR CONTA
 // =====================================================
 
-async function registerUser(name, email, password) {
+async function registerUser(
+    name,
+    email,
+    password
+) {
 
     try {
 
@@ -66,41 +216,76 @@ async function registerUser(name, email, password) {
                 password
             );
 
+
+        const user =
+            credential.user;
+
+
+        // ==========================================
+        // CRIAR API KEY
+        // ==========================================
+
+        const apiKey =
+            await criarDadosUsuario(
+                user,
+                name
+            );
+
+
+        // ==========================================
+        // EMAIL DE VERIFICAÇÃO
+        // ==========================================
+
         await sendEmailVerification(
-            credential.user
+            user
         );
+
 
         return {
 
-            success: true,
+            success:
+                true,
 
             message:
                 "Conta criada com sucesso! Verifique seu email.",
 
             user: {
 
-                uid: credential.user.uid,
+                uid:
+                    user.uid,
 
-                email: credential.user.email,
+                email:
+                    user.email,
 
-                name: name
+                name:
+                    name,
+
+                apiKey:
+                    apiKey
 
             }
 
         };
 
-    } catch (error) {
+
+    }
+    catch (error) {
 
         console.error(
             "Erro ao criar conta:",
             error
         );
 
+
         return {
 
-            success: false,
+            success:
+                false,
 
-            message: traduzirErroFirebase(error)
+            message:
+                traduzirErroFirebase(
+                    error
+                )
 
         };
 
@@ -113,7 +298,10 @@ async function registerUser(name, email, password) {
 // LOGIN
 // =====================================================
 
-async function loginUser(email, password) {
+async function loginUser(
+    email,
+    password
+) {
 
     try {
 
@@ -124,15 +312,21 @@ async function loginUser(email, password) {
                 password
             );
 
+
         const user =
             credential.user;
 
+
+        // ==========================================
+        // VERIFICAR EMAIL
+        // ==========================================
 
         if (!user.emailVerified) {
 
             return {
 
-                success: false,
+                success:
+                    false,
 
                 message:
                     "Seu email ainda não foi verificado. Verifique sua caixa de entrada."
@@ -142,39 +336,62 @@ async function loginUser(email, password) {
         }
 
 
+        // ==========================================
+        // GARANTIR API KEY
+        // ==========================================
+
+        const apiKey =
+            await criarDadosUsuario(
+                user,
+                user.displayName || ""
+            );
+
+
         return {
 
-            success: true,
+            success:
+                true,
 
             message:
                 "Login realizado com sucesso.",
 
             user: {
 
-                uid: user.uid,
+                uid:
+                    user.uid,
 
-                email: user.email,
+                email:
+                    user.email,
 
                 name:
-                    user.displayName || ""
+                    user.displayName || "",
+
+                apiKey:
+                    apiKey
 
             }
 
         };
 
-    } catch (error) {
+
+    }
+    catch (error) {
 
         console.error(
             "Erro ao fazer login:",
             error
         );
 
+
         return {
 
-            success: false,
+            success:
+                false,
 
             message:
-                traduzirErroFirebase(error)
+                traduzirErroFirebase(
+                    error
+                )
 
         };
 
@@ -184,10 +401,12 @@ async function loginUser(email, password) {
 
 
 // =====================================================
-// ESQUECI A PALAVRA-PASSE
+// RECUPERAR PALAVRA-PASSE
 // =====================================================
 
-async function recuperarSenha(email) {
+async function recuperarSenha(
+    email
+) {
 
     try {
 
@@ -196,28 +415,35 @@ async function recuperarSenha(email) {
             email
         );
 
+
         return {
 
-            success: true,
+            success:
+                true,
 
             message:
                 "Enviamos um link para redefinir sua palavra-passe no email."
 
         };
 
-    } catch (error) {
+    }
+    catch (error) {
 
         console.error(
             "Erro ao recuperar palavra-passe:",
             error
         );
 
+
         return {
 
-            success: false,
+            success:
+                false,
 
             message:
-                traduzirErroFirebase(error)
+                traduzirErroFirebase(
+                    error
+                )
 
         };
 
@@ -227,7 +453,7 @@ async function recuperarSenha(email) {
 
 
 // =====================================================
-// REENVIAR EMAIL DE VERIFICAÇÃO
+// REENVIAR VERIFICAÇÃO
 // =====================================================
 
 async function resendVerification() {
@@ -242,7 +468,8 @@ async function resendVerification() {
 
             return {
 
-                success: false,
+                success:
+                    false,
 
                 message:
                     "Nenhum usuário está conectado."
@@ -252,31 +479,39 @@ async function resendVerification() {
         }
 
 
-        await sendEmailVerification(user);
+        await sendEmailVerification(
+            user
+        );
 
 
         return {
 
-            success: true,
+            success:
+                true,
 
             message:
                 "Email de verificação reenviado."
 
         };
 
-    } catch (error) {
+    }
+    catch (error) {
 
         console.error(
             "Erro ao reenviar verificação:",
             error
         );
 
+
         return {
 
-            success: false,
+            success:
+                false,
 
             message:
-                traduzirErroFirebase(error)
+                traduzirErroFirebase(
+                    error
+                )
 
         };
 
@@ -289,7 +524,9 @@ async function resendVerification() {
 // ESTADO DE AUTENTICAÇÃO
 // =====================================================
 
-function onAuthState(callback) {
+function onAuthState(
+    callback
+) {
 
     return onAuthStateChanged(
         auth,
@@ -318,36 +555,62 @@ async function googleLogin() {
             );
 
 
+        const user =
+            result.user;
+
+
+        // ==========================================
+        // CRIAR/GARANTIR API KEY
+        // ==========================================
+
+        const apiKey =
+            await criarDadosUsuario(
+                user,
+                user.displayName || ""
+            );
+
+
         return {
 
-            success: true,
+            success:
+                true,
 
             user: {
 
-                uid: result.user.uid,
+                uid:
+                    user.uid,
 
-                email: result.user.email,
+                email:
+                    user.email,
 
                 name:
-                    result.user.displayName || ""
+                    user.displayName || "",
+
+                apiKey:
+                    apiKey
 
             }
 
         };
 
-    } catch (error) {
+    }
+    catch (error) {
 
         console.error(
             "Erro no login Google:",
             error
         );
 
+
         return {
 
-            success: false,
+            success:
+                false,
 
             message:
-                traduzirErroFirebase(error)
+                traduzirErroFirebase(
+                    error
+                )
 
         };
 
@@ -364,11 +627,16 @@ async function sair() {
 
     try {
 
-        await signOut(auth);
+        await signOut(
+            auth
+        );
 
-        window.location.href = "/";
 
-    } catch (error) {
+        window.location.href =
+            "/";
+
+    }
+    catch (error) {
 
         console.error(
             "Erro ao sair:",
@@ -384,7 +652,9 @@ async function sair() {
 // TRADUZIR ERROS FIREBASE
 // =====================================================
 
-function traduzirErroFirebase(error) {
+function traduzirErroFirebase(
+    error
+) {
 
     const codigo =
         error?.code || "";
@@ -417,7 +687,13 @@ function traduzirErroFirebase(error) {
             "Erro de conexão. Verifique sua internet.",
 
         "auth/popup-closed-by-user":
-            "A janela de login foi fechada."
+            "A janela de login foi fechada.",
+
+        "auth/popup-blocked":
+            "O navegador bloqueou a janela de login.",
+
+        "auth/operation-not-allowed":
+            "Este método de login não está ativado no Firebase."
 
     };
 
@@ -430,34 +706,134 @@ function traduzirErroFirebase(error) {
 
 
 // =====================================================
+// BUSCAR DADOS DO USUÁRIO
+// =====================================================
+
+async function obterDadosUsuario() {
+
+    const user =
+        auth.currentUser;
+
+
+    if (!user) {
+
+        return null;
+
+    }
+
+
+    const usuarioRef =
+        ref(
+            database,
+            "users/" + user.uid
+        );
+
+
+    const snapshot =
+        await get(usuarioRef);
+
+
+    if (!snapshot.exists()) {
+
+        const apiKey =
+            await criarDadosUsuario(
+                user,
+                user.displayName || ""
+            );
+
+
+        return {
+
+            uid:
+                user.uid,
+
+            email:
+                user.email || "",
+
+            name:
+                user.displayName || "",
+
+            apiKey:
+                apiKey
+
+        };
+
+    }
+
+
+    const dados =
+        snapshot.val();
+
+
+    // ==========================================
+    // GARANTIR API KEY
+    // ==========================================
+
+    if (!dados.apiKey) {
+
+        dados.apiKey =
+            gerarApiKey();
+
+
+        await update(
+            usuarioRef,
+            {
+
+                apiKey:
+                    dados.apiKey
+
+            }
+        );
+
+    }
+
+
+    return {
+
+        ...dados,
+
+        uid:
+            user.uid,
+
+        email:
+            user.email || dados.email || ""
+
+    };
+
+}
+
+
+// =====================================================
 // COMPATIBILIDADE
 // =====================================================
 
-window.criarConta = async function (
-    email,
-    senha
-) {
-
-    return await registerUser(
-        "",
+window.criarConta =
+    async function (
         email,
         senha
-    );
+    ) {
 
-};
+        return await registerUser(
+            "",
+            email,
+            senha
+        );
+
+    };
 
 
-window.entrar = async function (
-    email,
-    senha
-) {
-
-    return await loginUser(
+window.entrar =
+    async function (
         email,
         senha
-    );
+    ) {
 
-};
+        return await loginUser(
+            email,
+            senha
+        );
+
+    };
 
 
 window.googleLogin =
@@ -466,6 +842,10 @@ window.googleLogin =
 
 window.sair =
     sair;
+
+
+window.obterDadosUsuario =
+    obterDadosUsuario;
 
 
 // =====================================================
@@ -477,6 +857,8 @@ export {
     app,
 
     auth,
+
+    database,
 
     registerUser,
 
@@ -490,7 +872,8 @@ export {
 
     googleLogin,
 
-    sair
+    sair,
+
+    obterDadosUsuario
 
 };
-
