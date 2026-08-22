@@ -1,5 +1,4 @@
 
-
 // =====================================================
 // MACVENDAS - FIREBASE
 // Autenticação de usuários
@@ -14,6 +13,7 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     sendEmailVerification,
+    sendPasswordResetEmail,
     onAuthStateChanged,
     signOut,
     GoogleAuthProvider,
@@ -66,12 +66,9 @@ async function registerUser(name, email, password) {
                 password
             );
 
-
-        // Enviar email de verificação
         await sendEmailVerification(
             credential.user
         );
-
 
         return {
 
@@ -98,7 +95,6 @@ async function registerUser(name, email, password) {
             "Erro ao criar conta:",
             error
         );
-
 
         return {
 
@@ -128,12 +124,10 @@ async function loginUser(email, password) {
                 password
             );
 
-
         const user =
             credential.user;
 
 
-        // Exigir email verificado
         if (!user.emailVerified) {
 
             return {
@@ -175,12 +169,12 @@ async function loginUser(email, password) {
             error
         );
 
-
         return {
 
             success: false,
 
-            message: traduzirErroFirebase(error)
+            message:
+                traduzirErroFirebase(error)
 
         };
 
@@ -190,7 +184,50 @@ async function loginUser(email, password) {
 
 
 // =====================================================
-// REENVIAR VERIFICAÇÃO
+// ESQUECI A PALAVRA-PASSE
+// =====================================================
+
+async function recuperarSenha(email) {
+
+    try {
+
+        await sendPasswordResetEmail(
+            auth,
+            email
+        );
+
+        return {
+
+            success: true,
+
+            message:
+                "Enviamos um link para redefinir sua palavra-passe no email."
+
+        };
+
+    } catch (error) {
+
+        console.error(
+            "Erro ao recuperar palavra-passe:",
+            error
+        );
+
+        return {
+
+            success: false,
+
+            message:
+                traduzirErroFirebase(error)
+
+        };
+
+    }
+
+}
+
+
+// =====================================================
+// REENVIAR EMAIL DE VERIFICAÇÃO
 // =====================================================
 
 async function resendVerification() {
@@ -234,7 +271,6 @@ async function resendVerification() {
             error
         );
 
-
         return {
 
             success: false,
@@ -264,7 +300,7 @@ function onAuthState(callback) {
 
 
 // =====================================================
-// LOGIN COM GOOGLE
+// LOGIN GOOGLE
 // =====================================================
 
 async function googleLogin() {
@@ -306,7 +342,6 @@ async function googleLogin() {
             error
         );
 
-
         return {
 
             success: false,
@@ -346,7 +381,7 @@ async function sair() {
 
 
 // =====================================================
-// TRADUZIR ERROS
+// TRADUZIR ERROS FIREBASE
 // =====================================================
 
 function traduzirErroFirebase(error) {
@@ -395,8 +430,7 @@ function traduzirErroFirebase(error) {
 
 
 // =====================================================
-// FUNÇÕES GLOBAIS
-// Compatibilidade com outras páginas do sistema
+// COMPATIBILIDADE
 // =====================================================
 
 window.criarConta = async function (
@@ -447,6 +481,8 @@ export {
     registerUser,
 
     loginUser,
+
+    recuperarSenha,
 
     resendVerification,
 
