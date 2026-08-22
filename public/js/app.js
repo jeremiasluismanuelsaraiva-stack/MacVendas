@@ -41,9 +41,7 @@ window.showPanel = function (panelId) {
     // VERIFICAR PAINEL
     // ==========================================
 
-    const painelId =
-        paineis[panelId];
-
+    const painelId = paineis[panelId];
 
     if (!painelId) {
 
@@ -58,10 +56,7 @@ window.showPanel = function (panelId) {
 
 
     const painel =
-        document.getElementById(
-            painelId
-        );
-
+        document.getElementById(painelId);
 
     if (!painel) {
 
@@ -87,14 +82,10 @@ window.showPanel = function (panelId) {
     // ==========================================
 
     document
-        .querySelectorAll(
-            ".menu-item[data-panel]"
-        )
+        .querySelectorAll(".menu-item[data-panel]")
         .forEach(item => {
 
-            item.classList.remove(
-                "active"
-            );
+            item.classList.remove("active");
 
         });
 
@@ -107,25 +98,20 @@ window.showPanel = function (panelId) {
 
     if (botao) {
 
-        botao.classList.add(
-            "active"
-        );
+        botao.classList.add("active");
 
     }
 
 
     // ==========================================
-    // CARREGAR CONTEÚDO DO PAINEL
+    // CARREGAR CONTEÚDO
     // ==========================================
 
     try {
 
-
         // DASHBOARD
 
-        if (
-            panelId === "dashboard"
-        ) {
+        if (panelId === "dashboard") {
 
             if (
                 typeof window.carregarDashboard ===
@@ -136,7 +122,6 @@ window.showPanel = function (panelId) {
 
             }
 
-
             if (
                 typeof window.carregarTabela ===
                 "function"
@@ -145,7 +130,6 @@ window.showPanel = function (panelId) {
                 window.carregarTabela();
 
             }
-
 
             if (
                 typeof window.carregarGraficos ===
@@ -161,9 +145,7 @@ window.showPanel = function (panelId) {
 
         // CRM
 
-        if (
-            panelId === "crm"
-        ) {
+        if (panelId === "crm") {
 
             if (
                 typeof window.carregarClientes ===
@@ -179,9 +161,7 @@ window.showPanel = function (panelId) {
 
         // PACOTES
 
-        if (
-            panelId === "pacotes"
-        ) {
+        if (panelId === "pacotes") {
 
             if (
                 typeof window.carregarPacotes ===
@@ -197,9 +177,7 @@ window.showPanel = function (panelId) {
 
         // PEDIDOS
 
-        if (
-            panelId === "pedidos"
-        ) {
+        if (panelId === "pedidos") {
 
             if (
                 typeof window.carregarPedidos ===
@@ -215,9 +193,7 @@ window.showPanel = function (panelId) {
 
         // DISPOSITIVOS
 
-        if (
-            panelId === "dispositivos"
-        ) {
+        if (panelId === "dispositivos") {
 
             if (
                 typeof window.carregarDispositivos ===
@@ -233,9 +209,7 @@ window.showPanel = function (panelId) {
 
         // CONFIGURAÇÕES
 
-        if (
-            panelId === "config"
-        ) {
+        if (panelId === "config") {
 
             if (
                 typeof window.carregarConfiguracoes ===
@@ -249,9 +223,7 @@ window.showPanel = function (panelId) {
         }
 
 
-    }
-
-    catch (erro) {
+    } catch (erro) {
 
         console.error(
             "Erro ao carregar painel:",
@@ -266,35 +238,25 @@ window.showPanel = function (panelId) {
     // FECHAR MENU NO TELEMÓVEL
     // ==========================================
 
-    if (
-        window.innerWidth <= 768
-    ) {
+    if (window.innerWidth <= 768) {
 
         const sidebar =
-            document.getElementById(
-                "sidebar"
-            );
+            document.getElementById("sidebar");
 
         const overlay =
-            document.getElementById(
-                "menuOverlay"
-            );
+            document.getElementById("menuOverlay");
 
 
         if (sidebar) {
 
-            sidebar.classList.remove(
-                "open"
-            );
+            sidebar.classList.remove("open");
 
         }
 
 
         if (overlay) {
 
-            overlay.classList.remove(
-                "active"
-            );
+            overlay.classList.remove("active");
 
         }
 
@@ -310,9 +272,7 @@ window.showPanel = function (panelId) {
 function inicializarMenu() {
 
     document
-        .querySelectorAll(
-            ".menu-item[data-panel]"
-        )
+        .querySelectorAll(".menu-item[data-panel]")
         .forEach(item => {
 
             item.addEventListener(
@@ -320,7 +280,6 @@ function inicializarMenu() {
                 function (e) {
 
                     e.preventDefault();
-
                     e.stopPropagation();
 
 
@@ -337,9 +296,7 @@ function inicializarMenu() {
                     }
 
 
-                    window.showPanel(
-                        panel
-                    );
+                    window.showPanel(panel);
 
                 }
             );
@@ -355,14 +312,12 @@ function inicializarMenu() {
 
 document.addEventListener(
     "DOMContentLoaded",
-    () => {
+    function () {
 
         inicializarMenu();
 
-        // Mostrar dashboard inicialmente
-        window.showPanel(
-            "dashboard"
-        );
+        // Dashboard inicial
+        window.showPanel("dashboard");
 
     }
 );
