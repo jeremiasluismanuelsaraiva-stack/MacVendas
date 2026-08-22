@@ -1,5 +1,5 @@
-
 const API = window.location.origin;
+
 
 // ======================================
 // CARREGAR PACOTES
@@ -9,168 +9,463 @@ async function carregarPacotes() {
 
     try {
 
-        const resposta = await fetch(API + "/pacotes");
+        const resposta =
+            await fetch(API + "/pacotes");
 
-        const json = await resposta.json();
+        if (!resposta.ok) {
 
-        if (!json.success) return;
+            throw new Error(
+                "Erro HTTP: " + resposta.status
+            );
 
-        const tabela = document.getElementById("tabelaPacotes");
+        }
+
+        const json =
+            await resposta.json();
+
+
+        if (!json.success) {
+
+            console.error(
+                "Erro da API:",
+                json
+            );
+
+            return;
+
+        }
+
+
+        const tabela =
+            document.getElementById(
+                "tabelaPacotes"
+            );
+
 
         if (!tabela) return;
 
+
         tabela.innerHTML = "";
 
-        json.pacotes.forEach(pacote => {
 
-            tabela.innerHTML += `
+        const pacotes =
+            json.pacotes || [];
+
+
+        if (pacotes.length === 0) {
+
+            tabela.innerHTML = `
                 <tr>
-
-                    <td>${pacote.nome}</td>
-
-                    <td>${pacote.tipo}</td>
-
-                    <td>${pacote.gb} GB</td>
-
-                    <td>${pacote.valor} MT</td>
-
-                    <td>${pacote.vantagem || "-"}</td>
-
-                    <td>${pacote.ativo ? "Ativo" : "Desativado"}</td>
-
-                    <td>
-
-                        <button onclick="editarPacote('${pacote.id}')">
-                            Editar
-                        </button>
-
-                        <button onclick="removerPacote('${pacote.id}')">
-                            Remover
-                        </button>
-
+                    <td
+                        colspan="7"
+                        style="text-align:center;padding:25px;"
+                    >
+                        Nenhum pacote cadastrado.
                     </td>
-
                 </tr>
             `;
 
+            return;
+
+        }
+
+
+        pacotes.forEach(pacote => {
+
+            const tr =
+                document.createElement("tr");
+
+
+            tr.innerHTML = `
+
+                <td>
+                    ${pacote.nome || "-"}
+                </td>
+
+                <td>
+                    ${pacote.tipo || "-"}
+                </td>
+
+                <td>
+                    ${pacote.gb || 0} GB
+                </td>
+
+                <td>
+                    ${pacote.valor || 0} MT
+                </td>
+
+                <td>
+                    ${pacote.vantagem || "-"}
+                </td>
+
+                <td>
+
+                    ${
+                        pacote.ativo
+                            ? "Ativo"
+                            : "Desativado"
+                    }
+
+                </td>
+
+                <td>
+
+                    <button
+                        class="btn btn-outline"
+                        data-editar-pacote="${pacote.id}"
+                    >
+                        <i class="fas fa-edit"></i>
+                        Editar
+                    </button>
+
+                    <button
+                        class="btn btn-outline"
+                        data-remover-pacote="${pacote.id}"
+                    >
+                        <i class="fas fa-trash"></i>
+                        Remover
+                    </button>
+
+                </td>
+
+            `;
+
+
+            tabela.appendChild(tr);
+
         });
+
+
+        // ======================================
+        // BOTÃO EDITAR
+        // ======================================
+
+        tabela
+            .querySelectorAll(
+                "[data-editar-pacote]"
+            )
+            .forEach(botao => {
+
+                botao.addEventListener(
+                    "click",
+                    () => {
+
+                        const id =
+                            botao.getAttribute(
+                                "data-editar-pacote"
+                            );
+
+                        editarPacote(id);
+
+                    }
+                );
+
+            });
+
+
+        // ======================================
+        // BOTÃO REMOVER
+        // ======================================
+
+        tabela
+            .querySelectorAll(
+                "[data-remover-pacote]"
+            )
+            .forEach(botao => {
+
+                botao.addEventListener(
+                    "click",
+                    () => {
+
+                        const id =
+                            botao.getAttribute(
+                                "data-remover-pacote"
+                            );
+
+                        removerPacote(id);
+
+                    }
+                );
+
+            });
+
 
     }
 
     catch (erro) {
 
-        console.error(erro);
+        console.error(
+            "Erro ao carregar pacotes:",
+            erro
+        );
 
     }
 
 }
 
+
 // ======================================
-// NOVO PACOTE
+// ADICIONAR PACOTE
 // ======================================
 
 async function adicionarPacote(dados) {
 
     try {
 
-        await fetch(API + "/pacotes", {
+        const resposta =
+            await fetch(
+                API + "/pacotes",
+                {
+                    method: "POST",
 
-            method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-            headers: {
+                    body:
+                        JSON.stringify(dados)
+                }
+            );
 
-                "Content-Type": "application/json"
 
-            },
+        const json =
+            await resposta.json();
 
-            body: JSON.stringify(dados)
 
-        });
+        if (!resposta.ok) {
 
-        carregarPacotes();
+            throw new Error(
+                json.error ||
+                "Erro ao adicionar pacote."
+            );
+
+        }
+
+
+        await carregarPacotes();
+
+
+        return json;
 
     }
 
     catch (erro) {
 
-        console.error(erro);
+        console.error(
+            "Erro ao adicionar pacote:",
+            erro
+        );
+
+
+        alert(
+            "Não foi possível adicionar o pacote."
+        );
+
+
+        return {
+            success: false,
+            error: erro.message
+        };
 
     }
 
 }
 
+
 // ======================================
-// EDITAR
+// EDITAR PACOTE
 // ======================================
 
 async function editarPacote(id) {
 
-    const nome = prompt("Nome do pacote:");
+    const nome =
+        prompt(
+            "Nome do pacote:"
+        );
 
-    if (!nome) return;
+
+    if (nome === null) {
+        return;
+    }
+
+
+    const nomeFinal =
+        nome.trim();
+
+
+    if (!nomeFinal) {
+
+        alert(
+            "O nome do pacote não pode ficar vazio."
+        );
+
+        return;
+
+    }
+
 
     try {
 
-        await fetch(API + "/pacotes/" + id, {
+        const resposta =
+            await fetch(
+                API +
+                "/pacotes/" +
+                encodeURIComponent(id),
+                {
 
-            method: "PUT",
+                    method: "PUT",
 
-            headers: {
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-                "Content-Type": "application/json"
+                    body:
+                        JSON.stringify({
+                            nome: nomeFinal
+                        })
 
-            },
+                }
+            );
 
-            body: JSON.stringify({
 
-                nome
+        const json =
+            await resposta.json();
 
-            })
 
-        });
+        if (!resposta.ok) {
 
-        carregarPacotes();
+            throw new Error(
+                json.error ||
+                "Erro ao editar pacote."
+            );
+
+        }
+
+
+        await carregarPacotes();
+
+
+        alert(
+            "Pacote atualizado com sucesso!"
+        );
 
     }
 
     catch (erro) {
 
-        console.error(erro);
+        console.error(
+            "Erro ao editar pacote:",
+            erro
+        );
+
+
+        alert(
+            "Não foi possível editar o pacote."
+        );
 
     }
 
 }
 
+
 // ======================================
-// REMOVER
+// REMOVER PACOTE
 // ======================================
 
 async function removerPacote(id) {
 
-    if (!confirm("Deseja remover este pacote?")) return;
+    const confirmar =
+        confirm(
+            "Deseja remover este pacote?"
+        );
+
+
+    if (!confirmar) {
+        return;
+    }
+
 
     try {
 
-        await fetch(API + "/pacotes/" + id, {
+        const resposta =
+            await fetch(
+                API +
+                "/pacotes/" +
+                encodeURIComponent(id),
+                {
+                    method: "DELETE"
+                }
+            );
 
-            method: "DELETE"
 
-        });
+        const json =
+            await resposta.json();
 
-        carregarPacotes();
+
+        if (!resposta.ok) {
+
+            throw new Error(
+                json.error ||
+                "Erro ao remover pacote."
+            );
+
+        }
+
+
+        await carregarPacotes();
+
+
+        alert(
+            "Pacote removido com sucesso!"
+        );
 
     }
 
     catch (erro) {
 
-        console.error(erro);
+        console.error(
+            "Erro ao remover pacote:",
+            erro
+        );
+
+
+        alert(
+            "Não foi possível remover o pacote."
+        );
 
     }
 
 }
 
+
+// ======================================
+// DISPONIBILIZAR FUNÇÕES
+// ======================================
+
+window.carregarPacotes =
+    carregarPacotes;
+
+window.adicionarPacote =
+    adicionarPacote;
+
+window.editarPacote =
+    editarPacote;
+
+window.removerPacote =
+    removerPacote;
+
+
+// ======================================
+// INICIALIZAÇÃO
 // ======================================
 
 carregarPacotes();
 
-setInterval(carregarPacotes, 10000);
+
+// Atualização automática
+setInterval(
+    carregarPacotes,
+    10000
+);
