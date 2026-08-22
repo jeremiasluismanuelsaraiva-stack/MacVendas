@@ -2755,9 +2755,7 @@
             }
         });
 
-        document.querySelectorAll('[data-panel]').forEach(item => item.addEventListener('click', () => window.showPanel(
-            item.getAttribute('data-panel'))));
-
+       
         document.querySelectorAll('[data-top]').forEach(btn => btn.addEventListener('click', () => {
             document.querySelectorAll('[data-top]').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -2797,8 +2795,157 @@
             if (window.innerWidth > 768) closeSidebar();
         });
 
-        // Inicializar mostrando o dashboard
-        window.showPanel('dashboard');
-    </script>
+        <script>
+
+// ==========================================
+// NAVEGAÇÃO DOS PAINÉIS
+// ==========================================
+
+window.showPanel = function(panelId) {
+
+    console.log("Abrindo painel:", panelId);
+
+    const paineis = {
+        dashboard: "panelDashboard",
+        crm: "panelCRM",
+        pacotes: "panelPacotes",
+        tutorial: "panelTutorial",
+        config: "panelConfig"
+    };
+
+    // Esconder todos os painéis
+    Object.values(paineis).forEach(id => {
+
+        const painel = document.getElementById(id);
+
+        if (painel) {
+            painel.style.display = "none";
+        }
+
+    });
+
+    // Verificar painel solicitado
+    const painelId = paineis[panelId];
+
+    if (!painelId) {
+        console.error("Painel não encontrado:", panelId);
+        return;
+    }
+
+    const painel = document.getElementById(painelId);
+
+    if (!painel) {
+        console.error("Elemento não encontrado:", painelId);
+        return;
+    }
+
+    // Mostrar painel
+    painel.style.display = "block";
+
+    // Marcar menu ativo
+    document
+        .querySelectorAll(".menu-item[data-panel]")
+        .forEach(item => {
+            item.classList.remove("active");
+        });
+
+    const botao = document.querySelector(
+        `.menu-item[data-panel="${panelId}"]`
+    );
+
+    if (botao) {
+        botao.classList.add("active");
+    }
+
+    // Carregar conteúdo
+    try {
+
+        if (panelId === "config") {
+
+            if (typeof carregarConfiguracoes === "function") {
+                carregarConfiguracoes();
+            }
+
+        }
+
+        if (panelId === "crm") {
+
+            if (typeof renderizarClientes === "function") {
+                renderizarClientes();
+            }
+
+        }
+
+        if (panelId === "pacotes") {
+
+            if (typeof renderizarPacotes === "function") {
+                renderizarPacotes();
+            }
+
+            if (typeof atualizarVendasPorPacote === "function") {
+                atualizarVendasPorPacote();
+            }
+
+        }
+
+    } catch (erro) {
+
+        console.error(
+            "Erro ao carregar painel:",
+            panelId,
+            erro
+        );
+
+    }
+
+    // Fechar menu no celular
+    if (window.innerWidth <= 768) {
+
+        document
+            .getElementById("sidebar")
+            ?.classList.remove("open");
+
+        document
+            .getElementById("menuOverlay")
+            ?.classList.remove("active");
+
+    }
+
+};
+
+
+// ==========================================
+// CLIQUES DOS MENUS
+// ==========================================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    document
+        .querySelectorAll(".menu-item[data-panel]")
+        .forEach(item => {
+
+            item.addEventListener("click", function(e) {
+
+                e.preventDefault();
+                e.stopPropagation();
+
+                const panel =
+                    this.getAttribute("data-panel");
+
+                if (!panel) return;
+
+                window.showPanel(panel);
+
+            });
+
+        });
+
+    // Abrir Dashboard inicialmente
+    window.showPanel("dashboard");
+
+});
+
+</script>
+
 </body>
 </html>
