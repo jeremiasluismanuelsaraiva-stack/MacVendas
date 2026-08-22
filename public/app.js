@@ -2,163 +2,500 @@
 // DASHBOARD
 // =========================
 
-let graficoHoje;
-let graficoDias;
-let graficoMeses;
+let graficoHoje = null;
+let graficoDias = null;
+let graficoMeses = null;
+
 
 // =========================
-// DASHBOARD
+// FORMATAR NÚMEROS
 // =========================
+
+function numero(valor) {
+
+    return Number(valor || 0)
+        .toLocaleString("pt-PT");
+
+}
+
+
+// =========================
+// CARREGAR DASHBOARD
+// =========================
+
 async function carregarDashboard() {
 
-    const resposta = await fetch("/dashboard");
-    const dados = await resposta.json();
+    try {
 
-    document.getElementById("vendas").innerHTML = dados.vendas;
-    document.getElementById("valor").innerHTML = dados.faturamento + " MT";
-    document.getElementById("clientes").innerHTML = dados.clientes;
-    document.getElementById("disp").innerHTML = dados.dispositivos;
+        const resposta =
+            await fetch("/relatorios");
+
+        if (!resposta.ok) {
+            throw new Error(
+                "Erro HTTP: " + resposta.status
+            );
+        }
+
+        const dados =
+            await resposta.json();
+
+        if (!dados.success) {
+            return;
+        }
+
+
+        const resumo =
+            dados.resumo || {};
+
+
+        // =========================
+        // ESTATÍSTICAS
+        // =========================
+
+        const vendas =
+            document.getElementById("vendas");
+
+        const valor =
+            document.getElementById("valor");
+
+        const clientes =
+            document.getElementById("clientes");
+
+        const disp =
+            document.getElementById("disp");
+
+
+        if (vendas) {
+
+            vendas.textContent =
+                numero(resumo.totalVendas);
+
+        }
+
+
+        if (valor) {
+
+            valor.textContent =
+                numero(resumo.faturamento) + " MT";
+
+        }
+
+
+        if (clientes) {
+
+            clientes.textContent =
+                numero(resumo.totalClientes);
+
+        }
+
+
+        if (disp) {
+
+            disp.textContent =
+                numero(resumo.totalDispositivos);
+
+        }
+
+
+    } catch (erro) {
+
+        console.error(
+            "Erro ao carregar dashboard:",
+            erro
+        );
+
+    }
 
 }
 
+
 // =========================
-// TABELA
+// TABELA DE VENDAS
 // =========================
+
 async function carregarTabela() {
 
-    const resposta = await fetch("/vendas");
-    const vendas = await resposta.json();
+    try {
 
-    let html = "";
+        const resposta =
+            await fetch("/vendas");
 
-    vendas.forEach(v => {
-
-        html += `
-        <tr>
-            <td>${v.numero}</td>
-            <td>${v.mb}</td>
-            <td>${v.valor} MT</td>
-            <td><span class="status ok">${v.status}</span></td>
-        </tr>
-        `;
-
-    });
-
-    document.getElementById("lista").innerHTML = html;
-
-}
-
-// =========================
-// GRÁFICO HOJE
-// =========================
-function criarGraficoHoje() {
-
-    const ctx = document.getElementById("graficoHoje");
-
-    graficoHoje = new Chart(ctx, {
-        type: "bar",
-        data: {
-            labels: ["00","02","04","06","08","10","12","14","16","18","20","22","24"],
-            datasets: [{
-                data: [5,8,10,13,18,22,28,31,36,34,38,35,40],
-                backgroundColor: "#3b82f6",
-                borderRadius: 8,
-                borderSkipped: false,
-                barThickness: 8,
-                maxBarThickness: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins:{
-                legend:{display:false}
-            }
+        if (!resposta.ok) {
+            throw new Error(
+                "Erro HTTP: " + resposta.status
+            );
         }
-    });
 
-}
+        const json =
+            await resposta.json();
 
-// =========================
-// GRÁFICO POR DIA
-// =========================
-function criarGraficoDias() {
 
-    const ctx = document.getElementById("graficoDias");
+        const vendas =
+            Array.isArray(json)
+                ? json
+                : (json.vendas || []);
 
-    graficoDias = new Chart(ctx,{
-        type:"line",
-        data:{
-            labels:["1","5","10","15","20","25","30"],
-            datasets:[{
-                data:[30,45,52,48,60,72,90],
-                borderColor:"#22c55e",
-                backgroundColor:"#22c55e",
-                tension:.4,
-                fill:false
-            }]
-        },
-        options:{
-            responsive:true,
-            maintainAspectRatio:false,
-            plugins:{
-                legend:{display:false}
-            }
+
+        const lista =
+            document.getElementById("lista");
+
+
+        if (!lista) return;
+
+
+        lista.innerHTML = "";
+
+
+        if (vendas.length === 0) {
+
+            lista.innerHTML = `
+                <tr>
+                    <td colspan="4"
+                        style="text-align:center;padding:20px;">
+                        Nenhuma venda encontrada.
+                    </td>
+                </tr>
+            `;
+
+            return;
+
         }
-    });
+
+
+        vendas.forEach(v => {
+
+            const tr =
+                document.createElement("tr");
+
+
+            tr.innerHTML = `
+
+                <td>
+                    ${v.numero || "-"}
+                </td>
+
+                <td>
+                    ${v.mb || v.gb || 0}
+                </td>
+
+                <td>
+                    ${v.valor_venda ||
+                      v.valor ||
+                      0} MT
+                </td>
+
+                <td>
+
+                    <span class="status ok">
+                        ${v.status || "Concluído"}
+                    </span>
+
+                </td>
+
+            `;
+
+
+            lista.appendChild(tr);
+
+        });
+
+
+    } catch (erro) {
+
+        console.error(
+            "Erro ao carregar tabela:",
+            erro
+        );
+
+    }
 
 }
 
-// =========================
-// GRÁFICO MENSAL
-// =========================
-function criarGraficoMeses() {
 
-    const ctx=document.getElementById("graficoMeses");
+// =========================
+// CARREGAR RELATÓRIOS
+// =========================
 
-    graficoMeses=new Chart(ctx,{
-        type:"bar",
-        data:{
-            labels:["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],
-            datasets:[{
-                data:[120,150,180,170,210,240,270,260,300,320,340,380],
-                backgroundColor:"#ef4444",
-                borderRadius:8
-            }]
-        },
-        options:{
-            responsive:true,
-            maintainAspectRatio:false,
-            plugins:{
-                legend:{display:false}
-            }
+async function carregarGraficos() {
+
+    try {
+
+        const resposta =
+            await fetch("/relatorios");
+
+        if (!resposta.ok) {
+            throw new Error(
+                "Erro HTTP: " + resposta.status
+            );
         }
-    });
+
+        const dados =
+            await resposta.json();
+
+
+        if (!dados.success) {
+            return;
+        }
+
+
+        // =========================
+        // DADOS
+        // =========================
+
+        const vendasPorDia =
+            dados.vendasPorDia || {};
+
+        const vendasPorMes =
+            dados.vendasPorMes || {};
+
+
+        // =========================
+        // GRÁFICO POR DIA
+        // =========================
+
+        const canvasDias =
+            document.getElementById(
+                "graficoDias"
+            );
+
+
+        if (canvasDias) {
+
+            if (graficoDias) {
+                graficoDias.destroy();
+            }
+
+
+            const dias =
+                Object.keys(vendasPorDia);
+
+
+            const valores =
+                Object.values(vendasPorDia);
+
+
+            graficoDias =
+                new Chart(
+                    canvasDias,
+                    {
+
+                        type: "line",
+
+                        data: {
+
+                            labels: dias,
+
+                            datasets: [
+
+                                {
+
+                                    label:
+                                        "Vendas",
+
+                                    data:
+                                        valores,
+
+                                    borderColor:
+                                        "#22c55e",
+
+                                    backgroundColor:
+                                        "rgba(34,197,94,0.1)",
+
+                                    tension:
+                                        0.4,
+
+                                    fill:
+                                        true,
+
+                                    borderWidth:
+                                        3
+
+                                }
+
+                            ]
+
+                        },
+
+                        options: {
+
+                            responsive:
+                                true,
+
+                            maintainAspectRatio:
+                                false,
+
+                            plugins: {
+
+                                legend: {
+                                    display: false
+                                }
+
+                            },
+
+                            scales: {
+
+                                y: {
+
+                                    beginAtZero:
+                                        true
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+                );
+
+        }
+
+
+        // =========================
+        // GRÁFICO MENSAL
+        // =========================
+
+        const canvasMeses =
+            document.getElementById(
+                "graficoMeses"
+            );
+
+
+        if (canvasMeses) {
+
+            if (graficoMeses) {
+                graficoMeses.destroy();
+            }
+
+
+            const meses =
+                Object.keys(vendasPorMes);
+
+
+            const valoresMes =
+                Object.values(vendasPorMes);
+
+
+            graficoMeses =
+                new Chart(
+                    canvasMeses,
+                    {
+
+                        type: "bar",
+
+                        data: {
+
+                            labels: meses,
+
+                            datasets: [
+
+                                {
+
+                                    label:
+                                        "Vendas",
+
+                                    data:
+                                        valoresMes,
+
+                                    backgroundColor:
+                                        "#ef4444",
+
+                                    borderRadius:
+                                        8,
+
+                                    borderWidth:
+                                        0
+
+                                }
+
+                            ]
+
+                        },
+
+                        options: {
+
+                            responsive:
+                                true,
+
+                            maintainAspectRatio:
+                                false,
+
+                            plugins: {
+
+                                legend: {
+                                    display: false
+                                }
+
+                            },
+
+                            scales: {
+
+                                y: {
+
+                                    beginAtZero:
+                                        true
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+                );
+
+        }
+
+
+    } catch (erro) {
+
+        console.error(
+            "Erro ao carregar gráficos:",
+            erro
+        );
+
+    }
 
 }
 
-// =========================
-// DATA
-// =========================
-document.getElementById("data").innerHTML =
-new Date().toLocaleString("pt-PT");
 
 // =========================
-// INICIAR
+// DATA ATUAL
 // =========================
-criarGraficoHoje();
-criarGraficoDias();
-criarGraficoMeses();
+
+const elementoData =
+    document.getElementById("data");
+
+
+if (elementoData) {
+
+    elementoData.textContent =
+        new Date().toLocaleString("pt-PT");
+
+}
+
+
+// =========================
+// INICIALIZAR
+// =========================
 
 carregarDashboard();
+
 carregarTabela();
 
+carregarGraficos();
+
+
 // =========================
-// ATUALIZAR
+// ATUALIZAÇÃO AUTOMÁTICA
 // =========================
+
 setInterval(() => {
 
     carregarDashboard();
+
     carregarTabela();
 
-}, 5000);
+    carregarGraficos();
+
+}, 10000);
