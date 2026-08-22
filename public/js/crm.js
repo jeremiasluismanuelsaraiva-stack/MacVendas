@@ -1,148 +1,435 @@
-
 const API = window.location.origin;
+
+
+// ==========================================
+// CARREGAR CLIENTES
+// ==========================================
 
 async function carregarClientes() {
 
     try {
 
-        const resposta = await fetch(API + "/clientes");
+        const resposta =
+            await fetch(API + "/clientes");
 
-        const json = await resposta.json();
+        if (!resposta.ok) {
+            throw new Error(
+                `Erro HTTP: ${resposta.status}`
+            );
+        }
 
-        if (!json.success) return;
+        const json =
+            await resposta.json();
 
-        const tabela = document.getElementById("tabelaClientes");
+        if (!json.success) {
+
+            console.error(
+                "Erro da API:",
+                json
+            );
+
+            return;
+
+        }
+
+        const tabela =
+            document.getElementById(
+                "tabelaClientes"
+            );
 
         if (!tabela) return;
 
         tabela.innerHTML = "";
 
-        json.clientes.forEach(cliente => {
 
-            tabela.innerHTML += `
+        if (
+            !json.clientes ||
+            json.clientes.length === 0
+        ) {
+
+            tabela.innerHTML = `
                 <tr>
-                    <td>${cliente.id}</td>
-                    <td>${cliente.nome || "-"}</td>
-                    <td>${cliente.numero || "-"}</td>
-                    <td>${cliente.email || "-"}</td>
-                    <td>${cliente.grupo || "-"}</td>
-                    <td>${cliente.saldo || 0} GB</td>
-                    <td>
-                        <button onclick="editarCliente('${cliente.id}')">
-                            Editar
-                        </button>
-
-                        <button onclick="removerCliente('${cliente.id}')">
-                            Remover
-                        </button>
+                    <td colspan="7"
+                        style="text-align:center;padding:20px;">
+                        Nenhum cliente encontrado.
                     </td>
                 </tr>
             `;
 
+            return;
+
+        }
+
+
+        json.clientes.forEach(cliente => {
+
+            const tr =
+                document.createElement("tr");
+
+
+            tr.innerHTML = `
+
+                <td>
+                    ${cliente.id ?? "-"}
+                </td>
+
+                <td>
+                    ${cliente.nome || "-"}
+                </td>
+
+                <td>
+                    ${cliente.numero || "-"}
+                </td>
+
+                <td>
+                    ${cliente.email || "-"}
+                </td>
+
+                <td>
+                    ${cliente.grupo || "-"}
+                </td>
+
+                <td>
+                    ${cliente.saldo || 0} GB
+                </td>
+
+                <td>
+
+                    <button
+                        class="btn btn-outline"
+                        data-editar="${cliente.id}"
+                    >
+                        <i class="fas fa-edit"></i>
+                        Editar
+                    </button>
+
+                    <button
+                        class="btn btn-danger"
+                        data-remover="${cliente.id}"
+                    >
+                        <i class="fas fa-trash"></i>
+                        Remover
+                    </button>
+
+                </td>
+
+            `;
+
+
+            tabela.appendChild(tr);
+
         });
+
+
+        // ==========================================
+        // BOTÃO EDITAR
+        // ==========================================
+
+        tabela
+            .querySelectorAll("[data-editar]")
+            .forEach(botao => {
+
+                botao.addEventListener(
+                    "click",
+                    function () {
+
+                        const id =
+                            this.getAttribute(
+                                "data-editar"
+                            );
+
+                        editarCliente(id);
+
+                    }
+                );
+
+            });
+
+
+        // ==========================================
+        // BOTÃO REMOVER
+        // ==========================================
+
+        tabela
+            .querySelectorAll("[data-remover]")
+            .forEach(botao => {
+
+                botao.addEventListener(
+                    "click",
+                    function () {
+
+                        const id =
+                            this.getAttribute(
+                                "data-remover"
+                            );
+
+                        removerCliente(id);
+
+                    }
+                );
+
+            });
 
     }
 
     catch (err) {
 
-        console.error(err);
+        console.error(
+            "Erro ao carregar clientes:",
+            err
+        );
 
     }
 
 }
+
+
+// ==========================================
+// ADICIONAR CLIENTE
+// ==========================================
 
 async function adicionarCliente(dados) {
 
     try {
 
-        await fetch(API + "/clientes", {
+        const resposta =
+            await fetch(
+                API + "/clientes",
+                {
+                    method: "POST",
 
-            method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-            headers: {
+                    body:
+                        JSON.stringify(dados)
+                }
+            );
 
-                "Content-Type": "application/json"
 
-            },
+        const json =
+            await resposta.json();
 
-            body: JSON.stringify(dados)
 
-        });
+        if (!resposta.ok) {
 
-        carregarClientes();
+            throw new Error(
+                json.error ||
+                "Erro ao adicionar cliente."
+            );
+
+        }
+
+
+        await carregarClientes();
+
+
+        return json;
 
     }
 
     catch (err) {
 
-        console.error(err);
+        console.error(
+            "Erro ao adicionar cliente:",
+            err
+        );
+
+        return {
+            success: false,
+            error: err.message
+        };
 
     }
 
 }
+
+
+// ==========================================
+// EDITAR CLIENTE
+// ==========================================
 
 async function editarCliente(id) {
 
-    const nome = prompt("Nome:");
+    const nome =
+        prompt(
+            "Digite o novo nome do cliente:"
+        );
 
-    if (!nome) return;
+
+    if (nome === null) return;
+
+
+    const nomeLimpo =
+        nome.trim();
+
+
+    if (!nomeLimpo) {
+
+        alert(
+            "O nome não pode ficar vazio."
+        );
+
+        return;
+
+    }
+
 
     try {
 
-        await fetch(API + "/clientes/" + id, {
+        const resposta =
+            await fetch(
+                API + "/clientes/" + encodeURIComponent(id),
+                {
+                    method: "PUT",
 
-            method: "PUT",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-            headers: {
+                    body:
+                        JSON.stringify({
+                            nome: nomeLimpo
+                        })
+                }
+            );
 
-                "Content-Type": "application/json"
 
-            },
+        const json =
+            await resposta.json();
 
-            body: JSON.stringify({
 
-                nome
+        if (!resposta.ok) {
 
-            })
+            throw new Error(
+                json.error ||
+                "Erro ao editar cliente."
+            );
 
-        });
+        }
 
-        carregarClientes();
+
+        await carregarClientes();
+
+
+        alert(
+            "Cliente atualizado com sucesso!"
+        );
 
     }
 
     catch (err) {
 
-        console.error(err);
+        console.error(
+            "Erro ao editar cliente:",
+            err
+        );
+
+
+        alert(
+            "Não foi possível editar o cliente."
+        );
 
     }
 
 }
+
+
+// ==========================================
+// REMOVER CLIENTE
+// ==========================================
 
 async function removerCliente(id) {
 
-    if (!confirm("Remover este cliente?")) return;
+    const confirmar =
+        confirm(
+            "Tem certeza que deseja remover este cliente?"
+        );
+
+
+    if (!confirmar) return;
+
 
     try {
 
-        await fetch(API + "/clientes/" + id, {
+        const resposta =
+            await fetch(
+                API + "/clientes/" + encodeURIComponent(id),
+                {
+                    method: "DELETE"
+                }
+            );
 
-            method: "DELETE"
 
-        });
+        const json =
+            await resposta.json();
 
-        carregarClientes();
+
+        if (!resposta.ok) {
+
+            throw new Error(
+                json.error ||
+                "Erro ao remover cliente."
+            );
+
+        }
+
+
+        await carregarClientes();
+
+
+        alert(
+            "Cliente removido com sucesso!"
+        );
 
     }
 
     catch (err) {
 
-        console.error(err);
+        console.error(
+            "Erro ao remover cliente:",
+            err
+        );
+
+
+        alert(
+            "Não foi possível remover o cliente."
+        );
 
     }
 
 }
 
+
+// ==========================================
+// DISPONIBILIZAR FUNÇÕES GLOBALMENTE
+// ==========================================
+
+window.carregarClientes =
+    carregarClientes;
+
+window.adicionarCliente =
+    adicionarCliente;
+
+window.editarCliente =
+    editarCliente;
+
+window.removerCliente =
+    removerCliente;
+
+
+// ==========================================
+// INICIALIZAÇÃO
+// ==========================================
+
 carregarClientes();
 
-setInterval(carregarClientes, 10000);
+
+// Atualizar a cada 10 segundos
+setInterval(
+    carregarClientes,
+    10000
+);
