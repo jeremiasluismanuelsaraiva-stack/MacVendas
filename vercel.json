@@ -1,3 +1,4 @@
+```json
 {
   "version": 2,
   "builds": [
@@ -9,7 +10,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "api/index.js"
+      "dest": "/api/index.js"
     },
     {
       "src": "/(.*)",
@@ -17,3 +18,4 @@
     }
   ]
 }
+```
