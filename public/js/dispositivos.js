@@ -1,5 +1,5 @@
-
 const API = window.location.origin;
+
 
 // =====================================
 // CARREGAR DISPOSITIVOS
@@ -9,61 +9,203 @@ async function carregarDispositivos() {
 
     try {
 
-        const resposta = await fetch(API + "/dispositivos");
+        const resposta =
+            await fetch(API + "/dispositivos");
 
-        const json = await resposta.json();
+        if (!resposta.ok) {
 
-        if (!json.success) return;
+            throw new Error(
+                "Erro HTTP: " + resposta.status
+            );
 
-        const tabela = document.getElementById("tabelaDispositivos");
+        }
+
+        const json =
+            await resposta.json();
+
+
+        if (!json.success) {
+
+            console.error(
+                "Erro da API:",
+                json
+            );
+
+            return;
+
+        }
+
+
+        const tabela =
+            document.getElementById(
+                "tabelaDispositivos"
+            );
+
 
         if (!tabela) return;
 
+
         tabela.innerHTML = "";
 
-        json.dispositivos.forEach(dispositivo => {
 
-            tabela.innerHTML += `
+        const dispositivos =
+            json.dispositivos || [];
+
+
+        // =====================================
+        // NENHUM DISPOSITIVO
+        // =====================================
+
+        if (dispositivos.length === 0) {
+
+            tabela.innerHTML = `
                 <tr>
 
-                    <td>${dispositivo.id}</td>
-
-                    <td>${dispositivo.nome || "-"}</td>
-
-                    <td>${dispositivo.modelo || "-"}</td>
-
-                    <td>${dispositivo.numero || "-"}</td>
-
-                    <td>${dispositivo.status || "Offline"}</td>
-
-                    <td>${dispositivo.ultimaAtividade || "-"}</td>
-
-                    <td>
-
-                        <button onclick="editarDispositivo('${dispositivo.id}')">
-                            Editar
-                        </button>
-
-                        <button onclick="removerDispositivo('${dispositivo.id}')">
-                            Remover
-                        </button>
-
+                    <td
+                        colspan="7"
+                        style="text-align:center;padding:25px;"
+                    >
+                        Nenhum dispositivo encontrado.
                     </td>
 
                 </tr>
             `;
 
+            return;
+
+        }
+
+
+        // =====================================
+        // MOSTRAR DISPOSITIVOS
+        // =====================================
+
+        dispositivos.forEach(dispositivo => {
+
+            const tr =
+                document.createElement("tr");
+
+
+            tr.innerHTML = `
+
+                <td>
+                    ${dispositivo.id || "-"}
+                </td>
+
+                <td>
+                    ${dispositivo.nome || "-"}
+                </td>
+
+                <td>
+                    ${dispositivo.modelo || "-"}
+                </td>
+
+                <td>
+                    ${dispositivo.numero || "-"}
+                </td>
+
+                <td>
+                    ${dispositivo.status || "Offline"}
+                </td>
+
+                <td>
+                    ${dispositivo.ultimaAtividade || "-"}
+                </td>
+
+                <td>
+
+                    <button
+                        class="btn btn-outline"
+                        data-editar-dispositivo="${dispositivo.id}"
+                    >
+                        <i class="fas fa-edit"></i>
+                        Editar
+                    </button>
+
+                    <button
+                        class="btn btn-outline"
+                        data-remover-dispositivo="${dispositivo.id}"
+                    >
+                        <i class="fas fa-trash"></i>
+                        Remover
+                    </button>
+
+                </td>
+
+            `;
+
+
+            tabela.appendChild(tr);
+
         });
+
+
+        // =====================================
+        // BOTÃO EDITAR
+        // =====================================
+
+        tabela
+            .querySelectorAll(
+                "[data-editar-dispositivo]"
+            )
+            .forEach(botao => {
+
+                botao.addEventListener(
+                    "click",
+                    function () {
+
+                        const id =
+                            this.getAttribute(
+                                "data-editar-dispositivo"
+                            );
+
+                        editarDispositivo(id);
+
+                    }
+                );
+
+            });
+
+
+        // =====================================
+        // BOTÃO REMOVER
+        // =====================================
+
+        tabela
+            .querySelectorAll(
+                "[data-remover-dispositivo]"
+            )
+            .forEach(botao => {
+
+                botao.addEventListener(
+                    "click",
+                    function () {
+
+                        const id =
+                            this.getAttribute(
+                                "data-remover-dispositivo"
+                            );
+
+                        removerDispositivo(id);
+
+                    }
+                );
+
+            });
 
     }
 
     catch (erro) {
 
-        console.error(erro);
+        console.error(
+            "Erro ao carregar dispositivos:",
+            erro
+        );
 
     }
 
 }
+
 
 // =====================================
 // ADICIONAR DISPOSITIVO
@@ -73,31 +215,68 @@ async function adicionarDispositivo(dados) {
 
     try {
 
-        await fetch(API + "/dispositivos", {
+        const resposta =
+            await fetch(
+                API + "/dispositivos",
+                {
 
-            method: "POST",
+                    method: "POST",
 
-            headers: {
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-                "Content-Type": "application/json"
+                    body:
+                        JSON.stringify(dados)
 
-            },
+                }
+            );
 
-            body: JSON.stringify(dados)
 
-        });
+        const json =
+            await resposta.json();
 
-        carregarDispositivos();
+
+        if (!resposta.ok) {
+
+            throw new Error(
+                json.error ||
+                "Erro ao adicionar dispositivo."
+            );
+
+        }
+
+
+        await carregarDispositivos();
+
+
+        return json;
 
     }
 
     catch (erro) {
 
-        console.error(erro);
+        console.error(
+            "Erro ao adicionar dispositivo:",
+            erro
+        );
+
+
+        alert(
+            "Não foi possível adicionar o dispositivo."
+        );
+
+
+        return {
+            success: false,
+            error: erro.message
+        };
 
     }
 
 }
+
 
 // =====================================
 // EDITAR DISPOSITIVO
@@ -105,41 +284,96 @@ async function adicionarDispositivo(dados) {
 
 async function editarDispositivo(id) {
 
-    const nome = prompt("Nome do dispositivo:");
+    const nome =
+        prompt(
+            "Nome do dispositivo:"
+        );
 
-    if (!nome) return;
+
+    if (nome === null) {
+        return;
+    }
+
+
+    const nomeFinal =
+        nome.trim();
+
+
+    if (!nomeFinal) {
+
+        alert(
+            "O nome não pode ficar vazio."
+        );
+
+        return;
+
+    }
+
 
     try {
 
-        await fetch(API + "/dispositivos/" + id, {
+        const resposta =
+            await fetch(
+                API +
+                "/dispositivos/" +
+                encodeURIComponent(id),
+                {
 
-            method: "PUT",
+                    method: "PUT",
 
-            headers: {
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-                "Content-Type": "application/json"
+                    body:
+                        JSON.stringify({
+                            nome: nomeFinal
+                        })
 
-            },
+                }
+            );
 
-            body: JSON.stringify({
 
-                nome
+        const json =
+            await resposta.json();
 
-            })
 
-        });
+        if (!resposta.ok) {
 
-        carregarDispositivos();
+            throw new Error(
+                json.error ||
+                "Erro ao editar dispositivo."
+            );
+
+        }
+
+
+        await carregarDispositivos();
+
+
+        alert(
+            "Dispositivo atualizado com sucesso!"
+        );
 
     }
 
     catch (erro) {
 
-        console.error(erro);
+        console.error(
+            "Erro ao editar dispositivo:",
+            erro
+        );
+
+
+        alert(
+            "Não foi possível editar o dispositivo."
+        );
 
     }
 
 }
+
 
 // =====================================
 // REMOVER DISPOSITIVO
@@ -147,30 +381,96 @@ async function editarDispositivo(id) {
 
 async function removerDispositivo(id) {
 
-    if (!confirm("Deseja remover este dispositivo?")) return;
+    if (
+        !confirm(
+            "Deseja remover este dispositivo?"
+        )
+    ) {
+
+        return;
+
+    }
+
 
     try {
 
-        await fetch(API + "/dispositivos/" + id, {
+        const resposta =
+            await fetch(
+                API +
+                "/dispositivos/" +
+                encodeURIComponent(id),
+                {
+                    method: "DELETE"
+                }
+            );
 
-            method: "DELETE"
 
-        });
+        const json =
+            await resposta.json();
 
-        carregarDispositivos();
+
+        if (!resposta.ok) {
+
+            throw new Error(
+                json.error ||
+                "Erro ao remover dispositivo."
+            );
+
+        }
+
+
+        await carregarDispositivos();
+
+
+        alert(
+            "Dispositivo removido com sucesso!"
+        );
 
     }
 
     catch (erro) {
 
-        console.error(erro);
+        console.error(
+            "Erro ao remover dispositivo:",
+            erro
+        );
+
+
+        alert(
+            "Não foi possível remover o dispositivo."
+        );
 
     }
 
 }
 
+
+// =====================================
+// DISPONIBILIZAR FUNÇÕES
+// =====================================
+
+window.carregarDispositivos =
+    carregarDispositivos;
+
+window.adicionarDispositivo =
+    adicionarDispositivo;
+
+window.editarDispositivo =
+    editarDispositivo;
+
+window.removerDispositivo =
+    removerDispositivo;
+
+
+// =====================================
+// INICIALIZAÇÃO
 // =====================================
 
 carregarDispositivos();
 
-setInterval(carregarDispositivos, 5000);
+
+// Atualizar a cada 5 segundos
+setInterval(
+    carregarDispositivos,
+    5000
+);
