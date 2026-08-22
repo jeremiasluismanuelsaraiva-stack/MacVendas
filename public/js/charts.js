@@ -1,26 +1,76 @@
+// ==========================================
+// GRÁFICOS DO SISTEMA
+// ==========================================
 
+let graficoHoje = null;
 let graficoDias = null;
 let graficoMeses = null;
 
+const API_CHARTS = window.location.origin;
+
 
 // ==========================================
-// CARREGAR GRÁFICOS
+// DESTRUIR GRÁFICO COM SEGURANÇA
+// ==========================================
+
+function destruirGrafico(grafico) {
+
+    if (grafico) {
+
+        try {
+
+            grafico.destroy();
+
+        } catch (erro) {
+
+            console.warn(
+                "Erro ao destruir gráfico:",
+                erro
+            );
+
+        }
+
+    }
+
+}
+
+
+// ==========================================
+// CARREGAR DADOS DOS GRÁFICOS
 // ==========================================
 
 async function carregarGraficos() {
 
     try {
 
+        if (
+            typeof Chart === "undefined"
+        ) {
+
+            console.error(
+                "Chart.js não foi carregado."
+            );
+
+            return;
+
+        }
+
+
         const resposta =
-            await fetch("/relatorios");
+            await fetch(
+                API_CHARTS + "/relatorios"
+            );
+
 
         if (!resposta.ok) {
 
             throw new Error(
-                "Erro HTTP: " + resposta.status
+                "Erro HTTP: " +
+                resposta.status
             );
 
         }
+
 
         const json =
             await resposta.json();
@@ -29,7 +79,7 @@ async function carregarGraficos() {
         if (!json.success) {
 
             console.error(
-                "Erro nos relatórios:",
+                "API de relatórios retornou erro:",
                 json
             );
 
@@ -38,65 +88,73 @@ async function carregarGraficos() {
         }
 
 
+        const vendasPorDia =
+            json.vendasPorDia || {};
+
+
+        const vendasPorMes =
+            json.vendasPorMes || {};
+
+
         // ==========================================
-        // GRÁFICO POR DIA
+        // GRÁFICO DE HOJE
         // ==========================================
 
-        const dias =
-            Object.keys(
-                json.vendasPorDia || {}
-            );
-
-
-        const vendasDias =
-            Object.values(
-                json.vendasPorDia || {}
-            );
-
-
-        const elementoDias =
+        const canvasHoje =
             document.getElementById(
-                "graficoDias"
+                "graficoHoje"
             );
 
 
-        if (elementoDias) {
+        if (canvasHoje) {
 
-            if (graficoDias) {
-
-                graficoDias.destroy();
-
-            }
+            destruirGrafico(
+                graficoHoje
+            );
 
 
-            const ctxDias =
-                elementoDias.getContext("2d");
+            const hoje =
+                new Date()
+                    .toISOString()
+                    .substring(
+                        0,
+                        10
+                    );
 
 
-            graficoDias =
+            const quantidadeHoje =
+                vendasPorDia[hoje] || 0;
+
+
+            graficoHoje =
                 new Chart(
-                    ctxDias,
+                    canvasHoje,
                     {
 
-                        type: "line",
+                        type: "bar",
 
                         data: {
 
-                            labels: dias,
+                            labels: [
+                                "Hoje"
+                            ],
 
                             datasets: [
 
                                 {
 
-                                    label: "Vendas por dia",
+                                    label:
+                                        "Vendas",
 
-                                    data: vendasDias,
+                                    data: [
+                                        quantidadeHoje
+                                    ],
 
-                                    borderWidth: 3,
+                                    borderWidth:
+                                        0,
 
-                                    tension: 0.3,
-
-                                    fill: false
+                                    borderRadius:
+                                        8
 
                                 }
 
@@ -106,14 +164,19 @@ async function carregarGraficos() {
 
                         options: {
 
-                            responsive: true,
+                            responsive:
+                                true,
 
-                            maintainAspectRatio: false,
+                            maintainAspectRatio:
+                                false,
 
                             plugins: {
 
                                 legend: {
-                                    display: true
+
+                                    display:
+                                        false
+
                                 }
 
                             },
@@ -122,10 +185,117 @@ async function carregarGraficos() {
 
                                 y: {
 
-                                    beginAtZero: true,
+                                    beginAtZero:
+                                        true,
 
                                     ticks: {
-                                        precision: 0
+
+                                        precision:
+                                            0
+
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+                );
+
+        }
+
+
+        // ==========================================
+        // GRÁFICO POR DIA
+        // ==========================================
+
+        const canvasDias =
+            document.getElementById(
+                "graficoDias"
+            );
+
+
+        if (canvasDias) {
+
+            destruirGrafico(
+                graficoDias
+            );
+
+
+            graficoDias =
+                new Chart(
+                    canvasDias,
+                    {
+
+                        type: "line",
+
+                        data: {
+
+                            labels:
+                                Object.keys(
+                                    vendasPorDia
+                                ),
+
+                            datasets: [
+
+                                {
+
+                                    label:
+                                        "Vendas",
+
+                                    data:
+                                        Object.values(
+                                            vendasPorDia
+                                        ),
+
+                                    borderWidth:
+                                        3,
+
+                                    tension:
+                                        0.35,
+
+                                    fill:
+                                        false
+
+                                }
+
+                            ]
+
+                        },
+
+                        options: {
+
+                            responsive:
+                                true,
+
+                            maintainAspectRatio:
+                                false,
+
+                            plugins: {
+
+                                legend: {
+
+                                    display:
+                                        false
+
+                                }
+
+                            },
+
+                            scales: {
+
+                                y: {
+
+                                    beginAtZero:
+                                        true,
+
+                                    ticks: {
+
+                                        precision:
+                                            0
+
                                     }
 
                                 }
@@ -144,57 +314,50 @@ async function carregarGraficos() {
         // GRÁFICO POR MÊS
         // ==========================================
 
-        const meses =
-            Object.keys(
-                json.vendasPorMes || {}
-            );
-
-
-        const vendasMes =
-            Object.values(
-                json.vendasPorMes || {}
-            );
-
-
-        const elementoMeses =
+        const canvasMeses =
             document.getElementById(
                 "graficoMeses"
             );
 
 
-        if (elementoMeses) {
+        if (canvasMeses) {
 
-            if (graficoMeses) {
-
-                graficoMeses.destroy();
-
-            }
-
-
-            const ctxMeses =
-                elementoMeses.getContext("2d");
+            destruirGrafico(
+                graficoMeses
+            );
 
 
             graficoMeses =
                 new Chart(
-                    ctxMeses,
+                    canvasMeses,
                     {
 
                         type: "bar",
 
                         data: {
 
-                            labels: meses,
+                            labels:
+                                Object.keys(
+                                    vendasPorMes
+                                ),
 
                             datasets: [
 
                                 {
 
-                                    label: "Vendas por mês",
+                                    label:
+                                        "Vendas",
 
-                                    data: vendasMes,
+                                    data:
+                                        Object.values(
+                                            vendasPorMes
+                                        ),
 
-                                    borderWidth: 2
+                                    borderWidth:
+                                        0,
+
+                                    borderRadius:
+                                        8
 
                                 }
 
@@ -204,14 +367,19 @@ async function carregarGraficos() {
 
                         options: {
 
-                            responsive: true,
+                            responsive:
+                                true,
 
-                            maintainAspectRatio: false,
+                            maintainAspectRatio:
+                                false,
 
                             plugins: {
 
                                 legend: {
-                                    display: true
+
+                                    display:
+                                        false
+
                                 }
 
                             },
@@ -220,10 +388,14 @@ async function carregarGraficos() {
 
                                 y: {
 
-                                    beginAtZero: true,
+                                    beginAtZero:
+                                        true,
 
                                     ticks: {
-                                        precision: 0
+
+                                        precision:
+                                            0
+
                                     }
 
                                 }
@@ -253,7 +425,7 @@ async function carregarGraficos() {
 
 
 // ==========================================
-// DISPONIBILIZAR GLOBALMENTE
+// DISPONIBILIZAR FUNÇÃO
 // ==========================================
 
 window.carregarGraficos =
@@ -264,7 +436,14 @@ window.carregarGraficos =
 // INICIALIZAÇÃO
 // ==========================================
 
-carregarGraficos();
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        carregarGraficos();
+
+    }
+);
 
 
 // ==========================================
