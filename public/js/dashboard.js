@@ -585,115 +585,101 @@ async function carregarCredenciaisAPI() {
 
 
         // ==============================================
-        // COPIAR UID
-        // ==============================================
+// COPIAR UID
+// ==============================================
 
-        const botaoUID =
-            document.getElementById(
-                "copiarUid"
-            );
-
-
-        if (botaoUID) {
-
-            botaoUID.onclick =
-                async () => {
-
-                    const uid =
-                        dados.uid ||
-                        usuario.uid;
+const botaoUID =
+    document.getElementById(
+        "copyTutorialUidBtn"
+    );
 
 
-                    await navigator.clipboard
-                        .writeText(uid);
+if (botaoUID) {
 
+    botaoUID.onclick =
+        async () => {
+
+            const uid =
+                dados.uid ||
+                usuario.uid;
+
+
+            await navigator.clipboard
+                .writeText(uid);
+
+
+            botaoUID.textContent =
+                "Copiado!";
+
+
+            setTimeout(
+                () => {
 
                     botaoUID.textContent =
-                        "Copiado!";
+                        "Copiar UID";
 
-
-                    setTimeout(
-                        () => {
-
-                            botaoUID.textContent =
-                                "Copiar UID";
-
-                        },
-                        1500
-                    );
-
-                };
-
-        }
-
-
-        // ==============================================
-        // COPIAR API KEY
-        // ==============================================
-
-        const botaoAPI =
-            document.getElementById(
-                "copiarApiKey"
+                },
+                1500
             );
 
-
-        if (botaoAPI) {
-
-            botaoAPI.onclick =
-                async () => {
-
-                    const apiKey =
-                        dados.apiKey;
-
-
-                    if (!apiKey) {
-
-                        alert(
-                            "API Key não encontrada."
-                        );
-
-                        return;
-
-                    }
-
-
-                    await navigator.clipboard
-                        .writeText(
-                            apiKey
-                        );
-
-
-                    botaoAPI.textContent =
-                        "Copiado!";
-
-
-                    setTimeout(
-                        () => {
-
-                            botaoAPI.textContent =
-                                "Copiar API Key";
-
-                        },
-                        1500
-                    );
-
-                };
-
-        }
-
-
-    }
-    catch (erro) {
-
-        console.error(
-            "ERRO NAS CREDENCIAIS:",
-            erro
-        );
-
-    }
+        };
 
 }
 
+
+// ==============================================
+// COPIAR API KEY
+// ==============================================
+
+const botaoAPI =
+    document.getElementById(
+        "copyTutorialApiKeyBtn"
+    );
+
+
+if (botaoAPI) {
+
+    botaoAPI.onclick =
+        async () => {
+
+            const apiKey =
+                dados.apiKey;
+
+
+            if (!apiKey) {
+
+                alert(
+                    "API Key não encontrada."
+                );
+
+                return;
+
+            }
+
+
+            await navigator.clipboard
+                .writeText(
+                    apiKey
+                );
+
+
+            botaoAPI.textContent =
+                "Copiado!";
+
+
+            setTimeout(
+                () => {
+
+                    botaoAPI.textContent =
+                        "Copiar API Key";
+
+                },
+                1500
+            );
+
+        };
+
+}
 
 // =====================================================
 // DATA
