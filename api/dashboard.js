@@ -1,40 +1,178 @@
 const express = require("express");
 const router = express.Router();
+
 const db = require("../database/database");
 
+
+// =====================================================
+// DASHBOARD DA API
+// GET /dashboard
+// =====================================================
+
 router.get("/", (req, res) => {
+
     try {
 
-        const vendas = db.ler("vendas");
-        const clientes = db.ler("clientes");
-        const pedidos = db.ler("pedidos");
-        const dispositivos = db.ler("dispositivos");
+        // ==============================================
+        // CARREGAR DADOS
+        // ==============================================
+
+        const vendas =
+            db.ler("vendas") || [];
+
+        const clientes =
+            db.ler("clientes") || [];
+
+        const pedidos =
+            db.ler("pedidos") || [];
+
+        const dispositivos =
+            db.ler("dispositivos") || [];
+
+
+        // ==============================================
+        // TOTAIS
+        // ==============================================
 
         let faturamento = 0;
+
         let custo = 0;
+
         let lucro = 0;
+
         let totalGB = 0;
 
-        const hoje = new Date().toISOString().slice(0, 10);
+        let totalMB = 0;
 
         let vendasHoje = 0;
 
+
+        // ==============================================
+        // DATA DE HOJE
+        // ==============================================
+
+        const hoje =
+            new Date()
+                .toISOString()
+                .slice(0, 10);
+
+
+        // ==============================================
+        // PROCESSAR VENDAS
+        // ==============================================
+
         vendas.forEach(venda => {
 
-            faturamento += Number(venda.valor_venda || venda.valor || 0);
-            custo += Number(venda.custo || 0);
-            lucro += Number(venda.lucro || 0);
-            totalGB += Number(venda.gb || 0);
+            // ------------------------------------------
+            // VALOR
+            // ------------------------------------------
+
+            faturamento +=
+                Number(
+                    venda.valor_venda ||
+                    venda.valor ||
+                    venda.valorPacote ||
+                    0
+                );
+
+
+            // ------------------------------------------
+            // CUSTO
+            // ------------------------------------------
+
+            custo +=
+                Number(
+                    venda.custo ||
+                    0
+                );
+
+
+            // ------------------------------------------
+            // LUCRO
+            // ------------------------------------------
+
+            if (
+                venda.lucro !== undefined &&
+                venda.lucro !== null
+            ) {
+
+                lucro +=
+                    Number(
+                        venda.lucro
+                    );
+
+            }
+            else {
+
+                lucro +=
+                    Number(
+                        venda.valor_venda ||
+                        venda.valor ||
+                        venda.valorPacote ||
+                        0
+                    ) -
+                    Number(
+                        venda.custo ||
+                        0
+                    );
+
+            }
+
+
+            // ------------------------------------------
+            // GB
+            // ------------------------------------------
+
+            totalGB +=
+                Number(
+                    venda.gb ||
+                    venda.gbPacote ||
+                    0
+                );
+
+
+            // ------------------------------------------
+            // MB
+            // ------------------------------------------
+
+            totalMB +=
+                Number(
+                    venda.mb ||
+                    0
+                );
+
+
+            // ------------------------------------------
+            // VENDAS DE HOJE
+            // ------------------------------------------
 
             if (venda.createdAt) {
-                const data = venda.createdAt.slice(0, 10);
 
-                if (data === hoje) {
+                const data =
+                    String(
+                        venda.createdAt
+                    ).slice(
+                        0,
+                        10
+                    );
+
+
+                if (
+                    data === hoje
+                ) {
+
                     vendasHoje++;
+
                 }
+
             }
 
         });
+
+
+        // ==============================================
+        // RESPOSTA
+        // ==============================================
 
         res.json({
 
@@ -42,40 +180,84 @@ router.get("/", (req, res) => {
 
             dashboard: {
 
+                // --------------------------------------
+                // FINANCEIRO
+                // --------------------------------------
+
                 faturamento,
 
                 custo,
 
                 lucro,
 
+
+                // --------------------------------------
+                // INTERNET
+                // --------------------------------------
+
                 totalGB,
 
-                vendas: vendas.length,
+                totalMB,
+
+
+                // --------------------------------------
+                // VENDAS
+                // --------------------------------------
+
+                vendas:
+                    vendas.length,
 
                 vendasHoje,
 
-                clientes: clientes.length,
 
-                pedidos: pedidos.length,
+                // --------------------------------------
+                // CLIENTES
+                // --------------------------------------
 
-                dispositivos: dispositivos.length
+                clientes:
+                    clientes.length,
+
+
+                // --------------------------------------
+                // PEDIDOS
+                // --------------------------------------
+
+                pedidos:
+                    pedidos.length,
+
+
+                // --------------------------------------
+                // DISPOSITIVOS
+                // --------------------------------------
+
+                dispositivos:
+                    dispositivos.length
 
             }
 
         });
 
-    } catch (err) {
+    }
+    catch (err) {
+
+        console.error(
+            "Erro no dashboard da API:",
+            err
+        );
+
 
         res.status(500).json({
 
             success: false,
 
-            error: err.message
+            error:
+                err.message
 
         });
 
     }
 
 });
+
 
 module.exports = router;
