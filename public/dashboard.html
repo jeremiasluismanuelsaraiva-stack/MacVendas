@@ -2914,10 +2914,7 @@ window.showPanel = function(panelId) {
 };
 
 
-// ==========================================
-// CLIQUES DOS MENUS
-// ==========================================
-
+<script>
 document.addEventListener("DOMContentLoaded", () => {
 
     document
@@ -2940,16 +2937,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         });
 
-    // Abrir Dashboard inicialmente
-    window.showPanel("dashboard");
-
 });
-
 </script>
 
 <script src="/js/app.js"></script>
 
-<script src="/js/dashboard.js"></script>
+<script type="module" src="/js/dashboard.js"></script>
 
 <script src="/js/charts.js"></script>
 
