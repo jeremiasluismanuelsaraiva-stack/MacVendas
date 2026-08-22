@@ -1,323 +1,445 @@
-// ==========================================
-// SISTEMA DE PAINÉIS
-// ==========================================
+// =====================================================
+// MOZ TECH - APP.JS
+// AUTENTICAÇÃO + DADOS DO USUÁRIO
+// =====================================================
 
-window.showPanel = function (panelId) {
+import {
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    console.log("Abrindo painel:", panelId);
-
-    const paineis = {
-
-        dashboard: "panelDashboard",
-        crm: "panelCRM",
-        pacotes: "panelPacotes",
-        pedidos: "panelPedidos",
-        dispositivos: "panelDispositivos",
-        tutorial: "panelTutorial",
-        config: "panelConfig"
-
-    };
+import {
+    auth,
+    obterDadosUsuario
+} from "/firebase.js";
 
 
-    // ==========================================
-    // ESCONDER TODOS OS PAINÉIS
-    // ==========================================
+// =====================================================
+// MOSTRAR DADOS DO USUÁRIO
+// =====================================================
 
-    Object.values(paineis).forEach(id => {
-
-        const elemento =
-            document.getElementById(id);
-
-        if (elemento) {
-
-            elemento.style.display = "none";
-
-        }
-
-    });
-
-
-    // ==========================================
-    // VERIFICAR PAINEL
-    // ==========================================
-
-    const painelId = paineis[panelId];
-
-    if (!painelId) {
-
-        console.error(
-            "Painel não encontrado:",
-            panelId
-        );
-
-        return;
-
-    }
-
-
-    const painel =
-        document.getElementById(painelId);
-
-    if (!painel) {
-
-        console.error(
-            "Elemento não encontrado:",
-            painelId
-        );
-
-        return;
-
-    }
-
-
-    // ==========================================
-    // MOSTRAR PAINEL
-    // ==========================================
-
-    painel.style.display = "block";
-
-
-    // ==========================================
-    // MENU ATIVO
-    // ==========================================
-
-    document
-        .querySelectorAll(".menu-item[data-panel]")
-        .forEach(item => {
-
-            item.classList.remove("active");
-
-        });
-
-
-    const botao =
-        document.querySelector(
-            `.menu-item[data-panel="${panelId}"]`
-        );
-
-
-    if (botao) {
-
-        botao.classList.add("active");
-
-    }
-
-
-    // ==========================================
-    // CARREGAR CONTEÚDO
-    // ==========================================
+async function carregarUsuario() {
 
     try {
 
-        // DASHBOARD
+        const user = auth.currentUser;
 
-        if (panelId === "dashboard") {
+        if (!user) {
 
-            if (
-                typeof window.carregarDashboard ===
-                "function"
-            ) {
+            console.warn("Nenhum usuário autenticado.");
 
-                window.carregarDashboard();
+            return;
 
-            }
+        }
 
-            if (
-                typeof window.carregarTabela ===
-                "function"
-            ) {
+        console.log("Usuário autenticado:", user.uid);
 
-                window.carregarTabela();
 
-            }
+        // Buscar dados do usuário
+        const resultado =
+            await obterDadosUsuario(user);
 
-            if (
-                typeof window.carregarGraficos ===
-                "function"
-            ) {
 
-                window.carregarGraficos();
+        if (!resultado || !resultado.success) {
 
-            }
+            console.error(
+                "Não foi possível carregar os dados:",
+                resultado
+            );
+
+            return;
 
         }
 
 
-        // CRM
+        const dados = resultado.data || {};
 
-        if (panelId === "crm") {
+        const uid =
+            dados.uid ||
+            user.uid;
 
-            if (
-                typeof window.carregarClientes ===
-                "function"
-            ) {
+        const apiKey =
+            dados.apiKey ||
+            "Não disponível";
 
-                window.carregarClientes();
+        const nome =
+            dados.name ||
+            user.displayName ||
+            "Usuário";
 
-            }
-
-        }
-
-
-        // PACOTES
-
-        if (panelId === "pacotes") {
-
-            if (
-                typeof window.carregarPacotes ===
-                "function"
-            ) {
-
-                window.carregarPacotes();
-
-            }
-
-        }
+        const email =
+            dados.email ||
+            user.email ||
+            "-";
 
 
-        // PEDIDOS
+        // =================================================
+        // SIDEBAR
+        // =================================================
 
-        if (panelId === "pedidos") {
+        const nomeElemento =
+            document.getElementById(
+                "sidebarUserName"
+            );
 
-            if (
-                typeof window.carregarPedidos ===
-                "function"
-            ) {
+        const emailElemento =
+            document.getElementById(
+                "sidebarUserEmail"
+            );
 
-                window.carregarPedidos();
+        const uidElemento =
+            document.getElementById(
+                "sidebarUserUid"
+            );
 
-            }
+        const apiElemento =
+            document.getElementById(
+                "sidebarApiKey"
+            );
 
-        }
 
+        if (nomeElemento) {
 
-        // DISPOSITIVOS
-
-        if (panelId === "dispositivos") {
-
-            if (
-                typeof window.carregarDispositivos ===
-                "function"
-            ) {
-
-                window.carregarDispositivos();
-
-            }
+            nomeElemento.textContent =
+                nome;
 
         }
 
 
-        // CONFIGURAÇÕES
+        if (emailElemento) {
 
-        if (panelId === "config") {
-
-            if (
-                typeof window.carregarConfiguracoes ===
-                "function"
-            ) {
-
-                window.carregarConfiguracoes();
-
-            }
+            emailElemento.textContent =
+                email;
 
         }
 
 
-    } catch (erro) {
+        if (uidElemento) {
+
+            uidElemento.textContent =
+                "UID: " + uid;
+
+        }
+
+
+        if (apiElemento) {
+
+            apiElemento.textContent =
+                "API Key: " + apiKey;
+
+        }
+
+
+        // =================================================
+        // TUTORIAL
+        // =================================================
+
+        const tutorialUid =
+            document.getElementById(
+                "tutorialUid"
+            );
+
+        const tutorialApiKey =
+            document.getElementById(
+                "tutorialApiKey"
+            );
+
+
+        if (tutorialUid) {
+
+            tutorialUid.textContent =
+                uid;
+
+        }
+
+
+        if (tutorialApiKey) {
+
+            tutorialApiKey.textContent =
+                apiKey;
+
+        }
+
+
+        // =================================================
+        // GUARDAR LOCALMENTE
+        // =================================================
+
+        localStorage.setItem(
+            "userData",
+            JSON.stringify({
+
+                uid: uid,
+
+                email: email,
+
+                name: nome,
+
+                apiKey: apiKey
+
+            })
+        );
+
+
+        console.log(
+            "Credenciais carregadas:",
+            {
+                uid,
+                apiKey
+            }
+        );
+
+    }
+
+    catch (erro) {
 
         console.error(
-            "Erro ao carregar painel:",
-            panelId,
+            "Erro ao carregar usuário:",
             erro
         );
 
     }
 
-
-    // ==========================================
-    // FECHAR MENU NO TELEMÓVEL
-    // ==========================================
-
-    if (window.innerWidth <= 768) {
-
-        const sidebar =
-            document.getElementById("sidebar");
-
-        const overlay =
-            document.getElementById("menuOverlay");
+}
 
 
-        if (sidebar) {
+// =====================================================
+// COPIAR TEXTO
+// =====================================================
 
-            sidebar.classList.remove("open");
+async function copiarTexto(texto) {
 
-        }
+    if (!texto) return;
 
+    try {
 
-        if (overlay) {
+        await navigator.clipboard.writeText(
+            texto
+        );
 
-            overlay.classList.remove("active");
-
-        }
+        alert("Copiado com sucesso!");
 
     }
 
-};
+    catch (erro) {
 
+        console.error(
+            "Erro ao copiar:",
+            erro
+        );
 
-// ==========================================
-// CLIQUES DO MENU
-// ==========================================
-
-function inicializarMenu() {
-
-    document
-        .querySelectorAll(".menu-item[data-panel]")
-        .forEach(item => {
-
-            item.addEventListener(
-                "click",
-                function (e) {
-
-                    e.preventDefault();
-                    e.stopPropagation();
-
-
-                    const panel =
-                        this.getAttribute(
-                            "data-panel"
-                        );
-
-
-                    if (!panel) {
-
-                        return;
-
-                    }
-
-
-                    window.showPanel(panel);
-
-                }
-            );
-
-        });
+    }
 
 }
 
 
-// ==========================================
+// =====================================================
+// BOTÕES DE COPIAR
+// =====================================================
+
+function inicializarCopias() {
+
+    const copyUidBtn =
+        document.getElementById(
+            "copyUidBtn"
+        );
+
+    const copyApiKeyBtn =
+        document.getElementById(
+            "copyApiKeyBtn"
+        );
+
+    const copyTutorialUidBtn =
+        document.getElementById(
+            "copyTutorialUidBtn"
+        );
+
+    const copyTutorialApiKeyBtn =
+        document.getElementById(
+            "copyTutorialApiKeyBtn"
+        );
+
+
+    if (copyUidBtn) {
+
+        copyUidBtn.addEventListener(
+            "click",
+            () => {
+
+                const texto =
+                    document
+                        .getElementById(
+                            "sidebarUserUid"
+                        )
+                        ?.textContent
+                        ?.replace(
+                            "UID:",
+                            ""
+                        )
+                        .trim();
+
+                copiarTexto(texto);
+
+            }
+        );
+
+    }
+
+
+    if (copyApiKeyBtn) {
+
+        copyApiKeyBtn.addEventListener(
+            "click",
+            () => {
+
+                const texto =
+                    document
+                        .getElementById(
+                            "sidebarApiKey"
+                        )
+                        ?.textContent
+                        ?.replace(
+                            "API Key:",
+                            ""
+                        )
+                        .trim();
+
+                copiarTexto(texto);
+
+            }
+        );
+
+    }
+
+
+    if (copyTutorialUidBtn) {
+
+        copyTutorialUidBtn.addEventListener(
+            "click",
+            () => {
+
+                const texto =
+                    document.getElementById(
+                        "tutorialUid"
+                    )?.textContent;
+
+                copiarTexto(texto);
+
+            }
+        );
+
+    }
+
+
+    if (copyTutorialApiKeyBtn) {
+
+        copyTutorialApiKeyBtn.addEventListener(
+            "click",
+            () => {
+
+                const texto =
+                    document.getElementById(
+                        "tutorialApiKey"
+                    )?.textContent;
+
+                copiarTexto(texto);
+
+            }
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// LOGOUT
+// =====================================================
+
+function inicializarLogout() {
+
+    const botao =
+        document.getElementById(
+            "logoutBtn"
+        );
+
+
+    if (!botao) return;
+
+
+    botao.addEventListener(
+        "click",
+        async () => {
+
+            try {
+
+                await signOut(auth);
+
+                localStorage.removeItem(
+                    "userData"
+                );
+
+                window.location.href =
+                    "/";
+
+            }
+
+            catch (erro) {
+
+                console.error(
+                    "Erro ao sair:",
+                    erro
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// FIREBASE
+// =====================================================
+
+onAuthStateChanged(
+    auth,
+    async (user) => {
+
+        if (!user) {
+
+            console.warn(
+                "Usuário não autenticado."
+            );
+
+            return;
+
+        }
+
+        console.log(
+            "Sessão iniciada:",
+            user.email
+        );
+
+
+        await carregarUsuario();
+
+    }
+);
+
+
+// =====================================================
 // INICIALIZAÇÃO
-// ==========================================
+// =====================================================
 
 document.addEventListener(
     "DOMContentLoaded",
-    function () {
+    () => {
 
-        inicializarMenu();
+        inicializarCopias();
 
-        // Dashboard inicial
-        window.showPanel("dashboard");
+        inicializarLogout();
 
     }
 );
