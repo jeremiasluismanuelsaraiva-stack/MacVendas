@@ -1,15 +1,13 @@
-// =========================
+// ==========================================
 // DASHBOARD
-// =========================
+// ==========================================
 
-let graficoHoje = null;
-let graficoDias = null;
-let graficoMeses = null;
+const API = window.location.origin;
 
 
-// =========================
+// ==========================================
 // FORMATAR NÚMEROS
-// =========================
+// ==========================================
 
 function numero(valor) {
 
@@ -19,28 +17,40 @@ function numero(valor) {
 }
 
 
-// =========================
-// CARREGAR DASHBOARD
-// =========================
+// ==========================================
+// CARREGAR ESTATÍSTICAS
+// ==========================================
 
 async function carregarDashboard() {
 
     try {
 
         const resposta =
-            await fetch("/relatorios");
+            await fetch(API + "/relatorios");
+
 
         if (!resposta.ok) {
+
             throw new Error(
                 "Erro HTTP: " + resposta.status
             );
+
         }
+
 
         const dados =
             await resposta.json();
 
+
         if (!dados.success) {
+
+            console.error(
+                "Erro nos relatórios:",
+                dados
+            );
+
             return;
+
         }
 
 
@@ -48,56 +58,152 @@ async function carregarDashboard() {
             dados.resumo || {};
 
 
-        // =========================
-        // ESTATÍSTICAS
-        // =========================
+        // ==========================================
+        // VENDAS
+        // ==========================================
 
         const vendas =
             document.getElementById("vendas");
-
-        const valor =
-            document.getElementById("valor");
-
-        const clientes =
-            document.getElementById("clientes");
-
-        const disp =
-            document.getElementById("disp");
 
 
         if (vendas) {
 
             vendas.textContent =
-                numero(resumo.totalVendas);
+                numero(
+                    resumo.totalVendas
+                );
 
         }
+
+
+        // ==========================================
+        // FATURAMENTO
+        // ==========================================
+
+        const valor =
+            document.getElementById("valor");
 
 
         if (valor) {
 
             valor.textContent =
-                numero(resumo.faturamento) + " MT";
+                numero(
+                    resumo.faturamento
+                ) + " MT";
 
         }
+
+
+        // ==========================================
+        // CLIENTES
+        // ==========================================
+
+        const clientes =
+            document.getElementById("clientes");
 
 
         if (clientes) {
 
             clientes.textContent =
-                numero(resumo.totalClientes);
+                numero(
+                    resumo.totalClientes
+                );
 
         }
 
 
-        if (disp) {
+        // ==========================================
+        // DISPOSITIVOS
+        // ==========================================
 
-            disp.textContent =
-                numero(resumo.totalDispositivos);
+        const dispositivos =
+            document.getElementById("disp");
+
+
+        if (dispositivos) {
+
+            dispositivos.textContent =
+                numero(
+                    resumo.totalDispositivos
+                );
 
         }
 
 
-    } catch (erro) {
+        // ==========================================
+        // TOTAL GB
+        // ==========================================
+
+        const totalGB =
+            document.getElementById("totalGB");
+
+
+        if (totalGB) {
+
+            totalGB.textContent =
+                numero(
+                    resumo.totalGB
+                );
+
+        }
+
+
+        // ==========================================
+        // LUCRO
+        // ==========================================
+
+        const lucro =
+            document.getElementById("lucro");
+
+
+        if (lucro) {
+
+            lucro.textContent =
+                numero(
+                    resumo.lucro
+                ) + " MT";
+
+        }
+
+
+        // ==========================================
+        // CUSTO
+        // ==========================================
+
+        const custo =
+            document.getElementById("custo");
+
+
+        if (custo) {
+
+            custo.textContent =
+                numero(
+                    resumo.custo
+                ) + " MT";
+
+        }
+
+
+        // ==========================================
+        // PEDIDOS
+        // ==========================================
+
+        const pedidos =
+            document.getElementById("pedidos");
+
+
+        if (pedidos) {
+
+            pedidos.textContent =
+                numero(
+                    resumo.totalPedidos
+                );
+
+        }
+
+
+    }
+    catch (erro) {
 
         console.error(
             "Erro ao carregar dashboard:",
@@ -109,22 +215,29 @@ async function carregarDashboard() {
 }
 
 
-// =========================
-// TABELA DE VENDAS
-// =========================
+// ==========================================
+// CARREGAR TABELA DE VENDAS
+// ==========================================
 
 async function carregarTabela() {
 
     try {
 
         const resposta =
-            await fetch("/vendas");
+            await fetch(
+                API + "/vendas"
+            );
+
 
         if (!resposta.ok) {
+
             throw new Error(
-                "Erro HTTP: " + resposta.status
+                "Erro HTTP: " +
+                resposta.status
             );
+
         }
+
 
         const json =
             await resposta.json();
@@ -133,14 +246,24 @@ async function carregarTabela() {
         const vendas =
             Array.isArray(json)
                 ? json
-                : (json.vendas || []);
+                : (
+                    Array.isArray(json.vendas)
+                        ? json.vendas
+                        : []
+                );
 
 
         const lista =
-            document.getElementById("lista");
+            document.getElementById(
+                "lista"
+            );
 
 
-        if (!lista) return;
+        if (!lista) {
+
+            return;
+
+        }
 
 
         lista.innerHTML = "";
@@ -150,10 +273,17 @@ async function carregarTabela() {
 
             lista.innerHTML = `
                 <tr>
-                    <td colspan="4"
-                        style="text-align:center;padding:20px;">
+
+                    <td
+                        colspan="4"
+                        style="
+                            text-align:center;
+                            padding:20px;
+                        "
+                    >
                         Nenhuma venda encontrada.
                     </td>
+
                 </tr>
             `;
 
@@ -162,32 +292,43 @@ async function carregarTabela() {
         }
 
 
-        vendas.forEach(v => {
+        vendas.forEach(venda => {
 
             const tr =
-                document.createElement("tr");
+                document.createElement(
+                    "tr"
+                );
 
 
             tr.innerHTML = `
 
                 <td>
-                    ${v.numero || "-"}
+                    ${venda.numero || "-"}
                 </td>
 
                 <td>
-                    ${v.mb || v.gb || 0}
+                    ${
+                        venda.mb ||
+                        venda.gb ||
+                        0
+                    }
                 </td>
 
                 <td>
-                    ${v.valor_venda ||
-                      v.valor ||
-                      0} MT
+                    ${
+                        venda.valor_venda ??
+                        venda.valor ??
+                        0
+                    } MT
                 </td>
 
                 <td>
 
                     <span class="status ok">
-                        ${v.status || "Concluído"}
+                        ${
+                            venda.status ||
+                            "Concluído"
+                        }
                     </span>
 
                 </td>
@@ -200,10 +341,11 @@ async function carregarTabela() {
         });
 
 
-    } catch (erro) {
+    }
+    catch (erro) {
 
         console.error(
-            "Erro ao carregar tabela:",
+            "Erro ao carregar vendas:",
             erro
         );
 
@@ -212,290 +354,75 @@ async function carregarTabela() {
 }
 
 
-// =========================
-// CARREGAR RELATÓRIOS
-// =========================
-
-async function carregarGraficos() {
-
-    try {
-
-        const resposta =
-            await fetch("/relatorios");
-
-        if (!resposta.ok) {
-            throw new Error(
-                "Erro HTTP: " + resposta.status
-            );
-        }
-
-        const dados =
-            await resposta.json();
-
-
-        if (!dados.success) {
-            return;
-        }
-
-
-        // =========================
-        // DADOS
-        // =========================
-
-        const vendasPorDia =
-            dados.vendasPorDia || {};
-
-        const vendasPorMes =
-            dados.vendasPorMes || {};
-
-
-        // =========================
-        // GRÁFICO POR DIA
-        // =========================
-
-        const canvasDias =
-            document.getElementById(
-                "graficoDias"
-            );
-
-
-        if (canvasDias) {
-
-            if (graficoDias) {
-                graficoDias.destroy();
-            }
-
-
-            const dias =
-                Object.keys(vendasPorDia);
-
-
-            const valores =
-                Object.values(vendasPorDia);
-
-
-            graficoDias =
-                new Chart(
-                    canvasDias,
-                    {
-
-                        type: "line",
-
-                        data: {
-
-                            labels: dias,
-
-                            datasets: [
-
-                                {
-
-                                    label:
-                                        "Vendas",
-
-                                    data:
-                                        valores,
-
-                                    borderColor:
-                                        "#22c55e",
-
-                                    backgroundColor:
-                                        "rgba(34,197,94,0.1)",
-
-                                    tension:
-                                        0.4,
-
-                                    fill:
-                                        true,
-
-                                    borderWidth:
-                                        3
-
-                                }
-
-                            ]
-
-                        },
-
-                        options: {
-
-                            responsive:
-                                true,
-
-                            maintainAspectRatio:
-                                false,
-
-                            plugins: {
-
-                                legend: {
-                                    display: false
-                                }
-
-                            },
-
-                            scales: {
-
-                                y: {
-
-                                    beginAtZero:
-                                        true
-
-                                }
-
-                            }
-
-                        }
-
-                    }
-                );
-
-        }
-
-
-        // =========================
-        // GRÁFICO MENSAL
-        // =========================
-
-        const canvasMeses =
-            document.getElementById(
-                "graficoMeses"
-            );
-
-
-        if (canvasMeses) {
-
-            if (graficoMeses) {
-                graficoMeses.destroy();
-            }
-
-
-            const meses =
-                Object.keys(vendasPorMes);
-
-
-            const valoresMes =
-                Object.values(vendasPorMes);
-
-
-            graficoMeses =
-                new Chart(
-                    canvasMeses,
-                    {
-
-                        type: "bar",
-
-                        data: {
-
-                            labels: meses,
-
-                            datasets: [
-
-                                {
-
-                                    label:
-                                        "Vendas",
-
-                                    data:
-                                        valoresMes,
-
-                                    backgroundColor:
-                                        "#ef4444",
-
-                                    borderRadius:
-                                        8,
-
-                                    borderWidth:
-                                        0
-
-                                }
-
-                            ]
-
-                        },
-
-                        options: {
-
-                            responsive:
-                                true,
-
-                            maintainAspectRatio:
-                                false,
-
-                            plugins: {
-
-                                legend: {
-                                    display: false
-                                }
-
-                            },
-
-                            scales: {
-
-                                y: {
-
-                                    beginAtZero:
-                                        true
-
-                                }
-
-                            }
-
-                        }
-
-                    }
-                );
-
-        }
-
-
-    } catch (erro) {
-
-        console.error(
-            "Erro ao carregar gráficos:",
-            erro
-        );
-
-    }
-
-}
-
-
-// =========================
+// ==========================================
 // DATA ATUAL
-// =========================
+// ==========================================
 
-const elementoData =
-    document.getElementById("data");
+function atualizarData() {
+
+    const elemento =
+        document.getElementById(
+            "data"
+        );
 
 
-if (elementoData) {
+    if (!elemento) {
 
-    elementoData.textContent =
-        new Date().toLocaleString("pt-PT");
+        return;
+
+    }
+
+
+    elemento.textContent =
+        new Date()
+            .toLocaleString(
+                "pt-PT"
+            );
 
 }
 
 
-// =========================
-// INICIALIZAR
-// =========================
+// ==========================================
+// DISPONIBILIZAR FUNÇÕES PARA O app.js
+// ==========================================
 
-carregarDashboard();
-
-carregarTabela();
-
-carregarGraficos();
+window.carregarDashboard =
+    carregarDashboard;
 
 
-// =========================
+window.carregarTabela =
+    carregarTabela;
+
+
+// ==========================================
+// INICIALIZAÇÃO
+// ==========================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        atualizarData();
+
+        carregarDashboard();
+
+        carregarTabela();
+
+    }
+);
+
+
+// ==========================================
 // ATUALIZAÇÃO AUTOMÁTICA
-// =========================
+// ==========================================
 
-setInterval(() => {
+setInterval(
+    carregarDashboard,
+    5000
+);
 
-    carregarDashboard();
 
-    carregarTabela();
-
-    carregarGraficos();
-
-}, 10000);
+setInterval(
+    carregarTabela,
+    5000
+);
