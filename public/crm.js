@@ -1,249 +1,431 @@
-
 const API = window.location.origin;
 
-let clientes = [];
+// ==========================================
+// CRM - CARREGAR CLIENTES
+// ==========================================
 
-// ==============================
-// CARREGAR CLIENTES
-// ==============================
-
-async function carregarClientes() {
+async function carregarCRM() {
 
     try {
 
         const resposta = await fetch(API + "/clientes");
 
+        if (!resposta.ok) {
+            throw new Error("Erro HTTP: " + resposta.status);
+        }
+
         const json = await resposta.json();
 
-        if (!json.success) return;
+        if (!json.success) {
+            console.error("Erro da API:", json);
+            return;
+        }
 
-        clientes = json.clientes || [];
+        const clientes = json.clientes || [];
 
-        atualizarTabela(clientes);
+        const tabela = document.getElementById("tabelaClientes");
 
-        atualizarResumo(clientes);
+        if (!tabela) return;
 
-    } catch (e) {
+        tabela.innerHTML = "";
 
-        console.error(e);
+        // ==========================================
+        // ESTATÍSTICAS
+        // ==========================================
+
+        const total = clientes.length;
+
+        const elementoTotal =
+            document.getElementById("totalClientesCRM");
+
+        if (elementoTotal) {
+            elementoTotal.textContent = total;
+        }
+
+
+        // ==========================================
+        // NENHUM CLIENTE
+        // ==========================================
+
+        if (clientes.length === 0) {
+
+            tabela.innerHTML = `
+                <tr>
+                    <td colspan="7"
+                        style="text-align:center;padding:30px;">
+                        <i class="fas fa-users"
+                           style="font-size:30px;"></i>
+
+                        <br><br>
+
+                        Nenhum cliente encontrado.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+
+        // ==========================================
+        // MOSTRAR CLIENTES
+        // ==========================================
+
+        clientes.forEach(cliente => {
+
+            const tr =
+                document.createElement("tr");
+
+            tr.innerHTML = `
+
+                <td>
+                    ${cliente.id ?? "-"}
+                </td>
+
+                <td>
+                    ${cliente.nome || "-"}
+                </td>
+
+                <td>
+                    ${cliente.numero || "-"}
+                </td>
+
+                <td>
+                    ${cliente.email || "-"}
+                </td>
+
+                <td>
+                    ${cliente.grupo || "-"}
+                </td>
+
+                <td>
+                    ${cliente.saldo || 0} GB
+                </td>
+
+                <td>
+
+                    <button
+                        class="btn btn-outline"
+                        data-editar-cliente="${cliente.id}">
+                        <i class="fas fa-edit"></i>
+                        Editar
+                    </button>
+
+                    <button
+                        class="btn btn-outline"
+                        data-remover-cliente="${cliente.id}">
+                        <i class="fas fa-trash"></i>
+                        Remover
+                    </button>
+
+                </td>
+            `;
+
+            tabela.appendChild(tr);
+
+        });
+
+
+        // ==========================================
+        // BOTÃO EDITAR
+        // ==========================================
+
+        tabela
+            .querySelectorAll("[data-editar-cliente]")
+            .forEach(botao => {
+
+                botao.addEventListener("click", () => {
+
+                    const id =
+                        botao.getAttribute(
+                            "data-editar-cliente"
+                        );
+
+                    editarClienteCRM(id);
+
+                });
+
+            });
+
+
+        // ==========================================
+        // BOTÃO REMOVER
+        // ==========================================
+
+        tabela
+            .querySelectorAll("[data-remover-cliente]")
+            .forEach(botao => {
+
+                botao.addEventListener("click", () => {
+
+                    const id =
+                        botao.getAttribute(
+                            "data-remover-cliente"
+                        );
+
+                    removerClienteCRM(id);
+
+                });
+
+            });
+
+
+    } catch (erro) {
+
+        console.error(
+            "Erro ao carregar CRM:",
+            erro
+        );
 
     }
 
 }
 
-// ==============================
-// TABELA
-// ==============================
 
-function atualizarTabela(lista) {
+// ==========================================
+// EDITAR CLIENTE
+// ==========================================
 
-    const tbody = document.getElementById("tabelaClientes");
+async function editarClienteCRM(id) {
 
-    if (!tbody) return;
+    const nome =
+        prompt("Digite o novo nome do cliente:");
 
-    tbody.innerHTML = "";
+    if (nome === null) {
+        return;
+    }
 
-    lista.forEach(cliente => {
+    const nomeFinal =
+        nome.trim();
 
-        tbody.innerHTML += `
-        <tr>
+    if (!nomeFinal) {
 
-            <td>${cliente.id}</td>
+        alert(
+            "O nome não pode ficar vazio."
+        );
 
-            <td>${cliente.nome || ""}</td>
+        return;
+    }
 
-            <td>${cliente.numero || ""}</td>
 
-            <td>${cliente.grupo || ""}</td>
+    try {
 
-            <td>${cliente.totalCompras || 0}</td>
+        const resposta =
+            await fetch(
+                API +
+                "/clientes/" +
+                encodeURIComponent(id),
+                {
+                    method: "PUT",
 
-            <td>${cliente.totalGB || 0} GB</td>
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-            <td>${cliente.totalGasto || 0} MT</td>
+                    body: JSON.stringify({
+                        nome: nomeFinal
+                    })
+                }
+            );
 
-            <td>
 
-                <button onclick="editarCliente('${cliente.id}')">
-                    Editar
-                </button>
+        const json =
+            await resposta.json();
 
-                <button onclick="removerCliente('${cliente.id}')">
-                    Remover
-                </button>
 
-            </td>
+        if (!resposta.ok) {
 
-        </tr>
-        `;
+            throw new Error(
+                json.error ||
+                "Não foi possível atualizar."
+            );
 
-    });
+        }
+
+
+        alert(
+            "Cliente atualizado com sucesso!"
+        );
+
+
+        carregarCRM();
+
+
+    } catch (erro) {
+
+        console.error(
+            "Erro ao editar cliente:",
+            erro
+        );
+
+        alert(
+            "Erro ao editar o cliente."
+        );
+
+    }
 
 }
 
-// ==============================
-// RESUMO
-// ==============================
 
-function atualizarResumo(lista) {
+// ==========================================
+// REMOVER CLIENTE
+// ==========================================
 
-    let compras = 0;
-    let gb = 0;
-    let valor = 0;
+async function removerClienteCRM(id) {
 
-    lista.forEach(c => {
+    const confirmar =
+        confirm(
+            "Tem certeza que deseja remover este cliente?"
+        );
 
-        compras += Number(c.totalCompras || 0);
+    if (!confirmar) {
+        return;
+    }
 
-        gb += Number(c.totalGB || 0);
 
-        valor += Number(c.totalGasto || 0);
+    try {
 
-    });
+        const resposta =
+            await fetch(
+                API +
+                "/clientes/" +
+                encodeURIComponent(id),
+                {
+                    method: "DELETE"
+                }
+            );
 
-    if (document.getElementById("crmClientes"))
-        document.getElementById("crmClientes").textContent = lista.length;
 
-    if (document.getElementById("crmCompras"))
-        document.getElementById("crmCompras").textContent = compras;
+        const json =
+            await resposta.json();
 
-    if (document.getElementById("crmGB"))
-        document.getElementById("crmGB").textContent = gb + " GB";
 
-    if (document.getElementById("crmValor"))
-        document.getElementById("crmValor").textContent = valor + " MT";
+        if (!resposta.ok) {
+
+            throw new Error(
+                json.error ||
+                "Não foi possível remover."
+            );
+
+        }
+
+
+        alert(
+            "Cliente removido com sucesso!"
+        );
+
+
+        carregarCRM();
+
+
+    } catch (erro) {
+
+        console.error(
+            "Erro ao remover cliente:",
+            erro
+        );
+
+        alert(
+            "Erro ao remover o cliente."
+        );
+
+    }
 
 }
 
-// ==============================
-// PESQUISA
-// ==============================
 
-function pesquisarCliente() {
+// ==========================================
+// PESQUISA DO CRM
+// ==========================================
 
-    const texto = document
-        .getElementById("pesquisaCliente")
-        .value
-        .toLowerCase();
+function pesquisarCRM() {
 
-    atualizarTabela(
+    const input =
+        document.getElementById(
+            "pesquisaCliente"
+        );
 
-        clientes.filter(c =>
+    const tabela =
+        document.getElementById(
+            "tabelaClientes"
+        );
 
-            (c.nome || "").toLowerCase().includes(texto) ||
+    if (!input || !tabela) {
+        return;
+    }
 
-            (c.numero || "").toLowerCase().includes(texto) ||
 
-            (c.grupo || "").toLowerCase().includes(texto)
+    const termo =
+        input.value
+            .toLowerCase()
+            .trim();
 
-        )
 
+    tabela
+        .querySelectorAll("tr")
+        .forEach(linha => {
+
+            const texto =
+                linha.textContent
+                    .toLowerCase();
+
+            linha.style.display =
+                texto.includes(termo)
+                    ? ""
+                    : "none";
+
+        });
+
+}
+
+
+// ==========================================
+// DISPONIBILIZAR GLOBALMENTE
+// ==========================================
+
+window.carregarCRM =
+    carregarCRM;
+
+window.editarClienteCRM =
+    editarClienteCRM;
+
+window.removerClienteCRM =
+    removerClienteCRM;
+
+window.pesquisarCRM =
+    pesquisarCRM;
+
+
+// ==========================================
+// PESQUISA AUTOMÁTICA
+// ==========================================
+
+const campoPesquisa =
+    document.getElementById(
+        "pesquisaCliente"
+    );
+
+if (campoPesquisa) {
+
+    campoPesquisa.addEventListener(
+        "input",
+        pesquisarCRM
     );
 
 }
 
-// ==============================
-// EDITAR
-// ==============================
 
-async function editarCliente(id) {
+// ==========================================
+// INICIALIZAÇÃO
+// ==========================================
 
-    const nome = prompt("Novo nome:");
+carregarCRM();
 
-    if (!nome) return;
 
-    await fetch(API + "/clientes/" + id, {
+// Atualizar CRM a cada 10 segundos
 
-        method: "PUT",
-
-        headers: {
-
-            "Content-Type": "application/json"
-
-        },
-
-        body: JSON.stringify({
-
-            nome
-
-        })
-
-    });
-
-    carregarClientes();
-
-}
-
-// ==============================
-// REMOVER
-// ==============================
-
-async function removerCliente(id) {
-
-    if (!confirm("Deseja remover este cliente?")) return;
-
-    await fetch(API + "/clientes/" + id, {
-
-        method: "DELETE"
-
-    });
-
-    carregarClientes();
-
-}
-
-// ==============================
-// NOVO CLIENTE
-// ==============================
-
-async function adicionarCliente() {
-
-    const nome = document.getElementById("novoNome").value;
-
-    const numero = document.getElementById("novoNumero").value;
-
-    const grupo = document.getElementById("novoGrupo").value;
-
-    if (!nome || !numero) return;
-
-    await fetch(API + "/clientes", {
-
-        method: "POST",
-
-        headers: {
-
-            "Content-Type": "application/json"
-
-        },
-
-        body: JSON.stringify({
-
-            nome,
-
-            numero,
-
-            grupo,
-
-            totalCompras: 0,
-
-            totalGB: 0,
-
-            totalGasto: 0
-
-        })
-
-    });
-
-    document.getElementById("novoNome").value = "";
-
-    document.getElementById("novoNumero").value = "";
-
-    carregarClientes();
-
-}
-
-// ==============================
-
-carregarClientes();
-
-setInterval(carregarClientes,5000);
+setInterval(
+    carregarCRM,
+    10000
+);
