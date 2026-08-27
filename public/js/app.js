@@ -1,45 +1,58 @@
-// ==========================================
-// SISTEMA DE PAINÉIS
-// ==========================================
+// =====================================================
+// MOZ TECH
+// SISTEMA DE PAINÉIS + MENU MOBILE
+// =====================================================
+
+
+// =====================================================
+// PAINÉIS
+// =====================================================
 
 window.showPanel = function (panelId) {
 
     console.log("Abrindo painel:", panelId);
 
+
     const paineis = {
 
         dashboard: "panelDashboard",
+
         crm: "panelCRM",
+
         pacotes: "panelPacotes",
+
         pedidos: "panelPedidos",
+
         dispositivos: "panelDispositivos",
+
         tutorial: "panelTutorial",
+
         config: "panelConfig"
 
     };
 
 
-    // ==========================================
-    // ESCONDER TODOS OS PAINÉIS
-    // ==========================================
+    // =================================================
+    // ESCONDER TODOS
+    // =================================================
 
     Object.values(paineis).forEach(function (id) {
 
-        const elemento =
+        const painel =
             document.getElementById(id);
 
-        if (elemento) {
+        if (painel) {
 
-            elemento.style.display = "none";
+            painel.style.display = "none";
 
         }
 
     });
 
 
-    // ==========================================
-    // ENCONTRAR PAINEL
-    // ==========================================
+    // =================================================
+    // VERIFICAR PAINEL
+    // =================================================
 
     const painelId =
         paineis[panelId];
@@ -48,7 +61,7 @@ window.showPanel = function (panelId) {
     if (!painelId) {
 
         console.error(
-            "Painel não encontrado:",
+            "Painel não configurado:",
             panelId
         );
 
@@ -75,16 +88,16 @@ window.showPanel = function (panelId) {
     }
 
 
-    // ==========================================
+    // =================================================
     // MOSTRAR
-    // ==========================================
+    // =================================================
 
     painel.style.display = "block";
 
 
-    // ==========================================
+    // =================================================
     // MENU ATIVO
-    // ==========================================
+    // =================================================
 
     document
         .querySelectorAll(
@@ -92,7 +105,9 @@ window.showPanel = function (panelId) {
         )
         .forEach(function (item) {
 
-            item.classList.remove("active");
+            item.classList.remove(
+                "active"
+            );
 
         });
 
@@ -107,79 +122,150 @@ window.showPanel = function (panelId) {
 
     if (botao) {
 
-        botao.classList.add("active");
+        botao.classList.add(
+            "active"
+        );
 
     }
 
 
-    // ==========================================
+    // =================================================
     // CARREGAR DADOS
-    // ==========================================
+    // =================================================
 
     try {
 
+
         if (
-            panelId === "dashboard" &&
-            typeof window.carregarDashboard ===
-            "function"
+            panelId === "dashboard"
         ) {
 
-            window.carregarDashboard();
+            if (
+                typeof window.carregarDashboard ===
+                "function"
+            ) {
+
+                window.carregarDashboard();
+
+            }
+
+            if (
+                typeof window.carregarTabela ===
+                "function"
+            ) {
+
+                window.carregarTabela();
+
+            }
+
+            if (
+                typeof window.carregarGraficos ===
+                "function"
+            ) {
+
+                window.carregarGraficos();
+
+            }
 
         }
 
 
         if (
-            panelId === "crm" &&
-            typeof window.carregarClientes ===
-            "function"
+            panelId === "crm"
         ) {
 
-            window.carregarClientes();
+            if (
+                typeof window.carregarClientes ===
+                "function"
+            ) {
+
+                window.carregarClientes();
+
+            }
 
         }
 
 
         if (
-            panelId === "pacotes" &&
-            typeof window.carregarPacotes ===
-            "function"
+            panelId === "pacotes"
         ) {
 
-            window.carregarPacotes();
+            if (
+                typeof window.carregarPacotes ===
+                "function"
+            ) {
+
+                window.carregarPacotes();
+
+            }
 
         }
 
 
         if (
-            panelId === "pedidos" &&
-            typeof window.carregarPedidos ===
-            "function"
+            panelId === "pedidos"
         ) {
 
-            window.carregarPedidos();
+            if (
+                typeof window.carregarPedidos ===
+                "function"
+            ) {
+
+                window.carregarPedidos();
+
+            }
 
         }
 
 
         if (
-            panelId === "dispositivos" &&
-            typeof window.carregarDispositivos ===
-            "function"
+            panelId === "dispositivos"
         ) {
 
-            window.carregarDispositivos();
+            if (
+                typeof window.carregarDispositivos ===
+                "function"
+            ) {
+
+                window.carregarDispositivos();
+
+            }
 
         }
 
 
         if (
-            panelId === "config" &&
-            typeof window.carregarConfiguracoes ===
-            "function"
+            panelId === "config"
         ) {
 
-            window.carregarConfiguracoes();
+            if (
+                typeof window.carregarConfiguracoes ===
+                "function"
+            ) {
+
+                window.carregarConfiguracoes();
+
+            }
+
+        }
+
+
+        // =================================================
+        // TUTORIAL / API
+        // =================================================
+
+        if (
+            panelId === "tutorial"
+        ) {
+
+            if (
+                typeof window.carregarCredenciaisAPI ===
+                "function"
+            ) {
+
+                window.carregarCredenciaisAPI();
+
+            }
 
         }
 
@@ -188,56 +274,112 @@ window.showPanel = function (panelId) {
 
         console.error(
             "Erro ao carregar painel:",
+            panelId,
             erro
         );
 
     }
 
 
-    // ==========================================
-    // FECHAR MENU MOBILE
-    // ==========================================
+    // =================================================
+    // FECHAR MENU NO CELULAR
+    // =================================================
 
-    if (window.innerWidth <= 768) {
+    if (
+        window.innerWidth <= 768
+    ) {
 
-        const sidebar =
-            document.getElementById(
-                "sidebar"
-            );
-
-        const overlay =
-            document.getElementById(
-                "menuOverlay"
-            );
-
-
-        if (sidebar) {
-
-            sidebar.classList.remove(
-                "open"
-            );
-
-        }
-
-
-        if (overlay) {
-
-            overlay.classList.remove(
-                "active"
-            );
-
-        }
+        fecharMenuMobile();
 
     }
 
 };
 
 
-// ==========================================
-// CLIQUES DO MENU
-// ==========================================
+// =====================================================
+// ABRIR MENU MOBILE
+// =====================================================
+
+function abrirMenuMobile() {
+
+    const sidebar =
+        document.getElementById(
+            "sidebar"
+        );
+
+    const overlay =
+        document.getElementById(
+            "menuOverlay"
+        );
+
+
+    if (sidebar) {
+
+        sidebar.classList.add(
+            "open"
+        );
+
+    }
+
+
+    if (overlay) {
+
+        overlay.classList.add(
+            "active"
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// FECHAR MENU MOBILE
+// =====================================================
+
+function fecharMenuMobile() {
+
+    const sidebar =
+        document.getElementById(
+            "sidebar"
+        );
+
+    const overlay =
+        document.getElementById(
+            "menuOverlay"
+        );
+
+
+    if (sidebar) {
+
+        sidebar.classList.remove(
+            "open"
+        );
+
+    }
+
+
+    if (overlay) {
+
+        overlay.classList.remove(
+            "active"
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// INICIALIZAR MENU
+// =====================================================
 
 function inicializarMenu() {
+
+
+    // =================================================
+    // BOTÕES DOS PAINÉIS
+    // =================================================
 
     const botoes =
         document.querySelectorAll(
@@ -278,18 +420,99 @@ function inicializarMenu() {
 
     });
 
+
+    // =================================================
+    // BOTÃO 3 BARRAS
+    // =================================================
+
+    const menuToggle =
+        document.getElementById(
+            "menuToggle"
+        );
+
+
+    if (menuToggle) {
+
+        menuToggle.addEventListener(
+            "click",
+            function (e) {
+
+                e.preventDefault();
+
+                e.stopPropagation();
+
+
+                const sidebar =
+                    document.getElementById(
+                        "sidebar"
+                    );
+
+
+                if (
+                    sidebar &&
+                    sidebar.classList.contains(
+                        "open"
+                    )
+                ) {
+
+                    fecharMenuMobile();
+
+                }
+                else {
+
+                    abrirMenuMobile();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    // =================================================
+    // OVERLAY
+    // =================================================
+
+    const overlay =
+        document.getElementById(
+            "menuOverlay"
+        );
+
+
+    if (overlay) {
+
+        overlay.addEventListener(
+            "click",
+            function () {
+
+                fecharMenuMobile();
+
+            }
+        );
+
+    }
+
 }
 
 
-// ==========================================
-// INICIAR
-// ==========================================
+// =====================================================
+// INICIALIZAÇÃO
+// =====================================================
 
 document.addEventListener(
     "DOMContentLoaded",
     function () {
 
+        console.log(
+            "MOZ TECH: inicializando..."
+        );
+
+
         inicializarMenu();
+
+
+        // Dashboard inicial
 
         window.showPanel(
             "dashboard"
