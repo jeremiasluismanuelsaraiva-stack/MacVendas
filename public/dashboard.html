@@ -223,6 +223,7 @@
             cursor: pointer;
             font-size: 20px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            pointer-events: auto;
         }
 
         .menu-overlay {
@@ -235,6 +236,11 @@
             background: rgba(0,0,0,0.85);
             backdrop-filter: blur(6px);
             z-index: 999;
+            cursor: pointer;
+        }
+
+        .menu-overlay.active {
+            display: block;
         }
 
         .main-content {
@@ -2755,7 +2761,9 @@
             }
         });
 
-       
+        document.querySelectorAll('[data-panel]').forEach(item => item.addEventListener('click', () => window.showPanel(
+            item.getAttribute('data-panel'))));
+
         document.querySelectorAll('[data-top]').forEach(btn => btn.addEventListener('click', () => {
             document.querySelectorAll('[data-top]').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -2795,166 +2803,8 @@
             if (window.innerWidth > 768) closeSidebar();
         });
 
-        <script>
-
-// ==========================================
-// NAVEGAÇÃO DOS PAINÉIS
-// ==========================================
-
-window.showPanel = function(panelId) {
-
-    console.log("Abrindo painel:", panelId);
-
-    const paineis = {
-        dashboard: "panelDashboard",
-        crm: "panelCRM",
-        pacotes: "panelPacotes",
-        tutorial: "panelTutorial",
-        config: "panelConfig"
-    };
-
-    // Esconder todos os painéis
-    Object.values(paineis).forEach(id => {
-
-        const painel = document.getElementById(id);
-
-        if (painel) {
-            painel.style.display = "none";
-        }
-
-    });
-
-    // Verificar painel solicitado
-    const painelId = paineis[panelId];
-
-    if (!painelId) {
-        console.error("Painel não encontrado:", panelId);
-        return;
-    }
-
-    const painel = document.getElementById(painelId);
-
-    if (!painel) {
-        console.error("Elemento não encontrado:", painelId);
-        return;
-    }
-
-    // Mostrar painel
-    painel.style.display = "block";
-
-    // Marcar menu ativo
-    document
-        .querySelectorAll(".menu-item[data-panel]")
-        .forEach(item => {
-            item.classList.remove("active");
-        });
-
-    const botao = document.querySelector(
-        `.menu-item[data-panel="${panelId}"]`
-    );
-
-    if (botao) {
-        botao.classList.add("active");
-    }
-
-    // Carregar conteúdo
-    try {
-
-        if (panelId === "config") {
-
-            if (typeof carregarConfiguracoes === "function") {
-                carregarConfiguracoes();
-            }
-
-        }
-
-        if (panelId === "crm") {
-
-            if (typeof renderizarClientes === "function") {
-                renderizarClientes();
-            }
-
-        }
-
-        if (panelId === "pacotes") {
-
-            if (typeof renderizarPacotes === "function") {
-                renderizarPacotes();
-            }
-
-            if (typeof atualizarVendasPorPacote === "function") {
-                atualizarVendasPorPacote();
-            }
-
-        }
-
-    } catch (erro) {
-
-        console.error(
-            "Erro ao carregar painel:",
-            panelId,
-            erro
-        );
-
-    }
-
-    // Fechar menu no celular
-    if (window.innerWidth <= 768) {
-
-        document
-            .getElementById("sidebar")
-            ?.classList.remove("open");
-
-        document
-            .getElementById("menuOverlay")
-            ?.classList.remove("active");
-
-    }
-
-};
-
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-
-    document
-        .querySelectorAll(".menu-item[data-panel]")
-        .forEach(item => {
-
-            item.addEventListener("click", function(e) {
-
-                e.preventDefault();
-                e.stopPropagation();
-
-                const panel =
-                    this.getAttribute("data-panel");
-
-                if (!panel) return;
-
-                window.showPanel(panel);
-
-            });
-
-        });
-
-});
-</script>
-
-<script src="/js/app.js"></script>
-
-<script type="module" src="/js/dashboard.js"></script>
-
-<script src="/js/charts.js"></script>
-
-<script src="/js/crm.js"></script>
-
-<script src="/js/pacotes.js"></script>
-
-<script src="/js/pedidos.js"></script>
-
-<script src="/js/dispositivos.js"></script>
-
-<script src="/js/config.js"></script>
-
+        // Inicializar mostrando o dashboard
+        window.showPanel('dashboard');
+    </script>
 </body>
 </html>
