@@ -1,11 +1,11 @@
 // =====================================================
-// MOZ TECH
-// SISTEMA DE PAINÉIS + MENU MOBILE
+// MOZ TECH - APP.JS
+// PAINÉIS + MENU MOBILE + ATUALIZAÇÃO
 // =====================================================
 
 
 // =====================================================
-// PAINÉIS
+// SISTEMA DE PAINÉIS
 // =====================================================
 
 window.showPanel = function (panelId) {
@@ -33,17 +33,17 @@ window.showPanel = function (panelId) {
 
 
     // =================================================
-    // ESCONDER TODOS
+    // ESCONDER TODOS OS PAINÉIS
     // =================================================
 
     Object.values(paineis).forEach(function (id) {
 
-        const painel =
+        const elemento =
             document.getElementById(id);
 
-        if (painel) {
+        if (elemento) {
 
-            painel.style.display = "none";
+            elemento.style.display = "none";
 
         }
 
@@ -61,7 +61,7 @@ window.showPanel = function (panelId) {
     if (!painelId) {
 
         console.error(
-            "Painel não configurado:",
+            "Painel não encontrado:",
             panelId
         );
 
@@ -79,7 +79,7 @@ window.showPanel = function (panelId) {
     if (!painel) {
 
         console.error(
-            "Elemento não encontrado:",
+            "Elemento do painel não encontrado:",
             painelId
         );
 
@@ -89,7 +89,7 @@ window.showPanel = function (panelId) {
 
 
     // =================================================
-    // MOSTRAR
+    // MOSTRAR PAINEL
     // =================================================
 
     painel.style.display = "block";
@@ -130,15 +130,17 @@ window.showPanel = function (panelId) {
 
 
     // =================================================
-    // CARREGAR DADOS
+    // CARREGAR DADOS DO PAINEL
     // =================================================
 
     try {
 
 
-        if (
-            panelId === "dashboard"
-        ) {
+        // -----------------------------
+        // DASHBOARD
+        // -----------------------------
+
+        if (panelId === "dashboard") {
 
             if (
                 typeof window.carregarDashboard ===
@@ -149,6 +151,7 @@ window.showPanel = function (panelId) {
 
             }
 
+
             if (
                 typeof window.carregarTabela ===
                 "function"
@@ -157,6 +160,7 @@ window.showPanel = function (panelId) {
                 window.carregarTabela();
 
             }
+
 
             if (
                 typeof window.carregarGraficos ===
@@ -170,9 +174,11 @@ window.showPanel = function (panelId) {
         }
 
 
-        if (
-            panelId === "crm"
-        ) {
+        // -----------------------------
+        // CRM
+        // -----------------------------
+
+        if (panelId === "crm") {
 
             if (
                 typeof window.carregarClientes ===
@@ -186,9 +192,11 @@ window.showPanel = function (panelId) {
         }
 
 
-        if (
-            panelId === "pacotes"
-        ) {
+        // -----------------------------
+        // PACOTES
+        // -----------------------------
+
+        if (panelId === "pacotes") {
 
             if (
                 typeof window.carregarPacotes ===
@@ -202,9 +210,11 @@ window.showPanel = function (panelId) {
         }
 
 
-        if (
-            panelId === "pedidos"
-        ) {
+        // -----------------------------
+        // PEDIDOS
+        // -----------------------------
+
+        if (panelId === "pedidos") {
 
             if (
                 typeof window.carregarPedidos ===
@@ -218,9 +228,11 @@ window.showPanel = function (panelId) {
         }
 
 
-        if (
-            panelId === "dispositivos"
-        ) {
+        // -----------------------------
+        // DISPOSITIVOS
+        // -----------------------------
+
+        if (panelId === "dispositivos") {
 
             if (
                 typeof window.carregarDispositivos ===
@@ -234,9 +246,11 @@ window.showPanel = function (panelId) {
         }
 
 
-        if (
-            panelId === "config"
-        ) {
+        // -----------------------------
+        // CONFIGURAÇÕES
+        // -----------------------------
+
+        if (panelId === "config") {
 
             if (
                 typeof window.carregarConfiguracoes ===
@@ -244,26 +258,6 @@ window.showPanel = function (panelId) {
             ) {
 
                 window.carregarConfiguracoes();
-
-            }
-
-        }
-
-
-        // =================================================
-        // TUTORIAL / API
-        // =================================================
-
-        if (
-            panelId === "tutorial"
-        ) {
-
-            if (
-                typeof window.carregarCredenciaisAPI ===
-                "function"
-            ) {
-
-                window.carregarCredenciaisAPI();
 
             }
 
@@ -282,22 +276,16 @@ window.showPanel = function (panelId) {
 
 
     // =================================================
-    // FECHAR MENU NO CELULAR
+    // FECHAR MENU NO TELEMÓVEL
     // =================================================
 
-    if (
-        window.innerWidth <= 768
-    ) {
-
-        fecharMenuMobile();
-
-    }
+    fecharMenuMobile();
 
 };
 
 
 // =====================================================
-// ABRIR MENU MOBILE
+// MENU MOBILE
 // =====================================================
 
 function abrirMenuMobile() {
@@ -329,6 +317,11 @@ function abrirMenuMobile() {
         );
 
     }
+
+
+    console.log(
+        "Menu mobile aberto"
+    );
 
 }
 
@@ -371,15 +364,51 @@ function fecharMenuMobile() {
 
 
 // =====================================================
-// INICIALIZAR MENU
+// ALTERNAR MENU MOBILE
+// =====================================================
+
+function alternarMenuMobile() {
+
+    const sidebar =
+        document.getElementById(
+            "sidebar"
+        );
+
+
+    if (!sidebar) {
+
+        console.error(
+            "Sidebar não encontrada."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        sidebar.classList.contains(
+            "open"
+        )
+    ) {
+
+        fecharMenuMobile();
+
+    }
+    else {
+
+        abrirMenuMobile();
+
+    }
+
+}
+
+
+// =====================================================
+// CLIQUES DOS MENUS
 // =====================================================
 
 function inicializarMenu() {
-
-
-    // =================================================
-    // BOTÕES DOS PAINÉIS
-    // =================================================
 
     const botoes =
         document.querySelectorAll(
@@ -421,58 +450,53 @@ function inicializarMenu() {
     });
 
 
-    // =================================================
-    // BOTÃO 3 BARRAS
-    // =================================================
+}
 
-    const menuToggle =
+
+// =====================================================
+// BOTÃO DAS 3 BARRAS
+// =====================================================
+
+function inicializarBotaoMenu() {
+
+    const botao =
         document.getElementById(
             "menuToggle"
         );
 
 
-    if (menuToggle) {
+    if (!botao) {
 
-        menuToggle.addEventListener(
-            "click",
-            function (e) {
-
-                e.preventDefault();
-
-                e.stopPropagation();
-
-
-                const sidebar =
-                    document.getElementById(
-                        "sidebar"
-                    );
-
-
-                if (
-                    sidebar &&
-                    sidebar.classList.contains(
-                        "open"
-                    )
-                ) {
-
-                    fecharMenuMobile();
-
-                }
-                else {
-
-                    abrirMenuMobile();
-
-                }
-
-            }
+        console.warn(
+            "Botão menuToggle não encontrado."
         );
+
+        return;
 
     }
 
 
-    // =================================================
-    // OVERLAY
-    // =================================================
+    botao.addEventListener(
+        "click",
+        function (e) {
+
+            e.preventDefault();
+
+            e.stopPropagation();
+
+            alternarMenuMobile();
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// OVERLAY
+// =====================================================
+
+function inicializarOverlay() {
 
     const overlay =
         document.getElementById(
@@ -480,18 +504,188 @@ function inicializarMenu() {
         );
 
 
-    if (overlay) {
+    if (!overlay) {
 
-        overlay.addEventListener(
-            "click",
-            function () {
+        return;
+
+    }
+
+
+    overlay.addEventListener(
+        "click",
+        function () {
+
+            fecharMenuMobile();
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// TECLA ESC
+// =====================================================
+
+function inicializarTeclaESC() {
+
+    document.addEventListener(
+        "keydown",
+        function (e) {
+
+            if (
+                e.key === "Escape"
+            ) {
 
                 fecharMenuMobile();
 
             }
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// BOTÃO ATUALIZAR
+// =====================================================
+
+function inicializarBotaoAtualizar() {
+
+    const botoes = [
+
+        document.getElementById(
+            "btnAtualizar"
+        ),
+
+        document.getElementById(
+            "atualizarBtn"
+        ),
+
+        document.getElementById(
+            "refreshBtn"
+        ),
+
+        document.getElementById(
+            "btnRefresh"
+        )
+
+    ];
+
+
+    const botao =
+        botoes.find(
+            function (item) {
+
+                return item !== null;
+
+            }
         );
 
+
+    if (!botao) {
+
+        console.warn(
+            "Botão de atualizar não encontrado."
+        );
+
+        return;
+
     }
+
+
+    botao.addEventListener(
+        "click",
+        async function (e) {
+
+            e.preventDefault();
+
+            e.stopPropagation();
+
+
+            console.log(
+                "Atualizando dashboard..."
+            );
+
+
+            // Efeito visual
+
+            const textoOriginal =
+                botao.innerHTML;
+
+
+            botao.disabled = true;
+
+
+            botao.innerHTML =
+                '<i class="fas fa-spinner fa-spin"></i> Atualizando...';
+
+
+            try {
+
+
+                // Dashboard
+
+                if (
+                    typeof window.carregarDashboard ===
+                    "function"
+                ) {
+
+                    await window.carregarDashboard();
+
+                }
+
+
+                // Tabela
+
+                if (
+                    typeof window.carregarTabela ===
+                    "function"
+                ) {
+
+                    await window.carregarTabela();
+
+                }
+
+
+                // Gráficos
+
+                if (
+                    typeof window.carregarGraficos ===
+                    "function"
+                ) {
+
+                    await window.carregarGraficos();
+
+                }
+
+
+                console.log(
+                    "Dashboard atualizado."
+                );
+
+
+            }
+            catch (erro) {
+
+                console.error(
+                    "Erro ao atualizar:",
+                    erro
+                );
+
+            }
+            finally {
+
+                botao.disabled = false;
+
+                botao.innerHTML =
+                    textoOriginal;
+
+            }
+
+        }
+    );
 
 }
 
@@ -505,11 +699,23 @@ document.addEventListener(
     function () {
 
         console.log(
-            "MOZ TECH: inicializando..."
+            "MOZ TECH - App iniciado"
         );
 
 
         inicializarMenu();
+
+
+        inicializarBotaoMenu();
+
+
+        inicializarOverlay();
+
+
+        inicializarTeclaESC();
+
+
+        inicializarBotaoAtualizar();
 
 
         // Dashboard inicial
@@ -520,3 +726,17 @@ document.addEventListener(
 
     }
 );
+
+
+// =====================================================
+// EXPOR FUNÇÕES
+// =====================================================
+
+window.abrirMenuMobile =
+    abrirMenuMobile;
+
+window.fecharMenuMobile =
+    fecharMenuMobile;
+
+window.alternarMenuMobile =
+    alternarMenuMobile;
