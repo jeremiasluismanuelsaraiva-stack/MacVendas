@@ -18,15 +18,18 @@ function numero(valor) {
 
 
 // ==========================================
-// FORMATAR MT
+// FORMATAR DINHEIRO
 // ==========================================
 
 function dinheiro(valor) {
 
     return Number(valor || 0)
         .toLocaleString("pt-PT", {
+
             minimumFractionDigits: 2,
+
             maximumFractionDigits: 2
+
         }) + " MT";
 
 }
@@ -40,7 +43,9 @@ async function carregarDashboard() {
 
     try {
 
-        console.log("A carregar Dashboard...");
+        console.log(
+            "Carregando estatísticas do Dashboard..."
+        );
 
 
         const resposta =
@@ -68,7 +73,7 @@ async function carregarDashboard() {
 
 
         console.log(
-            "Dados do relatório:",
+            "Resposta /relatorios:",
             dados
         );
 
@@ -76,7 +81,7 @@ async function carregarDashboard() {
         if (!dados.success) {
 
             console.error(
-                "Erro nos relatórios:",
+                "API retornou erro:",
                 dados
             );
 
@@ -93,15 +98,15 @@ async function carregarDashboard() {
         // TOTAL DE VENDAS
         // ==========================================
 
-        const vendas =
+        const elementoVendas =
             document.getElementById(
                 "vendas"
             );
 
 
-        if (vendas) {
+        if (elementoVendas) {
 
-            vendas.textContent =
+            elementoVendas.textContent =
                 numero(
                     resumo.totalVendas
                 );
@@ -113,15 +118,15 @@ async function carregarDashboard() {
         // FATURAMENTO
         // ==========================================
 
-        const valor =
+        const elementoValor =
             document.getElementById(
                 "valor"
             );
 
 
-        if (valor) {
+        if (elementoValor) {
 
-            valor.textContent =
+            elementoValor.textContent =
                 dinheiro(
                     resumo.faturamento
                 );
@@ -133,15 +138,15 @@ async function carregarDashboard() {
         // CLIENTES
         // ==========================================
 
-        const clientes =
+        const elementoClientes =
             document.getElementById(
                 "clientes"
             );
 
 
-        if (clientes) {
+        if (elementoClientes) {
 
-            clientes.textContent =
+            elementoClientes.textContent =
                 numero(
                     resumo.totalClientes
                 );
@@ -153,15 +158,15 @@ async function carregarDashboard() {
         // DISPOSITIVOS
         // ==========================================
 
-        const dispositivos =
+        const elementoDispositivos =
             document.getElementById(
                 "disp"
             );
 
 
-        if (dispositivos) {
+        if (elementoDispositivos) {
 
-            dispositivos.textContent =
+            elementoDispositivos.textContent =
                 numero(
                     resumo.totalDispositivos
                 );
@@ -173,15 +178,15 @@ async function carregarDashboard() {
         // TOTAL GB
         // ==========================================
 
-        const totalGB =
+        const elementoGB =
             document.getElementById(
                 "totalGB"
             );
 
 
-        if (totalGB) {
+        if (elementoGB) {
 
-            totalGB.textContent =
+            elementoGB.textContent =
                 numero(
                     resumo.totalGB
                 );
@@ -193,15 +198,15 @@ async function carregarDashboard() {
         // LUCRO
         // ==========================================
 
-        const lucro =
+        const elementoLucro =
             document.getElementById(
                 "lucro"
             );
 
 
-        if (lucro) {
+        if (elementoLucro) {
 
-            lucro.textContent =
+            elementoLucro.textContent =
                 dinheiro(
                     resumo.lucro
                 );
@@ -213,15 +218,15 @@ async function carregarDashboard() {
         // CUSTO
         // ==========================================
 
-        const custo =
+        const elementoCusto =
             document.getElementById(
                 "custo"
             );
 
 
-        if (custo) {
+        if (elementoCusto) {
 
-            custo.textContent =
+            elementoCusto.textContent =
                 dinheiro(
                     resumo.custo
                 );
@@ -233,15 +238,15 @@ async function carregarDashboard() {
         // PEDIDOS
         // ==========================================
 
-        const pedidos =
+        const elementoPedidos =
             document.getElementById(
                 "pedidos"
             );
 
 
-        if (pedidos) {
+        if (elementoPedidos) {
 
-            pedidos.textContent =
+            elementoPedidos.textContent =
                 numero(
                     resumo.totalPedidos
                 );
@@ -250,8 +255,32 @@ async function carregarDashboard() {
 
 
         // ==========================================
-        // DATA
+        // ATUALIZAR GRÁFICOS
         // ==========================================
+
+        if (
+            typeof window.atualizarGraficos ===
+            "function"
+        ) {
+
+            try {
+
+                window.atualizarGraficos(
+                    dados
+                );
+
+            }
+            catch (erroGrafico) {
+
+                console.error(
+                    "Erro ao atualizar gráficos:",
+                    erroGrafico
+                );
+
+            }
+
+        }
+
 
         atualizarData();
 
@@ -260,7 +289,7 @@ async function carregarDashboard() {
     catch (erro) {
 
         console.error(
-            "Erro ao carregar dashboard:",
+            "ERRO AO CARREGAR DASHBOARD:",
             erro
         );
 
@@ -278,7 +307,7 @@ async function carregarTabela() {
     try {
 
         console.log(
-            "A carregar tabela de vendas..."
+            "Carregando vendas..."
         );
 
 
@@ -302,20 +331,43 @@ async function carregarTabela() {
         }
 
 
-        const json =
+        const respostaJSON =
             await resposta.json();
 
 
-        const vendas =
-            Array.isArray(json)
-                ? json
-                : (
-                    Array.isArray(
-                        json.vendas
-                    )
-                        ? json.vendas
-                        : []
-                );
+        let vendas = [];
+
+
+        // ==========================================
+        // API PODE RETORNAR ARRAY DIRETO
+        // ==========================================
+
+        if (
+            Array.isArray(
+                respostaJSON
+            )
+        ) {
+
+            vendas =
+                respostaJSON;
+
+        }
+
+
+        // ==========================================
+        // OU { vendas: [] }
+        // ==========================================
+
+        else if (
+            Array.isArray(
+                respostaJSON.vendas
+            )
+        ) {
+
+            vendas =
+                respostaJSON.vendas;
+
+        }
 
 
         const lista =
@@ -326,6 +378,10 @@ async function carregarTabela() {
 
         if (!lista) {
 
+            console.warn(
+                "Elemento #lista não encontrado."
+            );
+
             return;
 
         }
@@ -333,6 +389,10 @@ async function carregarTabela() {
 
         lista.innerHTML = "";
 
+
+        // ==========================================
+        // SEM VENDAS
+        // ==========================================
 
         if (
             vendas.length === 0
@@ -363,6 +423,10 @@ async function carregarTabela() {
         }
 
 
+        // ==========================================
+        // MOSTRAR VENDAS
+        // ==========================================
+
         vendas.forEach(
             venda => {
 
@@ -372,15 +436,42 @@ async function carregarTabela() {
                     );
 
 
-                const quantidade =
-                    venda.mb ||
-                    (
-                        Number(
-                            venda.gb || 0
-                        ) * 1024
-                    ) ||
-                    0;
+                // ==========================================
+                // NÚMERO
+                // ==========================================
 
+                const numeroCliente =
+                    venda.numero ||
+                    "-";
+
+
+                // ==========================================
+                // MB
+                // ==========================================
+
+                let mb =
+                    Number(
+                        venda.mb || 0
+                    );
+
+
+                // Se não tiver MB mas tiver GB
+                if (
+                    mb === 0 &&
+                    venda.gb
+                ) {
+
+                    mb =
+                        Number(
+                            venda.gb
+                        ) * 1024;
+
+                }
+
+
+                // ==========================================
+                // VALOR
+                // ==========================================
 
                 const valor =
                     venda.valor_venda ??
@@ -389,14 +480,23 @@ async function carregarTabela() {
                     0;
 
 
+                // ==========================================
+                // STATUS
+                // ==========================================
+
+                const status =
+                    venda.status ||
+                    "Concluído";
+
+
                 tr.innerHTML = `
 
                     <td>
-                        ${venda.numero || "-"}
+                        ${numeroCliente}
                     </td>
 
                     <td>
-                        ${numero(quantidade)} MB
+                        ${numero(mb)} MB
                     </td>
 
                     <td>
@@ -407,10 +507,7 @@ async function carregarTabela() {
 
                         <span class="status ok">
 
-                            ${
-                                venda.status ||
-                                "Concluído"
-                            }
+                            ${status}
 
                         </span>
 
@@ -431,7 +528,7 @@ async function carregarTabela() {
     catch (erro) {
 
         console.error(
-            "Erro ao carregar vendas:",
+            "ERRO AO CARREGAR VENDAS:",
             erro
         );
 
@@ -441,7 +538,7 @@ async function carregarTabela() {
 
 
 // ==========================================
-// DATA ATUAL
+// ATUALIZAR DATA
 // ==========================================
 
 function atualizarData() {
@@ -469,33 +566,109 @@ function atualizarData() {
 
 
 // ==========================================
-// ATUALIZAR DASHBOARD COMPLETO
+// ATUALIZAR TUDO
 // ==========================================
 
 async function atualizarDashboard() {
 
     console.log(
-        "Atualizando Dashboard..."
+        "================================="
+    );
+
+    console.log(
+        "ATUALIZANDO DASHBOARD"
+    );
+
+    console.log(
+        "================================="
+    );
+
+
+    const botao =
+        document.getElementById(
+            "atualizarBtn"
+        );
+
+
+    const botaoRefresh =
+        document.getElementById(
+            "refreshBtn"
+        );
+
+
+    const botoes = [
+        botao,
+        botaoRefresh
+    ];
+
+
+    // ==========================================
+    // DESATIVAR BOTÃO
+    // ==========================================
+
+    botoes.forEach(
+        elemento => {
+
+            if (!elemento) {
+                return;
+            }
+
+            elemento.disabled = true;
+
+            elemento.classList.add(
+                "loading"
+            );
+
+        }
     );
 
 
     try {
 
         await Promise.all([
+
             carregarDashboard(),
+
             carregarTabela()
+
         ]);
 
+
         console.log(
-            "Dashboard atualizado."
+            "Dashboard atualizado com sucesso."
         );
+
 
     }
     catch (erro) {
 
         console.error(
-            "Erro ao atualizar Dashboard:",
+            "Erro ao atualizar:",
             erro
+        );
+
+    }
+    finally {
+
+        // ==========================================
+        // REATIVAR BOTÃO
+        // ==========================================
+
+        botoes.forEach(
+            elemento => {
+
+                if (!elemento) {
+                    return;
+                }
+
+                elemento.disabled =
+                    false;
+
+                elemento.classList.remove(
+                    "loading"
+                );
+
+            }
         );
 
     }
@@ -504,54 +677,66 @@ async function atualizarDashboard() {
 
 
 // ==========================================
-// BOTÃO ATUALIZAR
+// INICIALIZAR BOTÃO ATUALIZAR
 // ==========================================
 
 function inicializarBotaoAtualizar() {
 
+    const seletores = [
+
+        "#atualizarBtn",
+
+        "#refreshBtn",
+
+        ".btn-atualizar",
+
+        ".refresh-btn",
+
+        "[data-action='atualizar']"
+
+    ];
+
+
     const botoes =
         document.querySelectorAll(
-            "#atualizarBtn, #refreshBtn, .btn-atualizar, .refresh-btn"
+            seletores.join(",")
         );
+
+
+    console.log(
+        "Botões de atualizar encontrados:",
+        botoes.length
+    );
 
 
     botoes.forEach(
         botao => {
+
+            // Evitar adicionar evento duas vezes
+            if (
+                botao.dataset.dashboardEvento ===
+                "true"
+            ) {
+
+                return;
+
+            }
+
+
+            botao.dataset.dashboardEvento =
+                "true";
+
 
             botao.addEventListener(
                 "click",
                 async function(e) {
 
                     e.preventDefault();
+
                     e.stopPropagation();
 
 
-                    const textoOriginal =
-                        this.innerHTML;
-
-
-                    this.disabled = true;
-
-
-                    this.innerHTML =
-                        '<i class="fas fa-sync-alt fa-spin"></i> Atualizando...';
-
-
-                    try {
-
-                        await atualizarDashboard();
-
-                    }
-                    finally {
-
-                        this.disabled =
-                            false;
-
-
-                        this.innerHTML =
-                            textoOriginal;
-
-                    }
+                    await atualizarDashboard();
 
                 }
             );
@@ -563,7 +748,7 @@ function inicializarBotaoAtualizar() {
 
 
 // ==========================================
-// DISPONIBILIZAR FUNÇÕES
+// DISPONIBILIZAR FUNÇÕES GLOBALMENTE
 // ==========================================
 
 window.carregarDashboard =
@@ -578,6 +763,10 @@ window.atualizarDashboard =
     atualizarDashboard;
 
 
+window.atualizarData =
+    atualizarData;
+
+
 // ==========================================
 // INICIALIZAÇÃO
 // ==========================================
@@ -587,15 +776,26 @@ document.addEventListener(
     function() {
 
         console.log(
-            "Dashboard.js iniciado."
+            "================================="
+        );
+
+        console.log(
+            "DASHBOARD.JS INICIADO"
+        );
+
+        console.log(
+            "================================="
         );
 
 
         atualizarData();
 
+
         carregarDashboard();
 
+
         carregarTabela();
+
 
         inicializarBotaoAtualizar();
 
@@ -608,6 +808,20 @@ document.addEventListener(
 // ==========================================
 
 setInterval(
-    atualizarDashboard,
+    function() {
+
+        carregarDashboard();
+
+    },
+    5000
+);
+
+
+setInterval(
+    function() {
+
+        carregarTabela();
+
+    },
     5000
 );
