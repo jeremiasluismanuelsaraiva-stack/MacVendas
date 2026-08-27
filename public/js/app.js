@@ -11,17 +11,11 @@
 const paineis = {
 
     dashboard: "panelDashboard",
-
     crm: "panelCRM",
-
     pacotes: "panelPacotes",
-
     pedidos: "panelPedidos",
-
     dispositivos: "panelDispositivos",
-
     tutorial: "panelTutorial",
-
     config: "panelConfig"
 
 };
@@ -33,30 +27,25 @@ const paineis = {
 
 window.showPanel = function (panelId) {
 
-    console.log(
-        "Abrindo painel:",
-        panelId
-    );
+    console.log("Abrindo painel:", panelId);
 
 
     // =================================================
     // ESCONDER TODOS OS PAINÉIS
     // =================================================
 
-    Object.values(paineis).forEach(
-        function (id) {
+    Object.values(paineis).forEach(function (id) {
 
-            const painel =
-                document.getElementById(id);
+        const painel =
+            document.getElementById(id);
 
-            if (painel) {
+        if (painel) {
 
-                painel.style.display = "none";
-
-            }
+            painel.style.display = "none";
 
         }
-    );
+
+    });
 
 
     // =================================================
@@ -65,7 +54,6 @@ window.showPanel = function (panelId) {
 
     const painelId =
         paineis[panelId];
-
 
     if (!painelId) {
 
@@ -88,7 +76,6 @@ window.showPanel = function (panelId) {
             painelId
         );
 
-
     if (!painel) {
 
         console.error(
@@ -109,22 +96,20 @@ window.showPanel = function (panelId) {
 
 
     // =================================================
-    // MARCAR MENU COMO ATIVO
+    // MARCAR MENU ATIVO
     // =================================================
 
     document
         .querySelectorAll(
             ".menu-item[data-panel]"
         )
-        .forEach(
-            function (item) {
+        .forEach(function (item) {
 
-                item.classList.remove(
-                    "active"
-                );
+            item.classList.remove(
+                "active"
+            );
 
-            }
-        );
+        });
 
 
     const botao =
@@ -133,7 +118,6 @@ window.showPanel = function (panelId) {
             panelId +
             '"]'
         );
-
 
     if (botao) {
 
@@ -255,9 +239,7 @@ window.showPanel = function (panelId) {
     // FECHAR MENU NO MOBILE
     // =================================================
 
-    if (
-        window.innerWidth <= 768
-    ) {
+    if (window.innerWidth <= 768) {
 
         fecharMenuMobile();
 
@@ -282,12 +264,10 @@ function abrirMenuMobile() {
             "sidebar"
         );
 
-
     const overlay =
         document.getElementById(
             "menuOverlay"
         );
-
 
     const botao =
         document.getElementById(
@@ -295,9 +275,7 @@ function abrirMenuMobile() {
         );
 
 
-    // ---------------------------------------------
-    // SIDEBAR
-    // ---------------------------------------------
+    // Sidebar
 
     if (sidebar) {
 
@@ -315,9 +293,7 @@ function abrirMenuMobile() {
     }
 
 
-    // ---------------------------------------------
-    // OVERLAY
-    // ---------------------------------------------
+    // Overlay
 
     if (overlay) {
 
@@ -328,9 +304,7 @@ function abrirMenuMobile() {
     }
 
 
-    // ---------------------------------------------
-    // BOTÃO
-    // ---------------------------------------------
+    // Botão
 
     if (botao) {
 
@@ -360,12 +334,10 @@ function fecharMenuMobile() {
             "sidebar"
         );
 
-
     const overlay =
         document.getElementById(
             "menuOverlay"
         );
-
 
     const botao =
         document.getElementById(
@@ -373,9 +345,7 @@ function fecharMenuMobile() {
         );
 
 
-    // ---------------------------------------------
-    // SIDEBAR
-    // ---------------------------------------------
+    // Sidebar
 
     if (sidebar) {
 
@@ -386,9 +356,7 @@ function fecharMenuMobile() {
     }
 
 
-    // ---------------------------------------------
-    // OVERLAY
-    // ---------------------------------------------
+    // Overlay
 
     if (overlay) {
 
@@ -399,9 +367,7 @@ function fecharMenuMobile() {
     }
 
 
-    // ---------------------------------------------
-    // BOTÃO
-    // ---------------------------------------------
+    // Botão
 
     if (botao) {
 
@@ -416,7 +382,7 @@ function fecharMenuMobile() {
 
 
 // =====================================================
-// INICIALIZAR MENU
+// INICIALIZAR MENUS
 // =====================================================
 
 function inicializarMenu() {
@@ -438,52 +404,66 @@ function inicializarMenu() {
     );
 
 
-    botoes.forEach(
-        function (item) {
+    botoes.forEach(function (item) {
 
-            item.addEventListener(
-                "click",
-                function (e) {
+        // Evitar adicionar o evento duas vezes
 
-                    e.preventDefault();
+        if (
+            item.dataset.menuInicializado ===
+            "true"
+        ) {
 
-                    e.stopPropagation();
-
-
-                    const panel =
-                        this.getAttribute(
-                            "data-panel"
-                        );
-
-
-                    console.log(
-                        "Menu clicado:",
-                        panel
-                    );
-
-
-                    if (!panel) {
-
-                        return;
-
-                    }
-
-
-                    window.showPanel(
-                        panel
-                    );
-
-                }
-            );
+            return;
 
         }
-    );
+
+
+        item.dataset.menuInicializado =
+            "true";
+
+
+        item.addEventListener(
+            "click",
+            function (e) {
+
+                e.preventDefault();
+
+                e.stopPropagation();
+
+
+                const panel =
+                    this.getAttribute(
+                        "data-panel"
+                    );
+
+
+                console.log(
+                    "Menu clicado:",
+                    panel
+                );
+
+
+                if (!panel) {
+
+                    return;
+
+                }
+
+
+                window.showPanel(
+                    panel
+                );
+
+            }
+        );
+
+    });
 
 }
 
 
 // =====================================================
-// INICIALIZAR BOTÃO DAS 3 BARRAS
+// BOTÃO DAS 3 BARRAS
 // =====================================================
 
 function inicializarBotaoMenu() {
@@ -503,6 +483,22 @@ function inicializarBotaoMenu() {
         return;
 
     }
+
+
+    // Evitar evento duplicado
+
+    if (
+        botao.dataset.menuInicializado ===
+        "true"
+    ) {
+
+        return;
+
+    }
+
+
+    botao.dataset.menuInicializado =
+        "true";
 
 
     console.log(
@@ -536,10 +532,6 @@ function inicializarBotaoMenu() {
             }
 
 
-            // -----------------------------------------
-            // SE ESTÁ ABERTO
-            // -----------------------------------------
-
             if (
                 sidebar.classList.contains(
                     "open"
@@ -549,11 +541,6 @@ function inicializarBotaoMenu() {
                 fecharMenuMobile();
 
             }
-
-            // -----------------------------------------
-            // SE ESTÁ FECHADO
-            // -----------------------------------------
-
             else {
 
                 abrirMenuMobile();
@@ -589,9 +576,25 @@ function inicializarOverlay() {
     }
 
 
+    if (
+        overlay.dataset.menuInicializado ===
+        "true"
+    ) {
+
+        return;
+
+    }
+
+
+    overlay.dataset.menuInicializado =
+        "true";
+
+
     overlay.addEventListener(
         "click",
-        function () {
+        function (e) {
+
+            e.preventDefault();
 
             fecharMenuMobile();
 
@@ -602,10 +605,24 @@ function inicializarOverlay() {
 
 
 // =====================================================
-// ESC PARA FECHAR MENU
+// TECLA ESC
 // =====================================================
 
 function inicializarTeclaESC() {
+
+    if (
+        document.documentElement.dataset
+            .escInicializado === "true"
+    ) {
+
+        return;
+
+    }
+
+
+    document.documentElement.dataset
+        .escInicializado = "true";
+
 
     document.addEventListener(
         "keydown",
@@ -631,6 +648,20 @@ function inicializarTeclaESC() {
 
 function inicializarCliqueFora() {
 
+    if (
+        document.documentElement.dataset
+            .cliqueForaInicializado === "true"
+    ) {
+
+        return;
+
+    }
+
+
+    document.documentElement.dataset
+        .cliqueForaInicializado = "true";
+
+
     document.addEventListener(
         "click",
         function (e) {
@@ -648,7 +679,6 @@ function inicializarCliqueFora() {
                 document.getElementById(
                     "sidebar"
                 );
-
 
             const botao =
                 document.getElementById(
@@ -675,7 +705,9 @@ function inicializarCliqueFora() {
 
 
             if (
-                sidebar.contains(e.target)
+                sidebar.contains(
+                    e.target
+                )
             ) {
 
                 return;
@@ -685,7 +717,9 @@ function inicializarCliqueFora() {
 
             if (
                 botao &&
-                botao.contains(e.target)
+                botao.contains(
+                    e.target
+                )
             ) {
 
                 return;
@@ -707,6 +741,19 @@ function inicializarCliqueFora() {
 
 function inicializarResize() {
 
+    if (
+        window.__resizeMenuInicializado
+    ) {
+
+        return;
+
+    }
+
+
+    window.__resizeMenuInicializado =
+        true;
+
+
     window.addEventListener(
         "resize",
         function () {
@@ -726,80 +773,88 @@ function inicializarResize() {
 
 
 // =====================================================
+// INICIALIZAÇÃO
+// =====================================================
+
+function iniciarSistema() {
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "MOZ TECH - SISTEMA INICIADO"
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    // Menu
+
+    inicializarMenu();
+
+
+    // 3 barras
+
+    inicializarBotaoMenu();
+
+
+    // Overlay
+
+    inicializarOverlay();
+
+
+    // ESC
+
+    inicializarTeclaESC();
+
+
+    // Clique fora
+
+    inicializarCliqueFora();
+
+
+    // Resize
+
+    inicializarResize();
+
+
+    // Dashboard inicial
+
+    window.showPanel(
+        "dashboard"
+    );
+
+
+    console.log(
+        "Sistema pronto."
+    );
+
+}
+
+
+// =====================================================
 // DOM READY
 // =====================================================
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
+if (
+    document.readyState ===
+    "loading"
+) {
 
-        console.log(
-            "================================"
-        );
+    document.addEventListener(
+        "DOMContentLoaded",
+        iniciarSistema,
+        {
+            once: true
+        }
+    );
 
-        console.log(
-            "MOZ TECH - SISTEMA INICIADO"
-        );
+}
+else {
 
-        console.log(
-            "================================"
-        );
+    iniciarSistema();
 
-
-        // ---------------------------------------------
-        // MENU
-        // ---------------------------------------------
-
-        inicializarMenu();
-
-
-        // ---------------------------------------------
-        // 3 BARRAS
-        // ---------------------------------------------
-
-        inicializarBotaoMenu();
-
-
-        // ---------------------------------------------
-        // OVERLAY
-        // ---------------------------------------------
-
-        inicializarOverlay();
-
-
-        // ---------------------------------------------
-        // ESC
-        // ---------------------------------------------
-
-        inicializarTeclaESC();
-
-
-        // ---------------------------------------------
-        // CLIQUE FORA
-        // ---------------------------------------------
-
-        inicializarCliqueFora();
-
-
-        // ---------------------------------------------
-        // RESIZE
-        // ---------------------------------------------
-
-        inicializarResize();
-
-
-        // ---------------------------------------------
-        // DASHBOARD INICIAL
-        // ---------------------------------------------
-
-        window.showPanel(
-            "dashboard"
-        );
-
-
-        console.log(
-            "Sistema pronto."
-        );
-
-    }
-);
+}
