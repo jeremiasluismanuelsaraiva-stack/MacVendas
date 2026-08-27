@@ -46,7 +46,12 @@ async function carregarDashboard() {
     try {
 
         const resposta =
-            await fetch(API + "/relatorios");
+            await fetch(
+                API + "/relatorios",
+                {
+                    cache: "no-store"
+                }
+            );
 
         if (!resposta.ok) {
 
@@ -59,11 +64,25 @@ async function carregarDashboard() {
         const dados =
             await resposta.json();
 
-        if (!dados.success) return;
+        if (!dados.success) {
+
+            console.error(
+                "API /relatorios retornou erro:",
+                dados
+            );
+
+            return;
+
+        }
+
 
         const resumo =
             dados.resumo || {};
 
+
+        // ==========================================
+        // ELEMENTOS
+        // ==========================================
 
         const vendas =
             document.getElementById("vendas");
@@ -90,46 +109,91 @@ async function carregarDashboard() {
             document.getElementById("pedidos");
 
 
-        if (vendas)
+        // ==========================================
+        // ATUALIZAR
+        // ==========================================
+
+        if (vendas) {
+
             vendas.textContent =
-                numero(resumo.totalVendas);
+                numero(
+                    resumo.totalVendas
+                );
+
+        }
 
 
-        if (valor)
+        if (valor) {
+
             valor.textContent =
-                numero(resumo.faturamento) + " MT";
+                numero(
+                    resumo.faturamento
+                ) + " MT";
+
+        }
 
 
-        if (clientes)
+        if (clientes) {
+
             clientes.textContent =
-                numero(resumo.totalClientes);
+                numero(
+                    resumo.totalClientes
+                );
+
+        }
 
 
-        if (disp)
+        if (disp) {
+
             disp.textContent =
-                numero(resumo.totalDispositivos);
+                numero(
+                    resumo.totalDispositivos
+                );
+
+        }
 
 
-        if (totalGB)
+        if (totalGB) {
+
             totalGB.textContent =
-                numero(resumo.totalGB);
+                numero(
+                    resumo.totalGB
+                );
+
+        }
 
 
-        if (lucro)
+        if (lucro) {
+
             lucro.textContent =
-                numero(resumo.lucro) + " MT";
+                numero(
+                    resumo.lucro
+                ) + " MT";
+
+        }
 
 
-        if (custo)
+        if (custo) {
+
             custo.textContent =
-                numero(resumo.custo) + " MT";
+                numero(
+                    resumo.custo
+                ) + " MT";
+
+        }
 
 
-        if (pedidos)
+        if (pedidos) {
+
             pedidos.textContent =
-                numero(resumo.totalPedidos);
+                numero(
+                    resumo.totalPedidos
+                );
+
+        }
 
     }
+
     catch (erro) {
 
         console.error(
@@ -143,7 +207,7 @@ async function carregarDashboard() {
 
 
 // =====================================================
-// TABELA
+// TABELA DE VENDAS
 // =====================================================
 
 async function carregarTabela() {
@@ -151,22 +215,48 @@ async function carregarTabela() {
     try {
 
         const resposta =
-            await fetch(API + "/vendas");
+            await fetch(
+                API + "/vendas",
+                {
+                    cache: "no-store"
+                }
+            );
 
-        if (!resposta.ok) return;
+        if (!resposta.ok) {
+
+            throw new Error(
+                "HTTP " + resposta.status
+            );
+
+        }
+
 
         const json =
             await resposta.json();
 
+
         const vendas =
             Array.isArray(json)
                 ? json
-                : (json.vendas || []);
+                : (
+                    Array.isArray(json.vendas)
+                        ? json.vendas
+                        : []
+                );
+
 
         const lista =
-            document.getElementById("lista");
+            document.getElementById(
+                "lista"
+            );
 
-        if (!lista) return;
+
+        if (!lista) {
+
+            return;
+
+        }
+
 
         lista.innerHTML = "";
 
@@ -174,12 +264,21 @@ async function carregarTabela() {
         if (!vendas.length) {
 
             lista.innerHTML = `
+
                 <tr>
-                    <td colspan="4"
-                        style="text-align:center;padding:20px;">
+
+                    <td
+                        colspan="4"
+                        style="
+                            text-align:center;
+                            padding:20px;
+                        "
+                    >
                         Nenhuma venda encontrada.
                     </td>
+
                 </tr>
+
             `;
 
             return;
@@ -193,31 +292,48 @@ async function carregarTabela() {
                 document.createElement("tr");
 
 
+            const numeroVenda =
+                v.numero ||
+                "-";
+
+
+            const quantidade =
+                v.mb ??
+                v.gb ??
+                0;
+
+
+            const valorVenda =
+                v.valor_venda ??
+                v.valor ??
+                0;
+
+
+            const status =
+                v.status ||
+                "Concluído";
+
+
             tr.innerHTML = `
 
                 <td>
-                    ${v.numero || "-"}
+                    ${numeroVenda}
                 </td>
 
                 <td>
-                    ${v.mb || v.gb || 0}
+                    ${quantidade}
                 </td>
 
                 <td>
-                    ${
-                        v.valor_venda ??
-                        v.valor ??
-                        0
-                    } MT
+                    ${valorVenda} MT
                 </td>
 
                 <td>
+
                     <span class="status ok">
-                        ${
-                            v.status ||
-                            "Concluído"
-                        }
+                        ${status}
                     </span>
+
                 </td>
 
             `;
@@ -228,6 +344,7 @@ async function carregarTabela() {
         });
 
     }
+
     catch (erro) {
 
         console.error(
@@ -253,6 +370,10 @@ async function carregarGraficos() {
             "undefined"
         ) {
 
+            console.warn(
+                "Chart.js ainda não foi carregado."
+            );
+
             return;
 
         }
@@ -260,27 +381,44 @@ async function carregarGraficos() {
 
         const resposta =
             await fetch(
-                API + "/relatorios"
+                API + "/relatorios",
+                {
+                    cache: "no-store"
+                }
             );
 
-        if (!resposta.ok) return;
+
+        if (!resposta.ok) {
+
+            throw new Error(
+                "HTTP " + resposta.status
+            );
+
+        }
+
 
         const dados =
             await resposta.json();
 
-        if (!dados.success) return;
+
+        if (!dados.success) {
+
+            return;
+
+        }
 
 
         const vendasPorDia =
             dados.vendasPorDia || {};
 
+
         const vendasPorMes =
             dados.vendasPorMes || {};
 
 
-        // ==============================
-        // DIA
-        // ==============================
+        // =================================================
+        // GRÁFICO DIÁRIO
+        // =================================================
 
         const canvasDias =
             document.getElementById(
@@ -290,8 +428,11 @@ async function carregarGraficos() {
 
         if (canvasDias) {
 
-            if (graficoDias)
+            if (graficoDias) {
+
                 graficoDias.destroy();
+
+            }
 
 
             graficoDias =
@@ -320,11 +461,14 @@ async function carregarGraficos() {
                                             vendasPorDia
                                         ),
 
-                                    borderWidth: 3,
+                                    borderWidth:
+                                        3,
 
-                                    tension: 0.4,
+                                    tension:
+                                        0.4,
 
-                                    fill: false
+                                    fill:
+                                        false
 
                                 }
 
@@ -334,7 +478,8 @@ async function carregarGraficos() {
 
                         options: {
 
-                            responsive: true,
+                            responsive:
+                                true,
 
                             maintainAspectRatio:
                                 false,
@@ -342,7 +487,10 @@ async function carregarGraficos() {
                             plugins: {
 
                                 legend: {
-                                    display: false
+
+                                    display:
+                                        false
+
                                 }
 
                             },
@@ -350,7 +498,10 @@ async function carregarGraficos() {
                             scales: {
 
                                 y: {
-                                    beginAtZero: true
+
+                                    beginAtZero:
+                                        true
+
                                 }
 
                             }
@@ -363,9 +514,9 @@ async function carregarGraficos() {
         }
 
 
-        // ==============================
-        // MÊS
-        // ==============================
+        // =================================================
+        // GRÁFICO MENSAL
+        // =================================================
 
         const canvasMeses =
             document.getElementById(
@@ -375,8 +526,11 @@ async function carregarGraficos() {
 
         if (canvasMeses) {
 
-            if (graficoMeses)
+            if (graficoMeses) {
+
                 graficoMeses.destroy();
+
+            }
 
 
             graficoMeses =
@@ -405,9 +559,11 @@ async function carregarGraficos() {
                                             vendasPorMes
                                         ),
 
-                                    borderWidth: 0,
+                                    borderWidth:
+                                        0,
 
-                                    borderRadius: 8
+                                    borderRadius:
+                                        8
 
                                 }
 
@@ -417,7 +573,8 @@ async function carregarGraficos() {
 
                         options: {
 
-                            responsive: true,
+                            responsive:
+                                true,
 
                             maintainAspectRatio:
                                 false,
@@ -425,7 +582,10 @@ async function carregarGraficos() {
                             plugins: {
 
                                 legend: {
-                                    display: false
+
+                                    display:
+                                        false
+
                                 }
 
                             },
@@ -433,7 +593,10 @@ async function carregarGraficos() {
                             scales: {
 
                                 y: {
-                                    beginAtZero: true
+
+                                    beginAtZero:
+                                        true
+
                                 }
 
                             }
@@ -446,6 +609,7 @@ async function carregarGraficos() {
         }
 
     }
+
     catch (erro) {
 
         console.error(
@@ -465,44 +629,101 @@ async function carregarGraficos() {
 async function carregarCredenciaisAPI() {
 
     console.log(
-        "Carregando credenciais..."
+        "Carregando credenciais da API..."
     );
 
 
     try {
 
-        // ==============================================
-        // ESPERAR FIREBASE
-        // ==============================================
+        // ==========================================
+        // PEGAR USUÁRIO ATUAL
+        // ==========================================
 
         let usuario =
             auth.currentUser;
 
 
+        // ==========================================
+        // SE AINDA NÃO CARREGOU, ESPERAR FIREBASE
+        // ==========================================
+
         if (!usuario) {
 
             usuario =
-                await new Promise(resolve => {
+                await new Promise(
+                    resolve => {
 
-                    const cancelar =
-                        onAuthState(
+                        let finalizado =
+                            false;
+
+
+                        let cancelar =
+                            null;
+
+
+                        const terminar =
                             user => {
 
-                                cancelar();
+                                if (finalizado) {
+
+                                    return;
+
+                                }
+
+
+                                finalizado =
+                                    true;
+
+
+                                if (cancelar) {
+
+                                    cancelar();
+
+                                }
+
 
                                 resolve(user);
 
-                            }
+                            };
+
+
+                        cancelar =
+                            onAuthState(
+                                user => {
+
+                                    terminar(
+                                        user
+                                    );
+
+                                }
+                            );
+
+
+                        // ==================================
+                        // SEGURANÇA:
+                        // NÃO FICAR ETERNAMENTE CARREGANDO
+                        // ==================================
+
+                        setTimeout(
+                            () => {
+
+                                terminar(
+                                    auth.currentUser
+                                );
+
+                            },
+                            10000
                         );
 
-                });
+                    }
+                );
 
         }
 
 
-        // ==============================================
+        // ==========================================
         // SEM LOGIN
-        // ==============================================
+        // ==========================================
 
         if (!usuario) {
 
@@ -510,30 +731,66 @@ async function carregarCredenciaisAPI() {
                 "Usuário não autenticado."
             );
 
+
+            mostrarCredenciais(
+                "-",
+                "Faça login novamente."
+            );
+
+
             return;
 
         }
 
 
         console.log(
-            "Usuário:",
+            "Usuário autenticado:",
             usuario.uid
         );
 
 
-        // ==============================================
-        // BUSCAR USERS/UID
-        // ==============================================
+        // ==========================================
+        // BUSCAR DADOS DO USUÁRIO
+        // ==========================================
 
-        const dados =
-            await obterDadosUsuario();
+        let dados = null;
 
+
+        try {
+
+            dados =
+                await obterDadosUsuario();
+
+        }
+
+        catch (erro) {
+
+            console.error(
+                "Erro ao obter dados do usuário:",
+                erro
+            );
+
+        }
+
+
+        // ==========================================
+        // SE NÃO EXISTIR DADOS
+        // ==========================================
 
         if (!dados) {
 
-            console.error(
+            console.warn(
                 "Dados do usuário não encontrados."
             );
+
+
+            // Pelo menos mostrar o UID do Firebase
+
+            mostrarCredenciais(
+                usuario.uid,
+                "API Key não encontrada"
+            );
+
 
             return;
 
@@ -546,110 +803,284 @@ async function carregarCredenciaisAPI() {
         );
 
 
-        // ==============================================
+        // ==========================================
         // UID
-        // ==============================================
+        // ==========================================
 
-        const elementoUID =
-            document.getElementById(
-                "tutorialUid"
-            );
-
-
-        if (elementoUID) {
-
-            elementoUID.textContent =
-                dados.uid ||
-                usuario.uid;
-
-        }
+        const uid =
+            dados.uid ||
+            usuario.uid;
 
 
-        // ==============================================
+        // ==========================================
         // API KEY
-        // ==============================================
+        // ==========================================
 
-        const elementoAPI =
+        const apiKey =
+            dados.apiKey ||
+            dados.api_key ||
+            dados.APIKey ||
+            "";
+
+
+        // ==========================================
+        // MOSTRAR NA TELA
+        // ==========================================
+
+        mostrarCredenciais(
+            uid,
+            apiKey || "API Key não encontrada"
+        );
+
+
+        // ==========================================
+        // ATUALIZAR SIDEBAR
+        // ==========================================
+
+        const sidebarUID =
             document.getElementById(
-                "tutorialApiKey"
+                "sidebarUserUid"
             );
 
 
-        if (elementoAPI) {
+        const sidebarAPI =
+            document.getElementById(
+                "sidebarApiKey"
+            );
 
-            elementoAPI.textContent =
-                dados.apiKey ||
-                "API Key não encontrada";
+
+        const sidebarNome =
+            document.getElementById(
+                "sidebarUserName"
+            );
+
+
+        const sidebarEmail =
+            document.getElementById(
+                "sidebarUserEmail"
+            );
+
+
+        if (sidebarUID) {
+
+            sidebarUID.textContent =
+                "UID: " + uid;
 
         }
 
 
-        // ==============================================
-// COPIAR UID
-// ==============================================
+        if (sidebarAPI) {
 
-const botaoUID =
-    document.getElementById(
-        "copyTutorialUidBtn"
-    );
+            sidebarAPI.textContent =
+                "API Key: " +
+                (
+                    apiKey ||
+                    "Não encontrada"
+                );
 
-
-if (botaoUID) {
-
-    botaoUID.onclick =
-        async () => {
-
-            const uid =
-                dados.uid ||
-                usuario.uid;
+        }
 
 
-            await navigator.clipboard
-                .writeText(uid);
+        if (sidebarNome) {
+
+            sidebarNome.textContent =
+                dados.nome ||
+                dados.name ||
+                usuario.displayName ||
+                "Usuário";
+
+        }
 
 
-            botaoUID.textContent =
-                "Copiado!";
+        if (sidebarEmail) {
+
+            sidebarEmail.textContent =
+                dados.email ||
+                usuario.email ||
+                "-";
+
+        }
 
 
-            setTimeout(
-                () => {
+        // ==========================================
+        // BOTÕES DE COPIAR
+        // ==========================================
 
-                    botaoUID.textContent =
-                        "Copiar UID";
+        configurarBotaoCopiar(
+            "copyTutorialUidBtn",
+            uid,
+            "Copiar UID"
+        );
 
-                },
-                1500
-            );
 
-        };
+        configurarBotaoCopiar(
+            "copyTutorialApiKeyBtn",
+            apiKey,
+            "Copiar API Key"
+        );
+
+
+        configurarBotaoCopiar(
+            "copyUidBtn",
+            uid,
+            "Copiar UID"
+        );
+
+
+        configurarBotaoCopiar(
+            "copyApiKeyBtn",
+            apiKey,
+            "Copiar API Key"
+        );
+
+    }
+
+    catch (erro) {
+
+        console.error(
+            "ERRO NAS CREDENCIAIS:",
+            erro
+        );
+
+
+        mostrarCredenciais(
+            "-",
+            "Erro ao carregar"
+        );
+
+    }
 
 }
 
 
-// ==============================================
-// COPIAR API KEY
-// ==============================================
+// =====================================================
+// MOSTRAR CREDENCIAIS
+// =====================================================
 
-const botaoAPI =
-    document.getElementById(
-        "copyTutorialApiKeyBtn"
-    );
+function mostrarCredenciais(
+    uid,
+    apiKey
+) {
+
+    // ==========================================
+    // TUTORIAL
+    // ==========================================
+
+    const elementoUID =
+        document.getElementById(
+            "tutorialUid"
+        );
 
 
-if (botaoAPI) {
+    const elementoAPI =
+        document.getElementById(
+            "tutorialApiKey"
+        );
 
-    botaoAPI.onclick =
+
+    if (elementoUID) {
+
+        elementoUID.textContent =
+            uid || "-";
+
+    }
+
+
+    if (elementoAPI) {
+
+        elementoAPI.textContent =
+            apiKey || "-";
+
+    }
+
+
+    // ==========================================
+    // SIDEBAR
+    // ==========================================
+
+    const sidebarUID =
+        document.getElementById(
+            "sidebarUserUid"
+        );
+
+
+    const sidebarAPI =
+        document.getElementById(
+            "sidebarApiKey"
+        );
+
+
+    if (sidebarUID) {
+
+        sidebarUID.textContent =
+            "UID: " +
+            (uid || "-");
+
+    }
+
+
+    if (sidebarAPI) {
+
+        sidebarAPI.textContent =
+            "API Key: " +
+            (apiKey || "-");
+
+    }
+
+}
+
+
+// =====================================================
+// CONFIGURAR BOTÃO COPIAR
+// =====================================================
+
+function configurarBotaoCopiar(
+    id,
+    valor,
+    textoOriginal
+) {
+
+    const botao =
+        document.getElementById(id);
+
+
+    if (!botao) {
+
+        return;
+
+    }
+
+
+    // ==========================================
+    // EVITAR DUPLICAR EVENTOS
+    // ==========================================
+
+    if (
+        botao.dataset.copiaConfigurada ===
+        "true"
+    ) {
+
+        return;
+
+    }
+
+
+    botao.dataset.copiaConfigurada =
+        "true";
+
+
+    botao.addEventListener(
+        "click",
         async () => {
 
-            const apiKey =
-                dados.apiKey;
-
-
-            if (!apiKey) {
+            if (
+                !valor ||
+                valor ===
+                    "API Key não encontrada"
+            ) {
 
                 alert(
-                    "API Key não encontrada."
+                    "Informação não disponível."
                 );
 
                 return;
@@ -657,29 +1088,129 @@ if (botaoAPI) {
             }
 
 
-            await navigator.clipboard
-                .writeText(
-                    apiKey
+            try {
+
+                await navigator.clipboard
+                    .writeText(
+                        String(valor)
+                    );
+
+
+                botao.textContent =
+                    "Copiado!";
+
+
+                setTimeout(
+                    () => {
+
+                        botao.textContent =
+                            textoOriginal;
+
+                    },
+                    1500
+                );
+
+            }
+
+            catch (erro) {
+
+                console.error(
+                    "Erro ao copiar:",
+                    erro
                 );
 
 
-            botaoAPI.textContent =
-                "Copiado!";
+                alert(
+                    "Não foi possível copiar."
+                );
 
+            }
 
-            setTimeout(
-                () => {
-
-                    botaoAPI.textContent =
-                        "Copiar API Key";
-
-                },
-                1500
-            );
-
-        };
+        }
+    );
 
 }
+
+
+// =====================================================
+// ATUALIZAR TUDO
+// =====================================================
+
+async function atualizarTudo() {
+
+    console.log(
+        "Atualizando dashboard..."
+    );
+
+
+    const botao =
+        document.getElementById(
+            "btnAtualizar"
+        );
+
+
+    const textoOriginal =
+        botao
+            ? botao.innerHTML
+            : "";
+
+
+    if (botao) {
+
+        botao.disabled =
+            true;
+
+        botao.innerHTML =
+            '<i class="fas fa-sync-alt fa-spin"></i> Atualizando...';
+
+    }
+
+
+    try {
+
+        await Promise.all([
+
+            carregarDashboard(),
+
+            carregarTabela(),
+
+            carregarGraficos(),
+
+            carregarCredenciaisAPI()
+
+        ]);
+
+
+        atualizarData();
+
+    }
+
+    catch (erro) {
+
+        console.error(
+            "Erro ao atualizar:",
+            erro
+        );
+
+    }
+
+    finally {
+
+        if (botao) {
+
+            botao.disabled =
+                false;
+
+            botao.innerHTML =
+                textoOriginal ||
+                '<i class="fas fa-sync-alt"></i> Atualizar';
+
+        }
+
+    }
+
+}
+
 
 // =====================================================
 // DATA
@@ -688,16 +1219,95 @@ if (botaoAPI) {
 function atualizarData() {
 
     const elemento =
-        document.getElementById("data");
+        document.getElementById(
+            "data"
+        );
 
 
     if (elemento) {
 
         elemento.textContent =
             new Date()
-                .toLocaleString("pt-PT");
+                .toLocaleString(
+                    "pt-PT"
+                );
 
     }
+
+}
+
+
+// =====================================================
+// BOTÃO ATUALIZAR
+// =====================================================
+
+function inicializarBotaoAtualizar() {
+
+    // Aceita o ID principal
+    let botao =
+        document.getElementById(
+            "btnAtualizar"
+        );
+
+
+    // Compatibilidade com outros IDs
+    if (!botao) {
+
+        botao =
+            document.getElementById(
+                "atualizarBtn"
+            );
+
+    }
+
+
+    if (!botao) {
+
+        botao =
+            document.getElementById(
+                "btnRefresh"
+            );
+
+    }
+
+
+    if (!botao) {
+
+        console.warn(
+            "Botão Atualizar não encontrado."
+        );
+
+        return;
+
+    }
+
+
+    // Evitar evento duplicado
+    if (
+        botao.dataset.atualizarConfigurado ===
+        "true"
+    ) {
+
+        return;
+
+    }
+
+
+    botao.dataset.atualizarConfigurado =
+        "true";
+
+
+    botao.addEventListener(
+        "click",
+        function(e) {
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            atualizarTudo();
+
+        }
+    );
 
 }
 
@@ -709,14 +1319,21 @@ function atualizarData() {
 window.carregarDashboard =
     carregarDashboard;
 
+
 window.carregarTabela =
     carregarTabela;
+
 
 window.carregarGraficos =
     carregarGraficos;
 
+
 window.carregarCredenciaisAPI =
     carregarCredenciaisAPI;
+
+
+window.atualizarTudo =
+    atualizarTudo;
 
 
 // =====================================================
@@ -728,6 +1345,8 @@ document.addEventListener(
     () => {
 
         atualizarData();
+
+        inicializarBotaoAtualizar();
 
         carregarDashboard();
 
@@ -742,7 +1361,7 @@ document.addEventListener(
 
 
 // =====================================================
-// ATUALIZAÇÃO
+// ATUALIZAÇÃO AUTOMÁTICA
 // =====================================================
 
 setInterval(
@@ -750,10 +1369,12 @@ setInterval(
     5000
 );
 
+
 setInterval(
     carregarTabela,
     5000
 );
+
 
 setInterval(
     carregarGraficos,
