@@ -17,7 +17,7 @@ const API = window.location.origin;
 
 
 // =====================================================
-// GRÁFICOS
+// DASHBOARD - MOZ TECH
 // =====================================================
 
 let graficoHoje = null;
@@ -31,44 +31,69 @@ let graficoMeses = null;
 
 function numero(valor) {
 
-    return Number(valor || 0)
-        .toLocaleString("pt-PT");
+    return Number(valor || 0).toLocaleString("pt-PT");
 
 }
 
 
 // =====================================================
-// DASHBOARD
+// FORMATAR MT
+// =====================================================
+
+function dinheiro(valor) {
+
+    return Number(valor || 0).toLocaleString("pt-PT", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }) + " MT";
+
+}
+
+
+// =====================================================
+// CARREGAR DASHBOARD
 // =====================================================
 
 async function carregarDashboard() {
 
     try {
 
+        console.log("Carregando Dashboard...");
+
         const resposta =
-            await fetch(
-                API + "/relatorios",
-                {
-                    cache: "no-store"
-                }
-            );
+            await fetch("/dashboard", {
+                method: "GET",
+                headers: {
+                    "Accept": "application/json"
+                },
+                cache: "no-store"
+            });
+
 
         if (!resposta.ok) {
 
             throw new Error(
-                "HTTP " + resposta.status
+                "Erro HTTP: " + resposta.status
             );
 
         }
 
+
         const dados =
             await resposta.json();
+
+
+        console.log(
+            "Dados do Dashboard:",
+            dados
+        );
+
 
         if (!dados.success) {
 
             console.error(
-                "API /relatorios retornou erro:",
-                dados
+                "API retornou erro:",
+                dados.error
             );
 
             return;
@@ -77,68 +102,89 @@ async function carregarDashboard() {
 
 
         const resumo =
-            dados.resumo || {};
+            dados.resumo ||
+            dados.dashboard ||
+            {};
 
 
-        // ==========================================
-        // ELEMENTOS
-        // ==========================================
+        // =================================================
+        // VENDAS
+        // =================================================
 
         const vendas =
             document.getElementById("vendas");
-
-        const valor =
-            document.getElementById("valor");
-
-        const clientes =
-            document.getElementById("clientes");
-
-        const disp =
-            document.getElementById("disp");
-
-        const totalGB =
-            document.getElementById("totalGB");
-
-        const lucro =
-            document.getElementById("lucro");
-
-        const custo =
-            document.getElementById("custo");
-
-        const pedidos =
-            document.getElementById("pedidos");
-
-
-        // ==========================================
-        // ATUALIZAR
-        // ==========================================
 
         if (vendas) {
 
             vendas.textContent =
                 numero(
-                    resumo.totalVendas
+                    resumo.totalVendas ??
+                    resumo.vendas ??
+                    0
                 );
 
         }
 
 
+        // =================================================
+        // FATURAMENTO
+        // =================================================
+
+        const valor =
+            document.getElementById("valor");
+
         if (valor) {
 
             valor.textContent =
-                numero(
+                dinheiro(
                     resumo.faturamento
-                ) + " MT";
+                );
 
         }
 
+
+        // =================================================
+        // CLIENTES
+        // =================================================
+
+        const clientes =
+            document.getElementById("clientes");
 
         if (clientes) {
 
             clientes.textContent =
                 numero(
-                    resumo.totalClientes
+                    resumo.totalClientes ??
+                    resumo.clientes ??
+                    0
                 );
+
+        }
+
+
+        // =================================================
+        // DISPOSITIVOS
+        // =================================================
+
+        const dispositivos =
+            document.getElementById("dispositivos");
+
+        const disp =
+            document.getElementById("disp");
+
+
+        const totalDispositivos =
+            numero(
+                resumo.totalDispositivos ??
+                resumo.dispositivos ??
+                0
+            );
+
+
+        if (dispositivos) {
+
+            dispositivos.textContent =
+                totalDispositivos;
 
         }
 
@@ -146,58 +192,139 @@ async function carregarDashboard() {
         if (disp) {
 
             disp.textContent =
+                totalDispositivos;
+
+        }
+
+
+        // =================================================
+        // PEDIDOS
+        // =================================================
+
+        const pedidos =
+            document.getElementById("pedidos");
+
+        if (pedidos) {
+
+            pedidos.textContent =
                 numero(
-                    resumo.totalDispositivos
+                    resumo.totalPedidos ??
+                    resumo.pedidos ??
+                    0
                 );
 
         }
 
+
+        // =================================================
+        // PACOTES
+        // =================================================
+
+        const pacotes =
+            document.getElementById("pacotes");
+
+        if (pacotes) {
+
+            pacotes.textContent =
+                numero(
+                    resumo.totalPacotes ??
+                    0
+                );
+
+        }
+
+
+        // =================================================
+        // GRUPOS
+        // =================================================
+
+        const grupos =
+            document.getElementById("grupos");
+
+        if (grupos) {
+
+            grupos.textContent =
+                numero(
+                    resumo.totalGrupos ??
+                    0
+                );
+
+        }
+
+
+        // =================================================
+        // TOTAL GB
+        // =================================================
+
+        const totalGB =
+            document.getElementById("totalGB");
 
         if (totalGB) {
 
             totalGB.textContent =
                 numero(
                     resumo.totalGB
-                );
+                ) + " GB";
 
         }
 
 
-        if (lucro) {
+        // =================================================
+        // CUSTO
+        // =================================================
 
-            lucro.textContent =
-                numero(
-                    resumo.lucro
-                ) + " MT";
-
-        }
-
+        const custo =
+            document.getElementById("custo");
 
         if (custo) {
 
             custo.textContent =
-                numero(
+                dinheiro(
                     resumo.custo
-                ) + " MT";
-
-        }
-
-
-        if (pedidos) {
-
-            pedidos.textContent =
-                numero(
-                    resumo.totalPedidos
                 );
 
         }
 
-    }
 
+        // =================================================
+        // LUCRO
+        // =================================================
+
+        const lucro =
+            document.getElementById("lucro");
+
+        if (lucro) {
+
+            lucro.textContent =
+                dinheiro(
+                    resumo.lucro
+                );
+
+        }
+
+
+        // =================================================
+        // VENDAS HOJE
+        // =================================================
+
+        const vendasHoje =
+            document.getElementById("vendasHoje");
+
+        if (vendasHoje) {
+
+            vendasHoje.textContent =
+                numero(
+                    resumo.vendasHoje
+                );
+
+        }
+
+
+    }
     catch (erro) {
 
         console.error(
-            "Erro no dashboard:",
+            "ERRO AO CARREGAR DASHBOARD:",
             erro
         );
 
@@ -207,7 +334,7 @@ async function carregarDashboard() {
 
 
 // =====================================================
-// TABELA DE VENDAS
+// CARREGAR TABELA DE VENDAS
 // =====================================================
 
 async function carregarTabela() {
@@ -215,17 +342,19 @@ async function carregarTabela() {
     try {
 
         const resposta =
-            await fetch(
-                API + "/vendas",
-                {
-                    cache: "no-store"
-                }
-            );
+            await fetch("/vendas", {
+                method: "GET",
+                headers: {
+                    "Accept": "application/json"
+                },
+                cache: "no-store"
+            });
+
 
         if (!resposta.ok) {
 
             throw new Error(
-                "HTTP " + resposta.status
+                "Erro HTTP: " + resposta.status
             );
 
         }
@@ -239,16 +368,13 @@ async function carregarTabela() {
             Array.isArray(json)
                 ? json
                 : (
-                    Array.isArray(json.vendas)
-                        ? json.vendas
-                        : []
+                    json.vendas ||
+                    []
                 );
 
 
         const lista =
-            document.getElementById(
-                "lista"
-            );
+            document.getElementById("lista");
 
 
         if (!lista) {
@@ -261,12 +387,10 @@ async function carregarTabela() {
         lista.innerHTML = "";
 
 
-        if (!vendas.length) {
+        if (vendas.length === 0) {
 
             lista.innerHTML = `
-
                 <tr>
-
                     <td
                         colspan="4"
                         style="
@@ -276,9 +400,7 @@ async function carregarTabela() {
                     >
                         Nenhuma venda encontrada.
                     </td>
-
                 </tr>
-
             `;
 
             return;
@@ -286,69 +408,76 @@ async function carregarTabela() {
         }
 
 
-        vendas.forEach(v => {
+        vendas.forEach(
+            function (venda) {
 
-            const tr =
-                document.createElement("tr");
-
-
-            const numeroVenda =
-                v.numero ||
-                "-";
+                const tr =
+                    document.createElement("tr");
 
 
-            const quantidade =
-                v.mb ??
-                v.gb ??
-                0;
+                const numeroVenda =
+                    venda.numero ||
+                    "-";
 
 
-            const valorVenda =
-                v.valor_venda ??
-                v.valor ??
-                0;
+                const quantidade =
+                    venda.mb !== undefined
+                        ? numero(venda.mb) + " MB"
+                        : (
+                            venda.gb !== undefined
+                                ? numero(venda.gb) + " GB"
+                                : "0"
+                        );
 
 
-            const status =
-                v.status ||
-                "Concluído";
+                const valorVenda =
+                    venda.valor_venda ??
+                    venda.valor ??
+                    venda.valor_pacote ??
+                    0;
 
 
-            tr.innerHTML = `
-
-                <td>
-                    ${numeroVenda}
-                </td>
-
-                <td>
-                    ${quantidade}
-                </td>
-
-                <td>
-                    ${valorVenda} MT
-                </td>
-
-                <td>
-
-                    <span class="status ok">
-                        ${status}
-                    </span>
-
-                </td>
-
-            `;
+                const status =
+                    venda.status ||
+                    "Concluído";
 
 
-            lista.appendChild(tr);
+                tr.innerHTML = `
 
-        });
+                    <td>
+                        ${numeroVenda}
+                    </td>
+
+                    <td>
+                        ${quantidade}
+                    </td>
+
+                    <td>
+                        ${dinheiro(valorVenda)}
+                    </td>
+
+                    <td>
+
+                        <span class="status ok">
+                            ${status}
+                        </span>
+
+                    </td>
+
+                `;
+
+
+                lista.appendChild(tr);
+
+            }
+        );
+
 
     }
-
     catch (erro) {
 
         console.error(
-            "Erro na tabela:",
+            "ERRO AO CARREGAR VENDAS:",
             erro
         );
 
@@ -358,40 +487,27 @@ async function carregarTabela() {
 
 
 // =====================================================
-// GRÁFICOS
+// CARREGAR GRÁFICOS
 // =====================================================
 
 async function carregarGraficos() {
 
     try {
 
-        if (
-            typeof Chart ===
-            "undefined"
-        ) {
-
-            console.warn(
-                "Chart.js ainda não foi carregado."
-            );
-
-            return;
-
-        }
-
-
         const resposta =
-            await fetch(
-                API + "/relatorios",
-                {
-                    cache: "no-store"
-                }
-            );
+            await fetch("/dashboard", {
+                method: "GET",
+                headers: {
+                    "Accept": "application/json"
+                },
+                cache: "no-store"
+            });
 
 
         if (!resposta.ok) {
 
             throw new Error(
-                "HTTP " + resposta.status
+                "Erro HTTP: " + resposta.status
             );
 
         }
@@ -409,11 +525,13 @@ async function carregarGraficos() {
 
 
         const vendasPorDia =
-            dados.vendasPorDia || {};
+            dados.vendasPorDia ||
+            {};
 
 
         const vendasPorMes =
-            dados.vendasPorMes || {};
+            dados.vendasPorMes ||
+            {};
 
 
         // =================================================
@@ -426,13 +544,28 @@ async function carregarGraficos() {
             );
 
 
-        if (canvasDias) {
+        if (
+            canvasDias &&
+            typeof Chart !== "undefined"
+        ) {
 
             if (graficoDias) {
 
                 graficoDias.destroy();
 
             }
+
+
+            const dias =
+                Object.keys(
+                    vendasPorDia
+                );
+
+
+            const valores =
+                Object.values(
+                    vendasPorDia
+                );
 
 
             graficoDias =
@@ -444,31 +577,27 @@ async function carregarGraficos() {
 
                         data: {
 
-                            labels:
-                                Object.keys(
-                                    vendasPorDia
-                                ),
+                            labels: dias,
 
                             datasets: [
 
                                 {
 
-                                    label:
-                                        "Vendas",
+                                    label: "Vendas",
 
-                                    data:
-                                        Object.values(
-                                            vendasPorDia
-                                        ),
+                                    data: valores,
 
-                                    borderWidth:
-                                        3,
+                                    borderColor:
+                                        "#22c55e",
 
-                                    tension:
-                                        0.4,
+                                    backgroundColor:
+                                        "rgba(34,197,94,0.1)",
 
-                                    fill:
-                                        false
+                                    tension: 0.4,
+
+                                    fill: true,
+
+                                    borderWidth: 3
 
                                 }
 
@@ -478,8 +607,7 @@ async function carregarGraficos() {
 
                         options: {
 
-                            responsive:
-                                true,
+                            responsive: true,
 
                             maintainAspectRatio:
                                 false,
@@ -488,8 +616,7 @@ async function carregarGraficos() {
 
                                 legend: {
 
-                                    display:
-                                        false
+                                    display: false
 
                                 }
 
@@ -524,13 +651,28 @@ async function carregarGraficos() {
             );
 
 
-        if (canvasMeses) {
+        if (
+            canvasMeses &&
+            typeof Chart !== "undefined"
+        ) {
 
             if (graficoMeses) {
 
                 graficoMeses.destroy();
 
             }
+
+
+            const meses =
+                Object.keys(
+                    vendasPorMes
+                );
+
+
+            const valoresMes =
+                Object.values(
+                    vendasPorMes
+                );
 
 
             graficoMeses =
@@ -542,28 +684,22 @@ async function carregarGraficos() {
 
                         data: {
 
-                            labels:
-                                Object.keys(
-                                    vendasPorMes
-                                ),
+                            labels: meses,
 
                             datasets: [
 
                                 {
 
-                                    label:
-                                        "Vendas",
+                                    label: "Vendas",
 
-                                    data:
-                                        Object.values(
-                                            vendasPorMes
-                                        ),
+                                    data: valoresMes,
 
-                                    borderWidth:
-                                        0,
+                                    backgroundColor:
+                                        "#ef4444",
 
-                                    borderRadius:
-                                        8
+                                    borderRadius: 8,
+
+                                    borderWidth: 0
 
                                 }
 
@@ -573,8 +709,7 @@ async function carregarGraficos() {
 
                         options: {
 
-                            responsive:
-                                true,
+                            responsive: true,
 
                             maintainAspectRatio:
                                 false,
@@ -583,8 +718,7 @@ async function carregarGraficos() {
 
                                 legend: {
 
-                                    display:
-                                        false
+                                    display: false
 
                                 }
 
@@ -608,12 +742,12 @@ async function carregarGraficos() {
 
         }
 
-    }
 
+    }
     catch (erro) {
 
         console.error(
-            "Erro nos gráficos:",
+            "ERRO AO CARREGAR GRÁFICOS:",
             erro
         );
 
@@ -623,738 +757,80 @@ async function carregarGraficos() {
 
 
 // =====================================================
-// CREDENCIAIS DA API
-// =====================================================
-
-async function carregarCredenciaisAPI() {
-
-    console.log(
-        "Carregando credenciais da API..."
-    );
-
-
-    try {
-
-        // ==========================================
-        // PEGAR USUÁRIO ATUAL
-        // ==========================================
-
-        let usuario =
-            auth.currentUser;
-
-
-        // ==========================================
-        // SE AINDA NÃO CARREGOU, ESPERAR FIREBASE
-        // ==========================================
-
-        if (!usuario) {
-
-            usuario =
-                await new Promise(
-                    resolve => {
-
-                        let finalizado =
-                            false;
-
-
-                        let cancelar =
-                            null;
-
-
-                        const terminar =
-                            user => {
-
-                                if (finalizado) {
-
-                                    return;
-
-                                }
-
-
-                                finalizado =
-                                    true;
-
-
-                                if (cancelar) {
-
-                                    cancelar();
-
-                                }
-
-
-                                resolve(user);
-
-                            };
-
-
-                        cancelar =
-                            onAuthState(
-                                user => {
-
-                                    terminar(
-                                        user
-                                    );
-
-                                }
-                            );
-
-
-                        // ==================================
-                        // SEGURANÇA:
-                        // NÃO FICAR ETERNAMENTE CARREGANDO
-                        // ==================================
-
-                        setTimeout(
-                            () => {
-
-                                terminar(
-                                    auth.currentUser
-                                );
-
-                            },
-                            10000
-                        );
-
-                    }
-                );
-
-        }
-
-
-        // ==========================================
-        // SEM LOGIN
-        // ==========================================
-
-        if (!usuario) {
-
-            console.error(
-                "Usuário não autenticado."
-            );
-
-
-            mostrarCredenciais(
-                "-",
-                "Faça login novamente."
-            );
-
-
-            return;
-
-        }
-
-
-        console.log(
-            "Usuário autenticado:",
-            usuario.uid
-        );
-
-
-        // ==========================================
-        // BUSCAR DADOS DO USUÁRIO
-        // ==========================================
-
-        let dados = null;
-
-
-        try {
-
-            dados =
-                await obterDadosUsuario();
-
-        }
-
-        catch (erro) {
-
-            console.error(
-                "Erro ao obter dados do usuário:",
-                erro
-            );
-
-        }
-
-
-        // ==========================================
-        // SE NÃO EXISTIR DADOS
-        // ==========================================
-
-        if (!dados) {
-
-            console.warn(
-                "Dados do usuário não encontrados."
-            );
-
-
-            // Pelo menos mostrar o UID do Firebase
-
-            mostrarCredenciais(
-                usuario.uid,
-                "API Key não encontrada"
-            );
-
-
-            return;
-
-        }
-
-
-        console.log(
-            "Dados encontrados:",
-            dados
-        );
-
-
-        // ==========================================
-        // UID
-        // ==========================================
-
-        const uid =
-            dados.uid ||
-            usuario.uid;
-
-
-        // ==========================================
-        // API KEY
-        // ==========================================
-
-        const apiKey =
-            dados.apiKey ||
-            dados.api_key ||
-            dados.APIKey ||
-            "";
-
-
-        // ==========================================
-        // MOSTRAR NA TELA
-        // ==========================================
-
-        mostrarCredenciais(
-            uid,
-            apiKey || "API Key não encontrada"
-        );
-
-
-        // ==========================================
-        // ATUALIZAR SIDEBAR
-        // ==========================================
-
-        const sidebarUID =
-            document.getElementById(
-                "sidebarUserUid"
-            );
-
-
-        const sidebarAPI =
-            document.getElementById(
-                "sidebarApiKey"
-            );
-
-
-        const sidebarNome =
-            document.getElementById(
-                "sidebarUserName"
-            );
-
-
-        const sidebarEmail =
-            document.getElementById(
-                "sidebarUserEmail"
-            );
-
-
-        if (sidebarUID) {
-
-            sidebarUID.textContent =
-                "UID: " + uid;
-
-        }
-
-
-        if (sidebarAPI) {
-
-            sidebarAPI.textContent =
-                "API Key: " +
-                (
-                    apiKey ||
-                    "Não encontrada"
-                );
-
-        }
-
-
-        if (sidebarNome) {
-
-            sidebarNome.textContent =
-                dados.nome ||
-                dados.name ||
-                usuario.displayName ||
-                "Usuário";
-
-        }
-
-
-        if (sidebarEmail) {
-
-            sidebarEmail.textContent =
-                dados.email ||
-                usuario.email ||
-                "-";
-
-        }
-
-
-        // ==========================================
-        // BOTÕES DE COPIAR
-        // ==========================================
-
-        configurarBotaoCopiar(
-            "copyTutorialUidBtn",
-            uid,
-            "Copiar UID"
-        );
-
-
-        configurarBotaoCopiar(
-            "copyTutorialApiKeyBtn",
-            apiKey,
-            "Copiar API Key"
-        );
-
-
-        configurarBotaoCopiar(
-            "copyUidBtn",
-            uid,
-            "Copiar UID"
-        );
-
-
-        configurarBotaoCopiar(
-            "copyApiKeyBtn",
-            apiKey,
-            "Copiar API Key"
-        );
-
-    }
-
-    catch (erro) {
-
-        console.error(
-            "ERRO NAS CREDENCIAIS:",
-            erro
-        );
-
-
-        mostrarCredenciais(
-            "-",
-            "Erro ao carregar"
-        );
-
-    }
-
-}
-
-
-// =====================================================
-// MOSTRAR CREDENCIAIS
-// =====================================================
-
-function mostrarCredenciais(
-    uid,
-    apiKey
-) {
-
-    // ==========================================
-    // TUTORIAL
-    // ==========================================
-
-    const elementoUID =
-        document.getElementById(
-            "tutorialUid"
-        );
-
-
-    const elementoAPI =
-        document.getElementById(
-            "tutorialApiKey"
-        );
-
-
-    if (elementoUID) {
-
-        elementoUID.textContent =
-            uid || "-";
-
-    }
-
-
-    if (elementoAPI) {
-
-        elementoAPI.textContent =
-            apiKey || "-";
-
-    }
-
-
-    // ==========================================
-    // SIDEBAR
-    // ==========================================
-
-    const sidebarUID =
-        document.getElementById(
-            "sidebarUserUid"
-        );
-
-
-    const sidebarAPI =
-        document.getElementById(
-            "sidebarApiKey"
-        );
-
-
-    if (sidebarUID) {
-
-        sidebarUID.textContent =
-            "UID: " +
-            (uid || "-");
-
-    }
-
-
-    if (sidebarAPI) {
-
-        sidebarAPI.textContent =
-            "API Key: " +
-            (apiKey || "-");
-
-    }
-
-}
-
-
-// =====================================================
-// CONFIGURAR BOTÃO COPIAR
-// =====================================================
-
-function configurarBotaoCopiar(
-    id,
-    valor,
-    textoOriginal
-) {
-
-    const botao =
-        document.getElementById(id);
-
-
-    if (!botao) {
-
-        return;
-
-    }
-
-
-    // ==========================================
-    // EVITAR DUPLICAR EVENTOS
-    // ==========================================
-
-    if (
-        botao.dataset.copiaConfigurada ===
-        "true"
-    ) {
-
-        return;
-
-    }
-
-
-    botao.dataset.copiaConfigurada =
-        "true";
-
-
-    botao.addEventListener(
-        "click",
-        async () => {
-
-            if (
-                !valor ||
-                valor ===
-                    "API Key não encontrada"
-            ) {
-
-                alert(
-                    "Informação não disponível."
-                );
-
-                return;
-
-            }
-
-
-            try {
-
-                await navigator.clipboard
-                    .writeText(
-                        String(valor)
-                    );
-
-
-                botao.textContent =
-                    "Copiado!";
-
-
-                setTimeout(
-                    () => {
-
-                        botao.textContent =
-                            textoOriginal;
-
-                    },
-                    1500
-                );
-
-            }
-
-            catch (erro) {
-
-                console.error(
-                    "Erro ao copiar:",
-                    erro
-                );
-
-
-                alert(
-                    "Não foi possível copiar."
-                );
-
-            }
-
-        }
-    );
-
-}
-
-
-// =====================================================
-// ATUALIZAR TUDO
-// =====================================================
-
-async function atualizarTudo() {
-
-    console.log(
-        "Atualizando dashboard..."
-    );
-
-
-    const botao =
-        document.getElementById(
-            "btnAtualizar"
-        );
-
-
-    const textoOriginal =
-        botao
-            ? botao.innerHTML
-            : "";
-
-
-    if (botao) {
-
-        botao.disabled =
-            true;
-
-        botao.innerHTML =
-            '<i class="fas fa-sync-alt fa-spin"></i> Atualizando...';
-
-    }
-
-
-    try {
-
-        await Promise.all([
-
-            carregarDashboard(),
-
-            carregarTabela(),
-
-            carregarGraficos(),
-
-            carregarCredenciaisAPI()
-
-        ]);
-
-
-        atualizarData();
-
-    }
-
-    catch (erro) {
-
-        console.error(
-            "Erro ao atualizar:",
-            erro
-        );
-
-    }
-
-    finally {
-
-        if (botao) {
-
-            botao.disabled =
-                false;
-
-            botao.innerHTML =
-                textoOriginal ||
-                '<i class="fas fa-sync-alt"></i> Atualizar';
-
-        }
-
-    }
-
-}
-
-
-// =====================================================
-// DATA
+// DATA ATUAL
 // =====================================================
 
 function atualizarData() {
 
-    const elemento =
+    const elementoData =
         document.getElementById(
             "data"
         );
 
 
-    if (elemento) {
+    if (!elementoData) {
 
-        elemento.textContent =
-            new Date()
-                .toLocaleString(
-                    "pt-PT"
-                );
+        return;
 
     }
+
+
+    elementoData.textContent =
+        new Date().toLocaleString(
+            "pt-PT"
+        );
 
 }
 
 
 // =====================================================
-// BOTÃO ATUALIZAR
+// ATUALIZAR DASHBOARD COMPLETO
 // =====================================================
 
-function inicializarBotaoAtualizar() {
+async function atualizarDashboard() {
 
-    // Aceita o ID principal
-    let botao =
-        document.getElementById(
-            "btnAtualizar"
-        );
-
-
-    // Compatibilidade com outros IDs
-    if (!botao) {
-
-        botao =
-            document.getElementById(
-                "atualizarBtn"
-            );
-
-    }
-
-
-    if (!botao) {
-
-        botao =
-            document.getElementById(
-                "btnRefresh"
-            );
-
-    }
-
-
-    if (!botao) {
-
-        console.warn(
-            "Botão Atualizar não encontrado."
-        );
-
-        return;
-
-    }
-
-
-    // Evitar evento duplicado
-    if (
-        botao.dataset.atualizarConfigurado ===
-        "true"
-    ) {
-
-        return;
-
-    }
-
-
-    botao.dataset.atualizarConfigurado =
-        "true";
-
-
-    botao.addEventListener(
-        "click",
-        function(e) {
-
-            e.preventDefault();
-            e.stopPropagation();
-
-            atualizarTudo();
-
-        }
+    console.log(
+        "Atualizando Dashboard..."
     );
 
+
+    await carregarDashboard();
+
+    await carregarTabela();
+
+    await carregarGraficos();
+
+    atualizarData();
+
 }
 
 
 // =====================================================
-// DISPONIBILIZAR PARA app.js
+// DISPONIBILIZAR GLOBALMENTE
 // =====================================================
 
 window.carregarDashboard =
     carregarDashboard;
 
-
 window.carregarTabela =
     carregarTabela;
-
 
 window.carregarGraficos =
     carregarGraficos;
 
-
-window.carregarCredenciaisAPI =
-    carregarCredenciaisAPI;
-
-
-window.atualizarTudo =
-    atualizarTudo;
+window.atualizarDashboard =
+    atualizarDashboard;
 
 
 // =====================================================
-// INICIALIZAÇÃO
+// INICIAR
 // =====================================================
 
 document.addEventListener(
     "DOMContentLoaded",
-    () => {
+    function () {
 
-        atualizarData();
-
-        inicializarBotaoAtualizar();
-
-        carregarDashboard();
-
-        carregarTabela();
-
-        carregarGraficos();
-
-        carregarCredenciaisAPI();
+        atualizarDashboard();
 
     }
 );
@@ -1362,21 +838,15 @@ document.addEventListener(
 
 // =====================================================
 // ATUALIZAÇÃO AUTOMÁTICA
+// A CADA 10 SEGUNDOS
 // =====================================================
 
 setInterval(
-    carregarDashboard,
-    5000
-);
+    function () {
 
+        atualizarDashboard();
 
-setInterval(
-    carregarTabela,
-    5000
-);
-
-
-setInterval(
-    carregarGraficos,
+    },
     10000
 );
+  
