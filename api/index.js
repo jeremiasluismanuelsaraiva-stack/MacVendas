@@ -52,7 +52,7 @@ app.get("/", (req, res) => {
 
         success: true,
 
-        nome: "Sistema SSD API",
+        nome: "MOZ TECH",
 
         versao: "1.0.0",
 
