@@ -2,8 +2,7 @@
 // DASHBOARD
 // =====================================================
 
-const API = window.location.origin;
-
+const API = window.location.origin + "/api";
 
 // =====================================================
 // FORMATAR NÚMEROS
