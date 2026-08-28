@@ -1,412 +1,740 @@
 // =====================================================
-// DASHBOARD
+// DASHBOARD.JS
+// Local: public/js/dashboard.js
 // =====================================================
 
-const API = window.location.origin + "/api";
+(function () {
 
-// =====================================================
-// FORMATAR NÚMEROS
-// =====================================================
+    "use strict";
 
-function numero(valor) {
 
-    const n = Number(valor);
+    // =================================================
+    // API
+    // =================================================
 
-    if (!Number.isFinite(n)) {
-        return "0";
+    const API = "/api";
+
+
+    // =================================================
+    // FORMATAR NÚMEROS
+    // =================================================
+
+    function numero(valor) {
+
+        const n = Number(valor);
+
+        if (!Number.isFinite(n)) {
+            return "0";
+        }
+
+        return n.toLocaleString("pt-MZ", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        });
+
     }
 
-    return n.toLocaleString("pt-MZ", {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2
-    });
 
-}
+    // =================================================
+    // FORMATAR MT
+    // =================================================
 
+    function dinheiro(valor) {
 
-// =====================================================
-// CARREGAR DASHBOARD
-// =====================================================
+        const n = Number(valor);
 
-async function carregarDashboard() {
+        if (!Number.isFinite(n)) {
+            return "0 MT";
+        }
 
-    console.log("====================================");
-    console.log("CARREGANDO DASHBOARD");
-    console.log("URL:", API + "/dashboard");
-    console.log("====================================");
+        return n.toLocaleString("pt-MZ", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }) + " MT";
 
-
-    try {
-
-        const resposta = await fetch(
-            API + "/dashboard",
-            {
-                method: "GET",
-                cache: "no-cache",
-                headers: {
-                    "Accept": "application/json"
-                }
-            }
-        );
+    }
 
 
-        console.log(
-            "Status dashboard:",
-            resposta.status
-        );
+    // =================================================
+    // ELEMENTO
+    // =================================================
+
+    function elemento(id) {
+
+        return document.getElementById(id);
+
+    }
 
 
-        if (!resposta.ok) {
+    // =================================================
+    // ATUALIZAR ELEMENTO
+    // =================================================
 
-            const texto =
-                await resposta.text();
+    function atualizar(id, valor) {
 
-            console.error(
-                "Erro HTTP dashboard:",
-                resposta.status,
-                texto
-            );
+        const el = elemento(id);
 
-            mostrarErroDashboard();
+        if (el) {
 
-            return;
+            el.textContent = valor;
 
         }
 
-
-        const json =
-            await resposta.json();
+    }
 
 
-        console.log(
-            "Resposta dashboard:",
-            json
-        );
+    // =================================================
+    // CARREGAR DASHBOARD
+    // GET /api/dashboard
+    // =================================================
+
+    async function carregarDashboard() {
+
+        try {
+
+            console.log(
+                "Carregando dashboard..."
+            );
 
 
-        if (
-            !json ||
-            json.success !== true
-        ) {
+            const resposta =
+                await fetch(
+                    API + "/dashboard",
+                    {
+                        method: "GET",
+                        headers: {
+                            "Accept": "application/json"
+                        },
+                        cache: "no-store"
+                    }
+                );
 
-            console.error(
-                "Dashboard retornou erro:",
+
+            console.log(
+                "Dashboard HTTP:",
+                resposta.status
+            );
+
+
+            if (!resposta.ok) {
+
+                throw new Error(
+                    "Erro HTTP " +
+                    resposta.status
+                );
+
+            }
+
+
+            const json =
+                await resposta.json();
+
+
+            console.log(
+                "Dashboard API:",
                 json
             );
 
-            mostrarErroDashboard();
+
+            if (
+                !json ||
+                json.success !== true
+            ) {
+
+                throw new Error(
+                    json?.error ||
+                    "API retornou erro."
+                );
+
+            }
+
+
+            const d =
+                json.dashboard || {};
+
+
+            // =========================================
+            // ESTATÍSTICAS
+            // =========================================
+
+            atualizar(
+                "vendas",
+                numero(d.vendas)
+            );
+
+
+            atualizar(
+                "valor",
+                dinheiro(d.faturamento)
+            );
+
+
+            atualizar(
+                "clientes",
+                numero(d.clientes)
+            );
+
+
+            atualizar(
+                "disp",
+                numero(d.dispositivos)
+            );
+
+
+            atualizar(
+                "totalGB",
+                numero(d.totalGB) + " GB"
+            );
+
+
+            atualizar(
+                "lucro",
+                dinheiro(d.lucro)
+            );
+
+
+            atualizar(
+                "custo",
+                dinheiro(d.custo)
+            );
+
+
+            atualizar(
+                "pedidos",
+                numero(d.pedidos)
+            );
+
+
+            // =========================================
+            // DATA
+            // =========================================
+
+            const data =
+                elemento("data");
+
+            if (data) {
+
+                data.textContent =
+                    "Atualizado em " +
+                    new Date()
+                        .toLocaleString("pt-MZ");
+
+            }
+
+
+            // =========================================
+            // CARREGAR ÚLTIMAS VENDAS
+            // =========================================
+
+            await carregarVendas();
+
+
+            console.log(
+                "Dashboard carregado com sucesso."
+            );
+
+
+            return json;
+
+
+        }
+        catch (erro) {
+
+            console.error(
+                "Erro ao carregar dashboard:",
+                erro
+            );
+
+
+            atualizar(
+                "vendas",
+                "Erro"
+            );
+
+            atualizar(
+                "valor",
+                "Erro"
+            );
+
+            atualizar(
+                "clientes",
+                "Erro"
+            );
+
+            atualizar(
+                "disp",
+                "Erro"
+            );
+
+            atualizar(
+                "totalGB",
+                "Erro"
+            );
+
+            atualizar(
+                "lucro",
+                "Erro"
+            );
+
+            atualizar(
+                "custo",
+                "Erro"
+            );
+
+            atualizar(
+                "pedidos",
+                "Erro"
+            );
+
+
+            const data =
+                elemento("data");
+
+            if (data) {
+
+                data.textContent =
+                    "Erro ao carregar";
+
+            }
+
+
+            const lista =
+                elemento("lista");
+
+            if (lista) {
+
+                lista.innerHTML = `
+                    <tr>
+                        <td
+                            colspan="4"
+                            style="text-align:center;padding:20px"
+                        >
+                            Erro ao carregar vendas.
+                        </td>
+                    </tr>
+                `;
+
+            }
+
+
+            throw erro;
+
+        }
+
+    }
+
+
+    // =================================================
+    // CARREGAR VENDAS
+    // GET /api/vendas
+    // =================================================
+
+    async function carregarVendas() {
+
+        try {
+
+            console.log(
+                "Carregando vendas..."
+            );
+
+
+            const resposta =
+                await fetch(
+                    API + "/vendas",
+                    {
+                        method: "GET",
+                        headers: {
+                            "Accept": "application/json"
+                        },
+                        cache: "no-store"
+                    }
+                );
+
+
+            console.log(
+                "Vendas HTTP:",
+                resposta.status
+            );
+
+
+            if (!resposta.ok) {
+
+                throw new Error(
+                    "Erro HTTP vendas: " +
+                    resposta.status
+                );
+
+            }
+
+
+            const json =
+                await resposta.json();
+
+
+            console.log(
+                "Vendas API:",
+                json
+            );
+
+
+            let vendas;
+
+
+            if (Array.isArray(json)) {
+
+                vendas = json;
+
+            }
+            else if (
+                json &&
+                Array.isArray(json.vendas)
+            ) {
+
+                vendas = json.vendas;
+
+            }
+            else if (
+                json &&
+                Array.isArray(json.data)
+            ) {
+
+                vendas = json.data;
+
+            }
+            else {
+
+                vendas = [];
+
+            }
+
+
+            renderizarVendas(
+                vendas
+            );
+
+
+            return vendas;
+
+
+        }
+        catch (erro) {
+
+            console.error(
+                "Erro ao carregar vendas:",
+                erro
+            );
+
+
+            const lista =
+                elemento("lista");
+
+            if (lista) {
+
+                lista.innerHTML = `
+                    <tr>
+                        <td
+                            colspan="4"
+                            style="text-align:center;padding:20px"
+                        >
+                            Erro ao carregar vendas.
+                        </td>
+                    </tr>
+                `;
+
+            }
+
+
+            throw erro;
+
+        }
+
+    }
+
+
+    // =================================================
+    // MOSTRAR VENDAS
+    // =================================================
+
+    function renderizarVendas(vendas) {
+
+        const lista =
+            elemento("lista");
+
+
+        if (!lista) {
 
             return;
 
         }
 
 
-        const d =
-            json.dashboard || {};
+        if (
+            !Array.isArray(vendas) ||
+            vendas.length === 0
+        ) {
 
+            lista.innerHTML = `
+                <tr>
+                    <td
+                        colspan="4"
+                        style="text-align:center;padding:20px"
+                    >
+                        Nenhuma venda encontrada.
+                    </td>
+                </tr>
+            `;
 
-        // =================================================
-        // VENDAS
-        // =================================================
-
-        const vendas =
-            document.getElementById(
-                "vendas"
-            );
-
-        if (vendas) {
-
-            vendas.textContent =
-                numero(
-                    d.vendas
-                );
+            return;
 
         }
 
 
-        // =================================================
-        // FATURAMENTO
-        // =================================================
+        lista.innerHTML =
+            vendas
+                .slice(0, 20)
+                .map(function (venda) {
 
-        const valor =
-            document.getElementById(
-                "valor"
+
+                    const numeroVenda =
+                        venda.numero ||
+                        venda.telefone ||
+                        "-";
+
+
+                    const mb =
+                        Number(
+                            venda.mb || 0
+                        );
+
+
+                    let gb =
+                        Number(
+                            venda.gb ||
+                            venda.gbPacote ||
+                            venda.gb_pacote ||
+                            0
+                        );
+
+
+                    let quantidade;
+
+
+                    if (
+                        gb > 0
+                    ) {
+
+                        quantidade =
+                            numero(gb) +
+                            " GB";
+
+                    }
+                    else if (
+                        mb > 0
+                    ) {
+
+                        quantidade =
+                            numero(mb) +
+                            " MB";
+
+                    }
+                    else {
+
+                        quantidade =
+                            "-";
+
+                    }
+
+
+                    const valor =
+                        Number(
+                            venda.valor_venda ??
+                            venda.valor_pacote ??
+                            venda.valorPacote ??
+                            venda.valor ??
+                            0
+                        );
+
+
+                    const status =
+                        venda.status ||
+                        "Concluído";
+
+
+                    return `
+                        <tr>
+
+                            <td>
+                                ${escapar(
+                                    numeroVenda
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapar(
+                                    quantidade
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapar(
+                                    dinheiro(valor)
+                                )}
+                            </td>
+
+                            <td>
+                                <span class="status ok">
+                                    ${escapar(
+                                        status
+                                    )}
+                                </span>
+                            </td>
+
+                        </tr>
+                    `;
+
+                })
+                .join("");
+
+    }
+
+
+    // =================================================
+    // PROTEGER HTML
+    // =================================================
+
+    function escapar(valor) {
+
+        return String(valor ?? "")
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#039;"
             );
 
-        if (valor) {
+    }
 
-            valor.textContent =
-                numero(
-                    d.faturamento
-                ) + " MT";
+
+    // =================================================
+    // BOTÃO ATUALIZAR
+    // =================================================
+
+    function configurarBotaoAtualizar() {
+
+        const botao =
+            elemento("btnAtualizar");
+
+
+        if (!botao) {
+
+            return;
 
         }
 
 
-        // =================================================
-        // CLIENTES
-        // =================================================
+        botao.addEventListener(
+            "click",
+            async function () {
 
-        const clientes =
-            document.getElementById(
-                "clientes"
-            );
+                if (botao.disabled) {
 
-        if (clientes) {
+                    return;
 
-            clientes.textContent =
-                numero(
-                    d.clientes
-                );
-
-        }
+                }
 
 
-        // =================================================
-        // DISPOSITIVOS
-        // =================================================
-
-        const dispositivos =
-            document.getElementById(
-                "disp"
-            );
-
-        if (dispositivos) {
-
-            dispositivos.textContent =
-                numero(
-                    d.dispositivos
-                );
-
-        }
+                const original =
+                    botao.innerHTML;
 
 
-        // =================================================
-        // TOTAL GB
-        // =================================================
-
-        const totalGB =
-            document.getElementById(
-                "totalGB"
-            );
-
-        if (totalGB) {
-
-            totalGB.textContent =
-                numero(
-                    d.totalGB
-                );
-
-        }
+                botao.disabled = true;
 
 
-        // =================================================
-        // LUCRO
-        // =================================================
-
-        const lucro =
-            document.getElementById(
-                "lucro"
-            );
-
-        if (lucro) {
-
-            lucro.textContent =
-                numero(
-                    d.lucro
-                ) + " MT";
-
-        }
+                botao.innerHTML = `
+                    <i class="fas fa-spinner fa-spin"></i>
+                    Atualizando...
+                `;
 
 
-        // =================================================
-        // CUSTO
-        // =================================================
+                try {
 
-        const custo =
-            document.getElementById(
-                "custo"
-            );
+                    await carregarDashboard();
 
-        if (custo) {
+                }
+                catch (erro) {
 
-            custo.textContent =
-                numero(
-                    d.custo
-                ) + " MT";
-
-        }
-
-
-        // =================================================
-        // PEDIDOS
-        // =================================================
-
-        const pedidos =
-            document.getElementById(
-                "pedidos"
-            );
-
-        if (pedidos) {
-
-            pedidos.textContent =
-                numero(
-                    d.pedidos
-                );
-
-        }
-
-
-        // =================================================
-        // DATA
-        // =================================================
-
-        const data =
-            document.getElementById(
-                "data"
-            );
-
-        if (data) {
-
-            data.textContent =
-                new Date()
-                    .toLocaleString(
-                        "pt-MZ"
+                    console.error(
+                        erro
                     );
 
+                }
+                finally {
+
+                    botao.disabled = false;
+
+                    botao.innerHTML =
+                        original;
+
+                }
+
+            }
+        );
+
+    }
+
+
+    // =================================================
+    // EXPORTAR PARA WINDOW
+    // =================================================
+
+    window.carregarDashboard =
+        carregarDashboard;
+
+
+    window.carregarVendas =
+        carregarVendas;
+
+
+    window.carregarTabela =
+        carregarVendas;
+
+
+    // =================================================
+    // INICIALIZAÇÃO
+    // =================================================
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            configurarBotaoAtualizar();
+
+            carregarDashboard()
+                .catch(function (erro) {
+
+                    console.error(
+                        "Falha inicial:",
+                        erro
+                    );
+
+                });
+
         }
+    );
 
 
-        console.log(
-            "Dashboard carregado com sucesso."
-        );
-
-    }
-    catch (erro) {
-
-        console.error(
-            "ERRO AO CARREGAR DASHBOARD:",
-            erro
-        );
-
-        mostrarErroDashboard();
-
-    }
-
-}
-
-
-// =====================================================
-// MOSTRAR ERRO
-// =====================================================
-
-function mostrarErroDashboard() {
-
-    const ids = [
-        "vendas",
-        "clientes",
-        "disp",
-        "totalGB",
-        "pedidos"
-    ];
-
-
-    ids.forEach(id => {
-
-        const elemento =
-            document.getElementById(id);
-
-        if (elemento) {
-
-            elemento.textContent =
-                "Erro";
-
-        }
-
-    });
-
-
-    const valor =
-        document.getElementById(
-            "valor"
-        );
-
-    if (valor) {
-
-        valor.textContent =
-            "Erro";
-
-    }
-
-
-    const lucro =
-        document.getElementById(
-            "lucro"
-        );
-
-    if (lucro) {
-
-        lucro.textContent =
-            "Erro";
-
-    }
-
-
-    const custo =
-        document.getElementById(
-            "custo"
-        );
-
-    if (custo) {
-
-        custo.textContent =
-            "Erro";
-
-    }
-
-
-    const data =
-        document.getElementById(
-            "data"
-        );
-
-    if (data) {
-
-        data.textContent =
-            "Erro ao carregar";
-
-    }
-
-}
-
-
-// =====================================================
-// DISPONIBILIZAR PARA OUTROS JS
-// =====================================================
-
-window.carregarDashboard =
-    carregarDashboard;
-
-
-// =====================================================
-// INICIAR
-// =====================================================
-
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
-
-        carregarDashboard();
-
-    }
-);
-
-
-// =====================================================
-// ATUALIZAÇÃO AUTOMÁTICA
-// =====================================================
-
-setInterval(
-    carregarDashboard,
-    5000
-);
+})();
