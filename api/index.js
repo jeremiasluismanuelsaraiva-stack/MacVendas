@@ -23,69 +23,37 @@ app.use(express.urlencoded({
 // ROTAS DA API
 // =====================================================
 
-app.use(
-    "/dashboard",
-    require("./dashboard")
-);
+app.use("/dashboard", require("./dashboard"));
 
-app.use(
-    "/vendas",
-    require("./vendas")
-);
+app.use("/vendas", require("./vendas"));
 
-app.use(
-    "/clientes",
-    require("./clientes")
-);
+app.use("/clientes", require("./clientes"));
 
-app.use(
-    "/pedidos",
-    require("./pedidos")
-);
+app.use("/pedidos", require("./pedidos"));
 
-app.use(
-    "/dispositivos",
-    require("./dispositivos")
-);
+app.use("/dispositivos", require("./dispositivos"));
 
-app.use(
-    "/pacotes",
-    require("./pacotes")
-);
+app.use("/pacotes", require("./pacotes"));
 
-app.use(
-    "/grupos",
-    require("./grupos")
-);
+app.use("/grupos", require("./grupos"));
 
-app.use(
-    "/configuracoes",
-    require("./configuracoes")
-);
+app.use("/configuracoes", require("./configuracoes"));
 
-app.use(
-    "/relatorios",
-    require("./relatorios")
-);
+app.use("/relatorios", require("./relatorios"));
 
 
 // =====================================================
 // STATUS DA API
-// GET /
+// GET /api/
 // =====================================================
 
 app.get("/", (req, res) => {
 
     res.json({
-
         success: true,
-
         nome: "Sistema SSD API",
-
         versao: "1.0.0",
-
         status: "Online"
-
     });
 
 });
