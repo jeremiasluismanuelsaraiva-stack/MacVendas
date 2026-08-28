@@ -1,1533 +1,1397 @@
-
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-MZ">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>MOZ TECH | Gestão de Vendas + CRM</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>MOZ TECH - Dashboard</title>
+
+    <!-- FONT AWESOME -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+    <!-- CSS -->
+    <link
+        rel="stylesheet"
+        href="/css/style.css"
+    >
+
     <style>
-        * {
+
+        /* ==========================================
+           ESTRUTURA
+        ========================================== */
+
+        html,
+        body {
+
+            width: 100%;
+            min-height: 100%;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
+
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, 'Inter', sans-serif;
-            background: radial-gradient(circle at 20% 30%, #0a0a0f, #030305);
-            color: #eef2ff;
+
             overflow-x: hidden;
-            font-size: 16px;
-            width: 100%;
-            max-width: 100vw;
+
         }
+
 
         .app-container {
-            display: flex;
+
             min-height: 100vh;
+            display: flex;
             position: relative;
-            width: 100%;
-            max-width: 100%;
-            overflow-x: hidden;
+
         }
+
+
+        /* ==========================================
+           SIDEBAR
+        ========================================== */
 
         .sidebar {
-            width: 280px;
-            background: rgba(10, 10, 20, 0.95);
-            backdrop-filter: blur(12px);
-            border-right: 1px solid rgba(0, 102, 204, 0.3);
+
+            width: 260px;
+            min-width: 260px;
+            min-height: 100vh;
+
+            background: var(--bg-secondary);
+
+            border-right:
+                1px solid
+                var(--border-color);
+
             position: fixed;
             left: 0;
             top: 0;
             bottom: 0;
-            overflow-y: auto;
-            transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+
             z-index: 1000;
-            transform: translateX(0);
-            box-shadow: 4px 0 30px rgba(0,0,0,0.5);
+
+            overflow-y: auto;
+
+            transition:
+                transform 0.3s ease;
+
         }
 
-        .sidebar.closed {
-            transform: translateX(-100%);
-        }
 
-        .sidebar-header {
-            padding: 30px 20px;
-            border-bottom: 1px solid rgba(0,102,204,0.4);
-            text-align: center;
-            background: linear-gradient(135deg, #0a0a1a, #05050a);
-        }
-
-        .sidebar-header h2 {
-            font-size: 24px;
-            background: linear-gradient(135deg, #fff, #3b82f6);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            letter-spacing: -0.5px;
-        }
-
-        .user-info-sidebar {
-            padding: 20px;
-            background: rgba(15, 20, 30, 0.6);
-            margin: 20px 15px;
-            border-radius: 24px;
-            border: 1px solid rgba(0,102,204,0.4);
-            backdrop-filter: blur(4px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-        }
-
-        .user-avatar {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(145deg, #0066cc, #004499);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 15px;
-            border: 2px solid rgba(255,255,255,0.3);
-            box-shadow: 0 0 20px rgba(0,102,204,0.5);
-        }
-
-        .user-avatar i {
-            font-size: 40px;
-            color: white;
-            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3));
-        }
-
-        .user-name {
-            text-align: center;
-            font-weight: 700;
-            margin-bottom: 8px;
-            font-size: 18px;
-            background: linear-gradient(135deg, #fff, #90caf9);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            word-break: break-word;
-        }
-
-        .user-email,
-        .user-uid,
-        .api-key-info {
-            text-align: center;
-            font-size: 12px;
-            color: #9ca3af;
-            word-break: break-all;
-            margin-top: 8px;
-        }
-
-        .user-uid {
-            color: #34d399;
-            font-weight: 600;
-            background: rgba(0,0,0,0.5);
-            padding: 8px;
-            border-radius: 16px;
-            font-family: monospace;
-            word-break: break-all;
-        }
-
-        .api-key-info {
-            background: rgba(0,0,0,0.4);
-            border-radius: 16px;
-            padding: 8px;
-            font-family: monospace;
-            font-size: 11px;
-            color: #60a5fa;
-            word-break: break-all;
-        }
-
-        .copy-btn {
-            background: linear-gradient(90deg, #0066cc, #0099ff);
-            border: none;
-            color: white;
-            padding: 10px;
-            border-radius: 40px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            margin-top: 12px;
-            width: 100%;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(0,102,204,0.3);
-        }
-
-        .copy-btn:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.05);
-            box-shadow: 0 6px 16px rgba(0,102,204,0.4);
-        }
-
-        .menu-item {
-            padding: 14px 20px;
-            margin: 8px 16px;
-            border-radius: 60px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            color: #cbd5e1;
-            font-size: 15px;
-            font-weight: 500;
-            backdrop-filter: blur(4px);
-        }
-
-        .menu-item i {
-            width: 24px;
-            font-size: 18px;
-        }
-
-        .menu-item:hover {
-            background: rgba(0,102,204,0.2);
-            color: white;
-            transform: translateX(6px);
-        }
-
-        .menu-item.active {
-            background: linear-gradient(90deg, #0066cc, #0a4a8a);
-            color: white;
-            box-shadow: 0 4px 12px rgba(0,102,204,0.4);
-        }
-
-        .logout-btn {
-            margin-top: 30px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding-top: 20px;
-        }
-
-        .logout-btn .menu-item {
-            color: #ff6b6b;
-        }
-
-        .logout-btn .menu-item:hover {
-            background: rgba(255,68,68,0.2);
-            color: #ff8888;
-        }
-
-        .menu-toggle {
-            display: none;
-            position: fixed;
-            top: 18px;
-            left: 18px;
-            z-index: 1001;
-            background: linear-gradient(145deg, #0066cc, #004499);
-            border: none;
-            color: white;
-            padding: 12px 18px;
-            border-radius: 40px;
-            cursor: pointer;
-            font-size: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            pointer-events: auto;
-        }
-
-        .menu-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(6px);
-            z-index: 999;
-            cursor: pointer;
-        }
-
-        .menu-overlay.active {
-            display: block;
-        }
+        /* ==========================================
+           CONTEÚDO
+        ========================================== */
 
         .main-content {
-            flex: 1;
-            margin-left: 280px;
-            padding: 28px;
-            transition: margin-left 0.3s ease;
-            width: calc(100% - 280px);
-            max-width: calc(100% - 280px);
-            overflow-x: hidden;
-        }
 
-        .header,
-        .stat-card,
-        .diario-card,
-        .rhythm-card,
-        .rank-card,
-        .chart-card,
-        .new-numbers-card,
-        .section,
-        .pacotes-card {
-            background: rgba(20, 25, 40, 0.65);
-            backdrop-filter: blur(10px);
-            border-radius: 28px;
-            border: 1px solid rgba(0, 102, 204, 0.3);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
             width: 100%;
-            overflow-x: hidden;
+
+            margin-left: 260px;
+
+            min-height: 100vh;
+
+            padding: 25px;
+
+            transition:
+                margin-left 0.3s ease;
+
         }
 
-        .stat-card:hover,
-        .diario-card:hover,
-        .rank-card:hover,
-        .pacotes-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            border-color: rgba(0,102,204,0.6);
+
+        /* ==========================================
+           LOGO
+        ========================================== */
+
+        .sidebar-header {
+
+            padding: 25px 20px;
+
+            border-bottom:
+                1px solid
+                var(--border-color);
+
         }
 
-        .header {
-            padding: 24px 32px;
-            margin-bottom: 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
+
+        .sidebar-header h2 {
+
+            margin: 0;
+
+            color:
+                var(--text-primary);
+
+            font-size: 22px;
+
         }
 
-        .logo h1 {
-            font-size: 28px;
-            background: linear-gradient(135deg, #fff, #60a5fa);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
 
-        .logo h1 i {
-            color: #3b82f6;
-            margin-right: 10px;
-        }
+        .sidebar-header p {
 
-        .logo p {
+            margin: 5px 0 0;
+
+            color:
+                var(--text-secondary);
+
             font-size: 13px;
-            color: #94a3b8;
+
         }
 
-        .btn {
-            padding: 12px 24px;
-            border-radius: 40px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            display: inline-flex;
+
+        /* ==========================================
+           MENU
+        ========================================== */
+
+        .sidebar-menu {
+
+            padding: 15px 10px;
+
+        }
+
+
+        .menu-item {
+
+            width: 100%;
+
+            display: flex;
+
             align-items: center;
-            gap: 10px;
-            transition: all 0.2s;
+
+            gap: 12px;
+
+            padding: 13px 15px;
+
+            margin-bottom: 5px;
+
+            border: 0;
+
+            border-radius: 10px;
+
+            background: transparent;
+
+            color:
+                var(--text-primary);
+
+            text-decoration: none;
+
+            cursor: pointer;
+
             font-size: 14px;
+
+            text-align: left;
+
+            transition: 0.2s;
+
         }
 
-        .btn-primary {
-            background: linear-gradient(90deg, #0066cc, #3b82f6);
-            color: white;
-            box-shadow: 0 4px 12px rgba(0,102,204,0.3);
+
+        .menu-item:hover {
+
+            background:
+                rgba(0, 102, 204, 0.08);
+
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.05);
-            box-shadow: 0 8px 20px rgba(0,102,204,0.4);
+
+        .menu-item.active {
+
+            background:
+                var(--accent-color);
+
+            color: #fff;
+
         }
 
-        .btn-outline {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid #3b82f6;
-            color: #e0e7ff;
+
+        .menu-item i {
+
+            width: 20px;
+
+            text-align: center;
+
         }
 
-        .btn-danger {
-            background: linear-gradient(90deg, #dc2626, #b91c1c);
-            color: white;
+
+        /* ==========================================
+           BOTÃO 3 BARRAS
+        ========================================== */
+
+        .menu-toggle {
+
+            display: none;
+
+            position: fixed;
+
+            top: 15px;
+
+            left: 15px;
+
+            width: 45px;
+
+            height: 45px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            background:
+                var(--accent-color);
+
+            color: #fff;
+
+            cursor: pointer;
+
+            z-index: 2001;
+
+            font-size: 20px;
+
         }
 
-        .btn-danger:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.05);
+
+        .menu-toggle:hover {
+
+            background:
+                var(--accent-hover);
+
         }
 
-        .btn-success {
-            background: linear-gradient(90deg, #10b981, #059669);
-            color: white;
+
+        /* ==========================================
+           OVERLAY
+        ========================================== */
+
+        .menu-overlay {
+
+            display: none;
+
+            position: fixed;
+
+            inset: 0;
+
+            background:
+                rgba(0, 0, 0, 0.55);
+
+            z-index: 999;
+
         }
+
+
+        .menu-overlay.active {
+
+            display: block;
+
+        }
+
+
+        /* ==========================================
+           TOPO
+        ========================================== */
+
+        .dashboard-header {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 15px;
+
+            margin-bottom: 25px;
+
+        }
+
+
+        .dashboard-title h1 {
+
+            margin: 0;
+
+            font-size: 28px;
+
+        }
+
+
+        .dashboard-title p {
+
+            margin: 5px 0 0;
+
+            color:
+                var(--text-secondary);
+
+        }
+
+
+        .header-actions {
+
+            display: flex;
+
+            gap: 10px;
+
+        }
+
+
+        .refresh-btn {
+
+            border: 1px solid
+                var(--border-color);
+
+            background:
+                var(--bg-secondary);
+
+            color:
+                var(--text-primary);
+
+            padding: 10px 15px;
+
+            border-radius: 10px;
+
+            cursor: pointer;
+
+            font-weight: 600;
+
+        }
+
+
+        .refresh-btn:hover {
+
+            border-color:
+                var(--accent-color);
+
+            color:
+                var(--accent-color);
+
+        }
+
+
+        /* ==========================================
+           CARDS
+        ========================================== */
 
         .stats-grid {
+
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 20px;
-            margin-bottom: 32px;
+
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(180px, 1fr)
+                );
+
+            gap: 15px;
+
+            margin-bottom: 25px;
+
         }
+
 
         .stat-card {
+
+            background:
+                var(--bg-secondary);
+
+            border:
+                1px solid
+                var(--border-color);
+
+            border-radius: 15px;
+
             padding: 20px;
-            position: relative;
-            overflow: hidden;
+
+            box-shadow:
+                var(--card-shadow);
+
         }
 
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, #0066cc, #00ccff);
-        }
 
-        .stat-icon {
-            font-size: 32px;
-            color: #3b82f6;
+        .stat-card .stat-icon {
+
+            width: 42px;
+
+            height: 42px;
+
+            border-radius: 10px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background:
+                rgba(0, 102, 204, 0.1);
+
+            color:
+                var(--accent-color);
+
             margin-bottom: 12px;
+
         }
 
-        .stat-title {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: #9ca3af;
-            margin-bottom: 8px;
-        }
 
-        .stat-value {
-            font-size: 28px;
-            font-weight: 800;
-            color: white;
-            word-break: break-word;
-        }
+        .stat-card h3 {
 
-        .profit-positive {
-            color: #34d399;
-            text-shadow: 0 0 6px rgba(52, 211, 153, 0.3);
-        }
+            margin: 0;
 
-        .diario-card,
-        .rhythm-card,
-        .rank-card,
-        .chart-card,
-        .new-numbers-card,
-        .section,
-        .pacotes-card {
-            padding: 24px;
-            margin-bottom: 28px;
-        }
-
-        h3 {
-            font-size: 20px;
-            margin-bottom: 20px;
-            padding-left: 14px;
-            border-left: 5px solid #0066cc;
-            font-weight: 600;
-            word-break: break-word;
-        }
-
-        .rhythm-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 28px;
-            margin-bottom: 28px;
-        }
-
-        .rhythm-card.alto h3 {
-            border-left-color: #ff4444;
-            color: #ff8888;
-        }
-
-        .rhythm-card.normal h3 {
-            border-left-color: #3b82f6;
-        }
-
-        .rhythm-stats,
-        .diario-stats {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            padding: 16px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 20px;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .rhythm-stat,
-        .diario-stat {
-            text-align: center;
-            flex: 1;
-            min-width: 80px;
-        }
-
-        .rhythm-stat .label,
-        .diario-stat .label {
-            font-size: 12px;
-            color: #9ca3af;
-            text-transform: uppercase;
-        }
-
-        .rhythm-stat .value,
-        .diario-stat .value {
-            font-size: 22px;
-            font-weight: 800;
-            word-break: break-word;
-        }
-
-        .three-columns,
-        .two-columns {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-            gap: 28px;
-            margin-bottom: 28px;
-        }
-
-        .rank-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            font-size: 14px;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .rank-number {
-            font-weight: bold;
-            color: #3b82f6;
-            width: 40px;
-        }
-
-        .rank-name {
-            flex: 1;
-            font-weight: 500;
-            word-break: break-word;
-        }
-
-        .rank-value {
-            font-weight: bold;
-            background: rgba(0,102,204,0.2);
-            padding: 4px 12px;
-            border-radius: 40px;
-            white-space: nowrap;
-        }
-
-        .rank-filters,
-        .quick-filters,
-        .filters {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-        }
-
-        .rank-filter-btn {
-            background: rgba(0,0,0,0.4);
-            border: 1px solid rgba(59,130,246,0.4);
-            padding: 8px 20px;
-            border-radius: 40px;
-            cursor: pointer;
             font-size: 13px;
+
+            color:
+                var(--text-secondary);
+
             font-weight: 500;
-            color: #cbd5e1;
-            transition: all 0.2s;
+
         }
 
-        .rank-filter-btn.active {
-            background: #0066cc;
-            border-color: #0066cc;
-            color: white;
-            box-shadow: 0 2px 8px rgba(0,102,204,0.5);
+
+        .stat-card .stat-value {
+
+            margin-top: 6px;
+
+            font-size: 24px;
+
+            font-weight: 700;
+
+            color:
+                var(--text-primary);
+
         }
 
-        .filter-group {
+
+        /* ==========================================
+           SEÇÕES
+        ========================================== */
+
+        .section {
+
+            background:
+                var(--bg-secondary);
+
+            border:
+                1px solid
+                var(--border-color);
+
+            border-radius: 15px;
+
+            padding: 20px;
+
+            margin-bottom: 20px;
+
+            box-shadow:
+                var(--card-shadow);
+
+        }
+
+
+        .section-header {
+
             display: flex;
+
             align-items: center;
-            gap: 12px;
-            background: rgba(0,0,0,0.4);
-            padding: 10px 20px;
-            border-radius: 60px;
-            border: 1px solid rgba(59,130,246,0.4);
-            flex: 1;
-            min-width: 160px;
+
+            justify-content: space-between;
+
+            margin-bottom: 15px;
+
         }
 
-        .filter-group i {
-            color: #3b82f6;
-            font-size: 16px;
+
+        .section-header h2 {
+
+            margin: 0;
+
+            font-size: 19px;
+
         }
 
-        select,
-        .filter-group input {
-            background: transparent;
-            border: none;
-            color: white;
-            padding: 8px 0;
-            outline: none;
-            font-size: 14px;
+
+        /* ==========================================
+           TABELA
+        ========================================== */
+
+        .table-container {
+
             width: 100%;
-        }
 
-        select option {
-            background: #0f172a;
-        }
-
-        .table-wrapper {
             overflow-x: auto;
-            border-radius: 20px;
-            width: 100%;
-            -webkit-overflow-scrolling: touch;
+
         }
+
 
         table {
+
             width: 100%;
+
             border-collapse: collapse;
-            font-size: 13px;
-            min-width: 600px;
+
         }
+
+
+        th,
+        td {
+
+            padding: 12px;
+
+            border-bottom:
+                1px solid
+                var(--border-color);
+
+            text-align: left;
+
+            font-size: 14px;
+
+        }
+
 
         th {
-            text-align: left;
-            padding: 16px 12px;
-            background: rgba(0,0,0,0.5);
-            color: #60a5fa;
-            font-weight: 700;
-        }
 
-        td {
-            padding: 14px 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
+            color:
+                var(--text-secondary);
 
-        tr:hover td {
-            background: rgba(0,102,204,0.1);
-        }
-
-        .delete-btn {
-            background: rgba(255,68,68,0.2);
-            border: none;
-            color: #ff8888;
-            cursor: pointer;
-            font-size: 16px;
-            padding: 8px 12px;
-            border-radius: 30px;
-            transition: all 0.2s;
-        }
-
-        .delete-btn:hover {
-            background: #ff4444;
-            color: white;
-            transform: scale(1.05);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #6b7280;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(12px);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background: rgba(25, 30, 45, 0.95);
-            backdrop-filter: blur(16px);
-            border-radius: 40px;
-            padding: 32px;
-            max-width: 500px;
-            width: 90%;
-            border: 1px solid #0066cc;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-content h3 {
-            border-left: none;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 16px;
-            justify-content: center;
-            margin-top: 28px;
-            flex-wrap: wrap;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 13px;
             font-weight: 600;
-            color: #94a3b8;
+
         }
 
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            padding: 14px;
-            background: rgba(0,0,0,0.5);
-            border: 1px solid #334155;
-            border-radius: 60px;
-            color: white;
-            font-size: 15px;
-            transition: 0.2s;
-        }
 
-        .form-group textarea {
-            border-radius: 20px;
-            resize: vertical;
-        }
+        .status {
 
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
-            border-color: #0066cc;
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(0,102,204,0.3);
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: linear-gradient(90deg, #00cc66, #009955);
-            color: white;
-            padding: 16px 24px;
-            border-radius: 60px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transform: translateX(450px);
-            transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-            z-index: 2000;
-            font-weight: 600;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-
-        .toast.show {
-            transform: translateX(0);
-        }
-
-        canvas {
-            max-height: 220px;
-            width: 100%;
-        }
-
-        .config-group-item {
-            margin-bottom: 20px;
-            padding: 20px;
-            background: rgba(0,0,0,0.35);
-            border-radius: 28px;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(0,102,204,0.3);
-            transition: all 0.2s;
-        }
-
-        .config-group-item:hover {
-            border-color: #0066cc;
-            background: rgba(0,102,204,0.1);
-        }
-
-        .config-group-name {
-            color: #60a5fa;
-            margin-bottom: 15px;
-            font-size: 18px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            word-break: break-word;
-        }
-
-        .config-inputs {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .config-inputs input {
-            flex: 1;
-            min-width: 130px;
-            padding: 12px 18px;
-            background: rgba(0,0,0,0.6);
-            border: 1px solid #2d3a5e;
-            border-radius: 60px;
-            color: white;
-            font-weight: 500;
-        }
-
-        .config-inputs button {
-            background: rgba(255,68,68,0.2);
-            border: none;
-            color: #ff8888;
-            border-radius: 60px;
-            padding: 0 20px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .pacotes-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-        }
-
-        .pacote-item {
-            background: rgba(0,0,0,0.4);
-            border-radius: 20px;
-            padding: 20px;
-            border: 1px solid rgba(0,102,204,0.3);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .pacote-item:hover {
-            border-color: #0066cc;
-            transform: translateY(-4px);
-            box-shadow: 0 8px 25px rgba(0,102,204,0.2);
-        }
-
-        .pacote-item .pacote-tipo {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-
-        .pacote-item .pacote-tipo.semanal {
-            color: #34d399;
-        }
-        .pacote-item .pacote-tipo.mensal {
-            color: #60a5fa;
-        }
-        .pacote-item .pacote-tipo.diamante {
-            color: #8b5cf6;
-        }
-        .pacote-item .pacote-tipo.ilimitado {
-            color: #f59e0b;
-        }
-
-        .pacote-item .pacote-detalhes {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin: 15px 0;
-            padding: 12px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 12px;
-        }
-
-        .pacote-item .pacote-detalhes span {
-            font-size: 14px;
-            color: #cbd5e1;
-        }
-
-        .pacote-item .pacote-detalhes .valor {
-            font-weight: 700;
-            color: #34d399;
-        }
-
-        .pacote-item .pacote-badge {
             display: inline-block;
-            padding: 4px 12px;
+
+            padding: 5px 9px;
+
             border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            margin-top: 10px;
-        }
 
-        .pacote-badge.semanal {
-            background: rgba(52, 211, 153, 0.2);
-            color: #34d399;
-        }
-        .pacote-badge.mensal {
-            background: rgba(96, 165, 250, 0.2);
-            color: #60a5fa;
-        }
-        .pacote-badge.diamante {
-            background: rgba(139, 92, 246, 0.2);
-            color: #8b5cf6;
-        }
-        .pacote-badge.ilimitado {
-            background: rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
-        }
-
-        .badge-pacote {
-            display: inline-block;
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: 600;
-        }
-
-        .badge-pacote.semanal {
-            background: rgba(52, 211, 153, 0.2);
-            color: #34d399;
-        }
-        .badge-pacote.mensal {
-            background: rgba(96, 165, 250, 0.2);
-            color: #60a5fa;
-        }
-        .badge-pacote.diamante {
-            background: rgba(139, 92, 246, 0.2);
-            color: #8b5cf6;
-        }
-        .badge-pacote.normal {
-            background: rgba(255, 255, 255, 0.1);
-            color: #9ca3af;
-        }
-
-        .crm-stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 28px;
-        }
-
-        .crm-stat-card {
-            background: rgba(20, 25, 40, 0.65);
-            backdrop-filter: blur(10px);
-            border-radius: 28px;
-            border: 1px solid rgba(0, 102, 204, 0.3);
-            padding: 20px;
-            text-align: center;
-        }
-
-        .crm-stat-value {
-            font-size: 32px;
-            font-weight: 800;
-            color: #3b82f6;
-        }
-
-        .crm-stat-label {
             font-size: 12px;
-            color: #9ca3af;
-            margin-top: 8px;
+
         }
 
-        .client-card {
-            background: rgba(20, 25, 40, 0.65);
-            backdrop-filter: blur(10px);
-            border-radius: 28px;
-            border: 1px solid rgba(0, 102, 204, 0.3);
-            padding: 20px;
-            margin-bottom: 16px;
-            transition: all 0.2s;
-            cursor: pointer;
+
+        .status.ok {
+
+            background:
+                rgba(0, 204, 102, 0.12);
+
+            color:
+                var(--success);
+
         }
 
-        .client-card:hover {
-            transform: translateY(-2px);
-            border-color: #0066cc;
-            background: rgba(0,102,204,0.1);
+
+        /* ==========================================
+           PAINÉIS
+        ========================================== */
+
+        .panel {
+
+            width: 100%;
+
         }
 
-        .client-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
 
-        .client-number {
-            font-size: 18px;
-            font-weight: 700;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        /* ==========================================
+           TUTORIAL
+        ========================================== */
 
-        .client-number i {
-            color: #3b82f6;
-        }
+        .tutorial-content pre {
 
-        .client-badge {
-            background: linear-gradient(90deg, #0066cc, #3b82f6);
-            padding: 6px 12px;
-            border-radius: 40px;
-            font-size: 12px;
-            font-weight: 600;
-        }
+            background:
+                #111;
 
-        .client-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 15px;
-            margin: 15px 0;
-        }
+            color:
+                #eee;
 
-        .client-stat {
-            text-align: center;
-        }
+            padding: 18px;
 
-        .client-stat .value {
-            font-size: 20px;
-            font-weight: 800;
-            color: #34d399;
-        }
+            border-radius: 10px;
 
-        .client-stat .label {
-            font-size: 11px;
-            color: #9ca3af;
-        }
+            overflow-x: auto;
 
-        .client-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .client-tag {
-            background: rgba(0,102,204,0.2);
-            padding: 4px 12px;
-            border-radius: 40px;
-            font-size: 11px;
-            color: #60a5fa;
-        }
-
-        .search-box {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-        }
-
-        .search-box input {
-            flex: 1;
-            padding: 14px 20px;
-            background: rgba(0,0,0,0.4);
-            border: 1px solid rgba(59,130,246,0.4);
-            border-radius: 60px;
-            color: white;
-            font-size: 14px;
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: #0066cc;
-        }
-
-        .client-filters {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-
-        .client-filter-btn {
-            background: rgba(0,0,0,0.4);
-            border: 1px solid rgba(59,130,246,0.4);
-            padding: 8px 20px;
-            border-radius: 40px;
-            cursor: pointer;
             font-size: 13px;
-            color: #cbd5e1;
-            transition: all 0.2s;
+
         }
 
-        .client-filter-btn.active {
-            background: #0066cc;
-            border-color: #0066cc;
-            color: white;
-        }
-
-        .tutorial-content {
-            line-height: 1.7;
-        }
 
         .credential-box {
-            background: rgba(0,0,0,0.5);
-            border-radius: 28px;
-            padding: 24px;
-            margin: 20px 0;
-            border: 1px solid #0066cc;
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(200px, 1fr)
+                );
+
+            gap: 10px;
+
+            margin-bottom: 25px;
+
         }
+
+
+        .credential-item {
+
+            padding: 15px;
+
+            border:
+                1px solid
+                var(--border-color);
+
+            border-radius: 10px;
+
+        }
+
+
+        .credential-label {
+
+            font-size: 11px;
+
+            color:
+                var(--text-secondary);
+
+            margin-bottom: 5px;
+
+        }
+
 
         .credential-value {
-            font-family: monospace;
-            background: #03050a;
-            padding: 10px;
-            border-radius: 16px;
-            color: #34d399;
-            margin: 10px 0;
+
             word-break: break-all;
+
+            font-weight: 600;
+
         }
 
-        pre {
-            background: #03050a;
-            padding: 16px;
-            border-radius: 20px;
-            overflow-x: auto;
-            border-left: 4px solid #0066cc;
-            font-size: 13px;
-            white-space: pre-wrap;
-            word-break: break-word;
+
+        .copy-btn {
+
+            border: none;
+
+            border-radius: 10px;
+
+            padding: 12px;
+
+            background:
+                var(--accent-color);
+
+            color: #fff;
+
+            cursor: pointer;
+
         }
+
+
+        /* ==========================================
+           MOBILE
+        ========================================== */
 
         @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                width: 280px;
-            }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .main-content {
-                margin-left: 0;
-                width: 100%;
-                max-width: 100%;
-                padding: 70px 16px 20px 16px;
-            }
+
             .menu-toggle {
-                display: block;
-            }
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
-            }
-            .stat-value {
-                font-size: 18px;
-            }
-            .stat-card {
-                padding: 15px;
-            }
-            .stat-icon {
-                font-size: 24px;
-            }
-            .header {
-                flex-direction: column;
-                text-align: center;
-                padding: 18px 20px;
-            }
-            .header-buttons {
-                width: 100%;
-            }
-            .header-buttons .btn {
-                width: 100%;
+
+                display: flex;
+
+                align-items: center;
+
                 justify-content: center;
+
             }
-            .rhythm-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
+
+
+            .sidebar {
+
+                transform:
+                    translateX(-100%);
+
             }
-            .three-columns,
-            .two-columns {
-                grid-template-columns: 1fr;
-                gap: 20px;
+
+
+            .sidebar.open {
+
+                transform:
+                    translateX(0);
+
             }
-            .diario-card,
-            .rhythm-card,
-            .rank-card,
-            .chart-card,
-            .new-numbers-card,
-            .section,
-            .pacotes-card {
-                padding: 18px;
+
+
+            .main-content {
+
+                margin-left: 0;
+
+                padding: 75px 15px 20px;
+
             }
-            h3 {
-                font-size: 18px;
-            }
-            .filters {
+
+
+            .dashboard-header {
+
                 flex-direction: column;
-            }
-            .filter-group {
-                width: 100%;
-                min-width: auto;
-            }
-            .rank-filters {
-                gap: 8px;
-            }
-            .rank-filter-btn {
-                padding: 6px 14px;
-                font-size: 12px;
-            }
-            .rhythm-stat .value,
-            .diario-stat .value {
-                font-size: 18px;
-            }
-            .rank-value {
-                white-space: normal;
-                font-size: 12px;
-            }
-            .config-inputs {
-                flex-direction: column;
-            }
-            .config-inputs input {
-                width: 100%;
-            }
-            .config-inputs button {
-                padding: 12px 20px;
-            }
-            .toast {
-                left: 16px;
-                right: 16px;
-                bottom: 16px;
-                padding: 14px 18px;
-                font-size: 13px;
-                transform: translateY(100px);
-            }
-            .toast.show {
-                transform: translateY(0);
-            }
-            .modal-content {
-                padding: 24px;
-                width: 92%;
-            }
-            .client-header {
-                flex-direction: column;
+
                 align-items: flex-start;
-            }
-            .client-stats {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .pacotes-grid {
-                grid-template-columns: 1fr;
-            }
-        }
 
-        @media (max-width: 480px) {
+            }
+
+
+            .header-actions {
+
+                width: 100%;
+
+            }
+
+
+            .refresh-btn {
+
+                width: 100%;
+
+            }
+
+
             .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-            }
-            .stat-title {
-                font-size: 10px;
-            }
-            .stat-value {
-                font-size: 16px;
-            }
-            .stat-icon {
-                font-size: 20px;
-            }
-            .logo h1 {
-                font-size: 22px;
-            }
-            .logo p {
-                font-size: 11px;
-            }
-            .btn {
-                padding: 10px 16px;
-                font-size: 13px;
-            }
-            .rank-item {
-                font-size: 12px;
-            }
-            .rank-name {
-                font-size: 12px;
-            }
-            th,
-            td {
-                font-size: 11px;
-                padding: 10px 8px;
-            }
-            .crm-stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .crm-stat-value {
-                font-size: 24px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <button class="menu-toggle" id="menuToggleBtn">
-        <i class="fas fa-bars"></i>
-    </button>
-    <div class="menu-overlay" id="menuOverlay"></div>
 
-    <div class="app-container">
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h2><i class="fas fa-chart-line"></i> MOZ TECH</h2>
-            </div>
-            <div class="user-info-sidebar" id="userInfoSidebar">
-                <div class="user-avatar"><i class="fas fa-user-astronaut"></i></div>
-                <div class="user-name" id="sidebarUserName">Carregando...</div>
-                <div class="user-email" id="sidebarUserEmail">-</div>
-                <div class="user-uid" id="sidebarUserUid">UID: -</div>
-                <div class="api-key-info" id="sidebarApiKey">API Key: -</div>
-                <button class="copy-btn" id="copyUidBtn"><i class="fas fa-copy"></i> Copiar UID</button>
-                <button class="copy-btn" id="copyApiKeyBtn"><i class="fas fa-key"></i> Copiar API Key</button>
-            </div>
-            <div class="menu-item active" data-panel="dashboard">
-                <i class="fas fa-tachometer-alt"></i> Dashboard
-            </div>
-            <div class="menu-item" data-panel="crm">
-                <i class="fas fa-users"></i> CRM Avançado
-            </div>
-            <div class="menu-item" data-panel="pacotes">
-                <i class="fas fa-boxes"></i> Pacotes
-            </div>
-            <div class="menu-item" data-panel="tutorial">
-                <i class="fas fa-code"></i> API / Tutorial
-            </div>
-            <div class="menu-item" data-panel="config">
-                <i class="fas fa-cog"></i> Configurações
-            </div>
-            <div class="logout-btn">
-                <div class="menu-item" id="logoutBtn">
-                    <i class="fas fa-sign-out-alt"></i> Sair
-                </div>
-            </div>
+                grid-template-columns:
+                    repeat(2, 1fr);
+
+            }
+
+        }
+
+
+        @media (max-width: 450px) {
+
+            .stats-grid {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="app-container">
+
+
+    <!-- ==========================================
+         BOTÃO DAS 3 BARRAS
+    =========================================== -->
+
+    <button
+        type="button"
+        id="menuToggle"
+        class="menu-toggle"
+        aria-label="Abrir menu"
+        aria-expanded="false"
+    >
+
+        <i class="fas fa-bars"></i>
+
+    </button>
+
+
+    <!-- ==========================================
+         OVERLAY
+    =========================================== -->
+
+    <div
+        id="menuOverlay"
+        class="menu-overlay"
+    ></div>
+
+
+    <!-- ==========================================
+         SIDEBAR
+    =========================================== -->
+
+    <aside
+        class="sidebar"
+        id="sidebar"
+    >
+
+        <div class="sidebar-header">
+
+            <h2>
+                <i class="fas fa-bolt"></i>
+                MOZ TECH
+            </h2>
+
+            <p>
+                Sistema de Gestão
+            </p>
+
         </div>
 
-        <div class="main-content">
-            <!-- DASHBOARD PANEL -->
-            <div id="panelDashboard" class="panel">
-                <div class="header">
-                    <div class="logo">
-                        <h1><i class="fas fa-chart-line"></i> MOZ TECH</h1>
-                        <p>Sistema profissional de gestão de vendas WhatsApp + CRM</p>
-                    </div>
-                    <div class="header-buttons">
-                        <button class="btn btn-outline" id="refreshBtn"><i class="fas fa-sync-alt"></i> Atualizar</button>
-                    </div>
+
+        <nav class="sidebar-menu">
+
+            <button
+                type="button"
+                class="menu-item active"
+                data-panel="dashboard"
+            >
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </button>
+
+
+            <button
+                type="button"
+                class="menu-item"
+                data-panel="crm"
+            >
+                <i class="fas fa-users"></i>
+                <span>CRM Avançado</span>
+            </button>
+
+
+            <button
+                type="button"
+                class="menu-item"
+                data-panel="pacotes"
+            >
+                <i class="fas fa-box"></i>
+                <span>Pacotes</span>
+            </button>
+
+
+            <button
+                type="button"
+                class="menu-item"
+                data-panel="pedidos"
+            >
+                <i class="fas fa-cart-shopping"></i>
+                <span>Pedidos</span>
+            </button>
+
+
+            <button
+                type="button"
+                class="menu-item"
+                data-panel="dispositivos"
+            >
+                <i class="fas fa-mobile-screen"></i>
+                <span>Dispositivos</span>
+            </button>
+
+
+            <button
+                type="button"
+                class="menu-item"
+                data-panel="tutorial"
+            >
+                <i class="fas fa-code"></i>
+                <span>API / Tutorial</span>
+            </button>
+
+
+            <button
+                type="button"
+                class="menu-item"
+                data-panel="config"
+            >
+                <i class="fas fa-gear"></i>
+                <span>Configurações</span>
+            </button>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- ==========================================
+         CONTEÚDO PRINCIPAL
+    =========================================== -->
+
+    <main class="main-content">
+
+
+        <!-- ======================================
+             DASHBOARD
+        ======================================= -->
+
+        <div
+            id="panelDashboard"
+            class="panel"
+        >
+
+            <div class="dashboard-header">
+
+                <div class="dashboard-title">
+
+                    <h1>
+                        Dashboard
+                    </h1>
+
+                    <p>
+                        Visão geral do sistema
+                    </p>
+
+                    <small id="data">
+                        Carregando...
+                    </small>
+
                 </div>
 
-                <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-dollar-sign"></i></div><div class="stat-title">FATURAMENTO</div><div class="stat-value" id="faturamento">0 MT</div></div>
-                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-coins"></i></div><div class="stat-title">CUSTO</div><div class="stat-value" id="custo">0 MT</div></div>
-                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-chart-line"></i></div><div class="stat-title">LUCRO</div><div class="stat-value profit-positive" id="lucro">0 MT</div></div>
-                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-sun"></i></div><div class="stat-title">LUCRO HOJE</div><div class="stat-value profit-positive" id="lucroDiario">0 MT</div></div>
-                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-percent"></i></div><div class="stat-title">MARGEM</div><div class="stat-value" id="margem">0%</div></div>
-                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-database"></i></div><div class="stat-title">TOTAL GB</div><div class="stat-value" id="totalGB">0 GB</div></div>
-                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-exchange-alt"></i></div><div class="stat-title">VENDAS</div><div class="stat-value" id="totalVendas">0</div></div>
+
+                <div class="header-actions">
+
+                    <button
+                        type="button"
+                        class="refresh-btn"
+                        id="btnAtualizar"
+                    >
+
+                        <i class="fas fa-rotate"></i>
+
+                        Atualizar
+
+                    </button>
+
                 </div>
 
-                <div class="diario-card">
-                    <h3><i class="fas fa-calendar-day"></i> MÉTRICAS DIÁRIAS</h3>
-                    <div class="diario-stats">
-                        <div class="diario-stat"><div class="label">Melhor Dia</div><div class="value" id="melhorDiaValor">--</div></div>
-                        <div class="diario-stat"><div class="label">Média/Dia</div><div class="value" id="mediaFaturamento">0 MT</div></div>
-                        <div class="diario-stat"><div class="label">Dias c/ Vendas</div><div class="value" id="totalDias">0</div></div>
-                    </div>
-                    <canvas id="graficoDiario"></canvas>
-                </div>
-
-                <div class="rhythm-grid">
-                    <div class="rhythm-card alto">
-                        <h3><i class="fas fa-charging-station"></i> RITMO ALTO</h3>
-                        <div class="rhythm-stats">
-                            <div class="rhythm-stat"><div class="label">Vendas/hora</div><div class="value" id="altoVendasHora">0</div></div>
-                            <div class="rhythm-stat"><div class="label">Volume MB</div><div class="value" id="altoVolume">0</div></div>
-                            <div class="rhythm-stat"><div class="label">Média</div><div class="value" id="altoMedia">0</div></div>
-                        </div>
-                        <canvas id="graficoRitmoAlto"></canvas>
-                    </div>
-                    <div class="rhythm-card normal">
-                        <h3><i class="fas fa-waveform"></i> RITMO NORMAL</h3>
-                        <div class="rhythm-stats">
-                            <div class="rhythm-stat"><div class="label">Vendas/hora</div><div class="value" id="normalVendasHora">0</div></div>
-                            <div class="rhythm-stat"><div class="label">Volume MB</div><div class="value" id="normalVolume">0</div></div>
-                            <div class="rhythm-stat"><div class="label">Média</div><div class="value" id="normalMedia">0</div></div>
-                        </div>
-                        <canvas id="graficoRitmoNormal"></canvas>
-                    </div>
-                </div>
-
-                <div class="new-numbers-card">
-                    <h3><i class="fas fa-user-plus"></i> Novos Números (últimos 7 dias)</h3>
-                    <div id="novosNumerosList"><div class="empty-state">Carregando...</div></div>
-                </div>
-
-                <div class="three-columns">
-                    <div class="rank-card">
-                        <h3><i class="fas fa-trophy"></i> Top Clientes (MB)</h3>
-                        <div class="rank-filters">
-                            <button class="rank-filter-btn active" data-top="hoje">Hoje</button>
-                            <button class="rank-filter-btn" data-top="semana">Semana</button>
-                            <button class="rank-filter-btn" data-top="mes">Mês</button>
-                            <button class="rank-filter-btn" data-top="todos">Todos</button>
-                        </div>
-                        <div id="topClientes"><div class="empty-state">Nenhum dado</div></div>
-                    </div>
-                    <div class="rank-card">
-                        <h3><i class="fas fa-dollar-sign"></i> Top Clientes (Faturamento)</h3>
-                        <div class="rank-filters">
-                            <button class="rank-filter-btn active" data-top-faturamento="hoje">Hoje</button>
-                            <button class="rank-filter-btn" data-top-faturamento="semana">Semana</button>
-                            <button class="rank-filter-btn" data-top-faturamento="mes">Mês</button>
-                            <button class="rank-filter-btn" data-top-faturamento="todos">Todos</button>
-                        </div>
-                        <div id="topClientesFaturamento"><div class="empty-state">Nenhum dado</div></div>
-                    </div>
-                    <div class="rank-card">
-                        <h3><i class="fas fa-users"></i> Top Grupos</h3>
-                        <div class="rank-filters">
-                            <button class="rank-filter-btn active" data-top-grupo="hoje">Hoje</button>
-                            <button class="rank-filter-btn" data-top-grupo="semana">Semana</button>
-                            <button class="rank-filter-btn" data-top-grupo="mes">Mês</button>
-                            <button class="rank-filter-btn" data-top-grupo="todos">Todos</button>
-                        </div>
-                        <div id="topGrupos"><div class="empty-state">Nenhum dado</div></div>
-                    </div>
-                </div>
-
-                <div class="two-columns">
-                    <div class="rank-card">
-                        <h3><i class="fas fa-calendar-day"></i> Top Dias</h3>
-                        <div id="topDias"><div class="empty-state">Nenhum dado</div></div>
-                    </div>
-                    <div class="chart-card">
-                        <h3><i class="fas fa-chart-line"></i> Evolução Mensal</h3>
-                        <canvas id="graficoMensal"></canvas>
-                    </div>
-                </div>
-
-                <div class="section">
-                    <div class="filters">
-                        <div class="filter-group"><i class="fas fa-calendar"></i><select id="filtroPeriodo"><option value="todos">Todos</option><option value="hoje">Hoje</option><option value="semana">Semana</option><option value="mes">Mês</option></select></div>
-                        <div class="filter-group"><i class="fas fa-phone"></i><input type="text" id="filtroNumero" placeholder="Número..."></div>
-                        <div class="filter-group"><i class="fas fa-users"></i><input type="text" id="filtroGrupo" placeholder="Grupo..."></div>
-                        <div class="filter-group"><i class="fas fa-tag"></i><select id="filtroTipoPacote"><option value="todos">Todos pacotes</option><option value="normal">Normal</option><option value="semanal">Semanal</option><option value="mensal">Mensal</option><option value="diamante">Diamante</option></select></div>
-                    </div>
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr><th>Data/Hora</th><th>MB</th><th>GB</th><th>Tipo</th><th>Venda</th><th>Custo</th><th>Lucro</th><th>Número</th><th>Grupo</th><th></th></tr>
-                            </thead>
-                            <tbody id="listaVendas"><tr><td colspan="10" class="empty-state">Carregando...</td></tr></tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
 
-            <!-- CRM AVANÇADO PANEL -->
-            <div id="panelCRM" class="panel" style="display: none;">
-                <div class="header">
-                    <div class="logo">
-                        <h1><i class="fas fa-users"></i> CRM Avançado</h1>
-                        <p>Gestão completa de clientes, fidelidade e histórico</p>
+
+            <!-- ESTATÍSTICAS -->
+
+            <div class="stats-grid">
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        <i class="fas fa-shopping-cart"></i>
                     </div>
+
+                    <h3>
+                        Vendas
+                    </h3>
+
+                    <div
+                        class="stat-value"
+                        id="vendas"
+                    >
+                        0
+                    </div>
+
                 </div>
 
-                <div class="crm-stats-grid">
-                    <div class="crm-stat-card">
-                        <div class="crm-stat-value" id="totalClientes">0</div>
-                        <div class="crm-stat-label">Total de Clientes</div>
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        <i class="fas fa-money-bill"></i>
                     </div>
-                    <div class="crm-stat-card">
-                        <div class="crm-stat-value" id="clientesAtivos">0</div>
-                        <div class="crm-stat-label">Clientes Ativos (30d)</div>
+
+                    <h3>
+                        Faturamento
+                    </h3>
+
+                    <div
+                        class="stat-value"
+                        id="valor"
+                    >
+                        0 MT
                     </div>
-                    <div class="crm-stat-card">
-                        <div class="crm-stat-value" id="clientesRecentes">0</div>
-                        <div class="crm-stat-label">Novos (7 dias)</div>
-                    </div>
-                    <div class="crm-stat-card">
-                        <div class="crm-stat-value" id="ticketMedioGeral">0 MT</div>
-                        <div class="crm-stat-label">Ticket Médio Geral</div>
-                    </div>
+
                 </div>
 
-                <div class="section">
-                    <div class="search-box">
-                        <input type="text" id="searchCliente" placeholder="Buscar por número...">
-                        <button class="btn btn-outline" id="limparBuscaBtn"><i class="fas fa-times"></i> Limpar</button>
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
                     </div>
-                    <div class="client-filters">
-                        <button class="client-filter-btn active" data-crm-filter="todos"><i class="fas fa-list"></i> Todos</button>
-                        <button class="client-filter-btn" data-crm-filter="top"><i class="fas fa-trophy"></i> Top</button>
-                        <button class="client-filter-btn" data-crm-filter="ativos"><i class="fas fa-circle" style="color: #10b981;"></i> Ativos</button>
-                        <button class="client-filter-btn" data-crm-filter="inativos"><i class="fas fa-circle" style="color: #6b7280;"></i> Inativos</button>
-                        <button class="client-filter-btn" data-crm-filter="vip"><i class="fas fa-gem"></i> VIP</button>
+
+                    <h3>
+                        Clientes
+                    </h3>
+
+                    <div
+                        class="stat-value"
+                        id="clientes"
+                    >
+                        0
                     </div>
+
                 </div>
 
-                <div id="clientesList" class="section">
-                    <div class="empty-state">Carregando clientes...</div>
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        <i class="fas fa-mobile-screen"></i>
+                    </div>
+
+                    <h3>
+                        Dispositivos
+                    </h3>
+
+                    <div
+                        class="stat-value"
+                        id="disp"
+                    >
+                        0
+                    </div>
+
                 </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+
+                    <h3>
+                        Total GB
+                    </h3>
+
+                    <div
+                        class="stat-value"
+                        id="totalGB"
+                    >
+                        0
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+
+                    <h3>
+                        Lucro
+                    </h3>
+
+                    <div
+                        class="stat-value"
+                        id="lucro"
+                    >
+                        0 MT
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+
+                    <h3>
+                        Custo
+                    </h3>
+
+                    <div
+                        class="stat-value"
+                        id="custo"
+                    >
+                        0 MT
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+
+                    <h3>
+                        Pedidos
+                    </h3>
+
+                    <div
+                        class="stat-value"
+                        id="pedidos"
+                    >
+                        0
+                    </div>
+
+                </div>
+
             </div>
 
-            <!-- PACOTES PANEL -->
-            <div id="panelPacotes" class="panel" style="display: none;">
-                <div class="header">
-                    <div class="logo">
-                        <h1><i class="fas fa-boxes"></i> Pacotes</h1>
-                        <p>Gerenciamento de pacotes semanais, mensais e diamante</p>
-                    </div>
-                    <div class="header-buttons">
-                        <button class="btn btn-primary" id="adicionarPacoteBtn"><i class="fas fa-plus"></i> Novo Pacote</button>
-                    </div>
+
+            <!-- TABELA DE VENDAS -->
+
+            <div class="section">
+
+                <div class="section-header">
+
+                    <h2>
+                        Últimas Vendas
+                    </h2>
+
                 </div>
 
-                <div class="pacotes-card">
-                    <div class="pacotes-header">
-                        <h3><i class="fas fa-filter"></i> Filtros</h3>
-                        <div class="filtro-pacotes" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
-                            <button class="rank-filter-btn active" data-pacote-filtro="todos">Todos</button>
-                            <button class="rank-filter-btn" data-pacote-filtro="semanal">📅 Semanal</button>
-                            <button class="rank-filter-btn" data-pacote-filtro="mensal">📆 Mensal</button>
-                            <button class="rank-filter-btn" data-pacote-filtro="diamante">💎 Diamante</button>
-                            <button class="rank-filter-btn" data-pacote-filtro="ilimitado">♾️ Ilimitado</button>
-                        </div>
-                    </div>
-                    <div class="pacotes-grid" id="listaPacotes">
-                        <div class="empty-state">Carregando pacotes...</div>
-                    </div>
+
+                <div class="table-container">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Número
+                                </th>
+
+                                <th>
+                                    MB / GB
+                                </th>
+
+                                <th>
+                                    Valor
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="lista">
+
+                            <tr>
+
+                                <td
+                                    colspan="4"
+                                    style="text-align:center;padding:20px"
+                                >
+                                    Carregando...
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
                 </div>
 
-                <div class="three-columns">
-                    <div class="rank-card">
-                        <h3><i class="fas fa-calendar-week"></i> Vendas Semanais</h3>
-                        <div id="vendasSemanais"><div class="empty-state">Nenhuma venda</div></div>
-                    </div>
-                    <div class="rank-card">
-                        <h3><i class="fas fa-calendar-alt"></i> Vendas Mensais</h3>
-                        <div id="vendasMensais"><div class="empty-state">Nenhuma venda</div></div>
-                    </div>
-                    <div class="rank-card">
-                        <h3><i class="fas fa-gem"></i> Vendas Diamante</h3>
-                        <div id="vendasDiamante"><div class="empty-state">Nenhuma venda</div></div>
-                    </div>
-                </div>
             </div>
 
-            <!-- TUTORIAL PANEL -->
-            <div id="panelTutorial" class="panel" style="display: none;">
-                <div class="section">
-                    <h2><i class="fas fa-code"></i> API para Integração</h2>
-                    <div class="tutorial-content">
-                        <h3>Suas Credenciais de API</h3>
-                        <div class="credential-box">
-                            <div class="credential-item">
-                                <div class="credential-label">SEU UID</div>
-                                <div class="credential-value" id="tutorialUid">Carregando...</div>
+        </div>
+
+
+        <!-- ======================================
+             CRM
+        ======================================= -->
+
+        <div
+            id="panelCRM"
+            class="panel"
+            style="display:none"
+        >
+
+            <div class="section">
+
+                <h2>
+                    <i class="fas fa-users"></i>
+                    CRM Avançado
+                </h2>
+
+                <div id="crmConteudo">
+
+                    Carregando clientes...
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ======================================
+             PACOTES
+        ======================================= -->
+
+        <div
+            id="panelPacotes"
+            class="panel"
+            style="display:none"
+        >
+
+            <div class="section">
+
+                <h2>
+                    <i class="fas fa-box"></i>
+                    Pacotes
+                </h2>
+
+                <div id="pacotesConteudo">
+
+                    Carregando pacotes...
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ======================================
+             PEDIDOS
+        ======================================= -->
+
+        <div
+            id="panelPedidos"
+            class="panel"
+            style="display:none"
+        >
+
+            <div class="section">
+
+                <h2>
+                    <i class="fas fa-cart-shopping"></i>
+                    Pedidos
+                </h2>
+
+                <div id="pedidosConteudo">
+
+                    Carregando pedidos...
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ======================================
+             DISPOSITIVOS
+        ======================================= -->
+
+        <div
+            id="panelDispositivos"
+            class="panel"
+            style="display:none"
+        >
+
+            <div class="section">
+
+                <h2>
+                    <i class="fas fa-mobile-screen"></i>
+                    Dispositivos
+                </h2>
+
+                <div id="dispositivosConteudo">
+
+                    Carregando dispositivos...
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ======================================
+             TUTORIAL / API
+        ======================================= -->
+
+        <div
+            id="panelTutorial"
+            class="panel"
+            style="display:none"
+        >
+
+            <div class="section">
+
+                <h2>
+                    <i class="fas fa-code"></i>
+                    API para Integração
+                </h2>
+
+
+                <div class="tutorial-content">
+
+                    <h3>
+                        Suas Credenciais de API
+                    </h3>
+
+
+                    <div class="credential-box">
+
+                        <div class="credential-item">
+
+                            <div class="credential-label">
+                                SEU UID
                             </div>
-                            <div class="credential-item">
-                                <div class="credential-label">SUA API KEY</div>
-                                <div class="credential-value" id="tutorialApiKey">Carregando...</div>
+
+                            <div
+                                class="credential-value"
+                                id="tutorialUid"
+                            >
+                                Carregando...
                             </div>
-                            <button class="copy-btn" id="copyTutorialUidBtn">Copiar UID</button>
-                            <button class="copy-btn" id="copyTutorialApiKeyBtn">Copiar API Key</button>
+
                         </div>
 
-                        <h3>Adicionar Venda Normal</h3>
-                        <pre>fetch('https://moztech-je-gz92.vercel.app/api/vendas', {
+
+                        <div class="credential-item">
+
+                            <div class="credential-label">
+                                SUA API KEY
+                            </div>
+
+                            <div
+                                class="credential-value"
+                                id="tutorialApiKey"
+                            >
+                                Carregando...
+                            </div>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="copy-btn"
+                            id="copyTutorialUidBtn"
+                        >
+                            Copiar UID
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="copy-btn"
+                            id="copyTutorialApiKeyBtn"
+                        >
+                            Copiar API Key
+                        </button>
+
+                    </div>
+
+
+                    <h3>
+                        Adicionar Venda Normal
+                    </h3>
+
+
+                    <pre>fetch('https://moztech-je-gz92.vercel.app/api/vendas', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -1539,8 +1403,13 @@
   })
 })</pre>
 
-                        <h3>Adicionar Pacote Semanal</h3>
-                        <pre>fetch('https://moztech-je-gz92.vercel.app/api/vendas', {
+
+                    <h3>
+                        Adicionar Pacote Semanal
+                    </h3>
+
+
+                    <pre>fetch('https://moztech-je-gz92.vercel.app/api/vendas', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -1553,1258 +1422,373 @@
     grupo: "Pacotes_Semanais"
   })
 })</pre>
-                    </div>
-                </div>
-            </div>
 
-            <!-- CONFIG PANEL -->
-            <div id="panelConfig" class="panel" style="display: none;">
-                <div class="section">
-                    <h2><i class="fas fa-cog"></i> Configurar Preços</h2>
-                    <div id="configGrupos"></div>
-                    <div style="margin-top: 25px;">
-                        <div class="form-group">
-                            <label>Novo Grupo</label>
-                            <input type="text" id="novoGrupoNome" placeholder="Ex: Doce_Megas">
-                        </div>
-                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                            <input type="number" id="novoGrupoVenda" placeholder="Preço Venda (MT/GB)" step="1">
-                            <input type="number" id="novoGrupoCusto" placeholder="Preço Custo (MT/GB)" step="1">
-                            <button class="btn btn-primary" id="adicionarGrupoBtn">Adicionar</button>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" id="salvarConfigBtn" style="margin-top: 25px;">Salvar Configurações</button>
                 </div>
 
-                <div class="section">
-                    <h2><i class="fas fa-plus-circle"></i> Nova Venda Manual</h2>
-                    <div class="form-group">
-                        <label>Quantidade (MB)</label>
-                        <input type="number" id="novaVendaMB" placeholder="Ex: 1000" step="1">
-                    </div>
-                    <div class="form-group">
-                        <label>Número do Cliente</label>
-                        <input type="text" id="novaVendaNumero" placeholder="849000001">
-                    </div>
-                    <div class="form-group">
-                        <label>Grupo</label>
-                        <input type="text" id="novaVendaGrupo" placeholder="Doce_Megas">
-                    </div>
-                    <div class="form-group">
-                        <label>Tipo de Pacote</label>
-                        <select id="novaVendaTipo">
-                            <option value="normal">Normal</option>
-                            <option value="semanal">Semanal</option>
-                            <option value="mensal">Mensal</option>
-                            <option value="diamante">Diamante</option>
-                            <option value="ilimitado">Ilimitado</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="campoValorPacote" style="display: none;">
-                        <label>Valor do Pacote (MT)</label>
-                        <input type="number" id="novaVendaValorPacote" placeholder="Ex: 500" step="1">
-                    </div>
-                    <div class="form-group" id="campoGbPacote" style="display: none;">
-                        <label>GB do Pacote</label>
-                        <input type="number" id="novaVendaGbPacote" placeholder="Ex: 10" step="0.1">
-                    </div>
-                    <button class="btn btn-primary" id="registrarVendaBtn">Registrar Venda</button>
+            </div>
+
+        </div>
+
+
+        <!-- ======================================
+             CONFIGURAÇÕES
+        ======================================= -->
+
+        <div
+            id="panelConfig"
+            class="panel"
+            style="display:none"
+        >
+
+            <div class="section">
+
+                <h2>
+                    <i class="fas fa-gear"></i>
+                    Configurações
+                </h2>
+
+                <div id="configConteudo">
+
+                    Carregando configurações...
+
                 </div>
+
             </div>
+
         </div>
-    </div>
 
-    <!-- Modal de Detalhes do Cliente -->
-    <div id="modalCliente" class="modal">
-        <div class="modal-content">
-            <h3 id="modalClienteTitulo"><i class="fas fa-user"></i> Detalhes do Cliente</h3>
-            <div id="modalClienteConteudo"></div>
-            <div class="modal-buttons">
-                <button class="btn btn-outline" id="fecharModalClienteBtn">Fechar</button>
-            </div>
-        </div>
-    </div>
 
-    <!-- Modal de Excluir Venda -->
-    <div id="modalExcluir" class="modal">
-        <div class="modal-content">
-            <h3><i class="fas fa-trash-alt"></i> Excluir Venda</h3>
-            <p>Tem certeza que deseja excluir esta venda?</p>
-            <div class="modal-buttons">
-                <button class="btn btn-outline" id="cancelarExcluirBtn">Cancelar</button>
-                <button class="btn btn-primary" id="confirmarExcluirBtn">Confirmar</button>
-            </div>
-        </div>
-    </div>
+    </main>
 
-    <!-- Modal de Adicionar/Editar Pacote -->
-    <div id="modalPacote" class="modal">
-        <div class="modal-content">
-            <h3 id="modalPacoteTitulo"><i class="fas fa-box"></i> Novo Pacote</h3>
-            <div class="form-group">
-                <label>Tipo de Pacote</label>
-                <select id="pacoteTipo">
-                    <option value="semanal">📅 Semanal</option>
-                    <option value="mensal">📆 Mensal</option>
-                    <option value="diamante">💎 Diamante</option>
-                    <option value="ilimitado">♾️ Ilimitado</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>GB</label>
-                <input type="number" id="pacoteGb" placeholder="Ex: 10" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Valor (MT)</label>
-                <input type="number" id="pacoteValor" placeholder="Ex: 500" step="1">
-            </div>
-            <div class="form-group">
-                <label>Vantagem (opcional)</label>
-                <input type="text" id="pacoteVantagem" placeholder="Ex: Chamadas ilimitadas">
-            </div>
-            <div class="form-group">
-                <label>Grupo</label>
-                <input type="text" id="pacoteGrupo" placeholder="Grupo onde o pacote está disponível">
-            </div>
-            <div class="modal-buttons">
-                <button class="btn btn-outline" id="cancelarPacoteBtn">Cancelar</button>
-                <button class="btn btn-primary" id="salvarPacoteBtn">Salvar Pacote</button>
-            </div>
-        </div>
-    </div>
+</div>
 
-    <div id="toast" class="toast"><i class="fas fa-check-circle"></i><span id="toastMessage"></span></div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
-                "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
-                "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"
-            }
-        }
-    </script>
+<!-- ==========================================
+     JAVASCRIPT
+=========================================== -->
 
-    <script type="module">
-        import { initializeApp } from "firebase/app";
-        import { getAuth, signOut } from "firebase/auth";
-        import { getDatabase, ref, get, push, set, remove, onValue } from "firebase/database";
+<script src="/js/app.js"></script>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCVCO8vrS-c6Qt0lmlDVbh-Cp5QI9cRrZA",
-            authDomain: "moztech-142ec.firebaseapp.com",
-            projectId: "moztech-142ec",
-            storageBucket: "moztech-142ec.firebasestorage.app",
-            messagingSenderId: "482648158719",
-            appId: "1:482648158719:web:f009b76f55b92c2796b7ca"
-        };
+<script src="/js/dashboard.js"></script>
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const database = getDatabase(app);
+<script src="/js/charts.js"></script>
 
-        let currentUser = null;
-        let salesData = [];
-        let charts = {};
-        let vendaParaExcluir = null;
-        let topFiltroAtual = "hoje";
-        let topFiltroFaturamentoAtual = "hoje";
-        let topGrupoFiltroAtual = "hoje";
-        let clientesData = {};
-        let crmFilterAtual = "todos";
-        let searchTerm = "";
-        let pacotesData = {};
-        let pacoteEditando = null;
-        let filtroPacoteAtual = "todos";
+<script src="/js/crm.js"></script>
 
-        const userData = localStorage.getItem('userData');
-        if (!userData) window.location.href = 'index.html';
-        currentUser = JSON.parse(userData);
+<script src="/js/pacotes.js"></script>
 
-        function normalizarGrupo(nome) {
-            if (!nome) return "GRUPO_PADRAO";
-            return nome.trim().replace(/\s+/g, '_').toUpperCase();
-        }
+<script src="/js/pedidos.js"></script>
 
-        // Verificar usuário
-        const userSnap = await get(ref(database, `users/${currentUser.uid}`));
-        if (!userSnap.exists() || !userSnap.val().verified) {
-            localStorage.removeItem('userData');
-            await signOut(auth);
-            window.location.href = 'index.html';
-        }
+<script src="/js/dispositivos.js"></script>
 
-        const userInfo = userSnap.val();
-        document.getElementById('sidebarUserName').innerHTML = userInfo.fullName || currentUser.email.split('@')[0];
-        document.getElementById('sidebarUserEmail').innerHTML = currentUser.email;
-        document.getElementById('sidebarUserUid').innerHTML = `UID: ${currentUser.uid}`;
-        document.getElementById('sidebarApiKey').innerHTML = `API Key: ${currentUser.apiKey}`;
-        document.getElementById('tutorialUid').innerHTML = currentUser.uid;
-        document.getElementById('tutorialApiKey').innerHTML = currentUser.apiKey;
+<script src="/js/config.js"></script>
 
-        function copiarTexto(texto, mensagem) {
-            navigator.clipboard.writeText(texto);
-            mostrarToast(mensagem);
-        }
 
-        document.getElementById('copyUidBtn')?.addEventListener('click', () => copiarTexto(currentUser.uid, 'UID copiado!'));
-        document.getElementById('copyApiKeyBtn')?.addEventListener('click', () => copiarTexto(currentUser.apiKey, 'API Key copiada!'));
-        document.getElementById('copyTutorialUidBtn')?.addEventListener('click', () => copiarTexto(currentUser.uid, 'UID copiado!'));
-        document.getElementById('copyTutorialApiKeyBtn')?.addEventListener('click', () => copiarTexto(currentUser.apiKey, 'API Key copiada!'));
+<!-- ==========================================
+     MENU MOBILE + ATUALIZAR
+=========================================== -->
 
-        function mostrarToast(msg, isError = false) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toastMessage').innerHTML = msg;
-            toast.style.background = isError ? 'linear-gradient(90deg, #ff4444, #cc0000)' : 'linear-gradient(90deg, #00cc66, #009955)';
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 4000);
-        }
+<script>
 
-        function formatDate(dateISO) {
-            return new Date(dateISO).toLocaleDateString('pt-PT');
-        }
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
 
-        function formatDateTime(dateISO) {
-            return new Date(dateISO).toLocaleString('pt-PT');
-        }
 
-        function getDataFiltro(dataISO, filtro) {
-            const dataVenda = new Date(dataISO);
-            const hoje = new Date();
-            const dataVendaSemHora = new Date(dataVenda.getFullYear(), dataVenda.getMonth(), dataVenda.getDate());
-            const hojeSemHora = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
-            if (filtro === 'hoje') return dataVendaSemHora.getTime() === hojeSemHora.getTime();
-            if (filtro === 'semana') {
-                const diasParaSegunda = (hojeSemHora.getDay() === 0 ? 6 : hojeSemHora.getDay() - 1);
-                const inicioSemana = new Date(hojeSemHora);
-                inicioSemana.setDate(hojeSemHora.getDate() - diasParaSegunda);
-                const fimSemana = new Date(inicioSemana);
-                fimSemana.setDate(inicioSemana.getDate() + 6);
-                return dataVenda >= inicioSemana && dataVenda <= fimSemana;
-            }
-            if (filtro === 'mes') return dataVenda.getMonth() === hoje.getMonth() && dataVenda.getFullYear() === hoje
-                .getFullYear();
-            return true;
-        }
+        // ======================================
+        // BOTÃO 3 BARRAS
+        // ======================================
 
-        function processarClientes() {
-            const clientes = {};
+        const menuToggle =
+            document.getElementById(
+                "menuToggle"
+            );
 
-            salesData.forEach(venda => {
-                const numero = venda.numero;
-                if (!clientes[numero]) {
-                    clientes[numero] = {
-                        numero: numero,
-                        primeiraCompra: venda.createdAt,
-                        ultimaCompra: venda.createdAt,
-                        totalCompras: 0,
-                        totalMB: 0,
-                        totalGB: 0,
-                        totalFaturamento: 0,
-                        totalCusto: 0,
-                        totalLucro: 0,
-                        grupos: new Set(),
-                        compras: [],
-                        observacoes: [],
-                        ticketMedio: 0,
-                        diasDesdeUltima: 0,
-                        status: "ativo",
-                        nivel: "Bronze"
-                    };
-                }
 
-                const cliente = clientes[numero];
-                cliente.totalCompras++;
-                cliente.totalMB += venda.mb || 0;
-                cliente.totalGB += venda.gb || 0;
-                cliente.totalFaturamento += venda.valor_venda || 0;
-                cliente.totalCusto += venda.custo || 0;
-                cliente.totalLucro += venda.lucro || 0;
-                cliente.grupos.add(venda.grupo || "N/A");
-                cliente.compras.push({
-                    data: venda.createdAt,
-                    mb: venda.mb,
-                    gb: venda.gb,
-                    valor: venda.valor_venda,
-                    grupo: venda.grupo,
-                    tipo: venda.tipo || 'normal'
-                });
+        const sidebar =
+            document.getElementById(
+                "sidebar"
+            );
 
-                if (new Date(venda.createdAt) > new Date(cliente.ultimaCompra)) {
-                    cliente.ultimaCompra = venda.createdAt;
-                }
-                if (new Date(venda.createdAt) < new Date(cliente.primeiraCompra)) {
-                    cliente.primeiraCompra = venda.createdAt;
-                }
-            });
 
-            for (const numero in clientes) {
-                const cliente = clientes[numero];
-                cliente.ticketMedio = cliente.totalFaturamento / cliente.totalCompras;
-                cliente.grupos = Array.from(cliente.grupos);
-                cliente.compras.sort((a, b) => new Date(b.data) - new Date(a.data));
+        const menuOverlay =
+            document.getElementById(
+                "menuOverlay"
+            );
 
-                const ultimaCompraDate = new Date(cliente.ultimaCompra);
-                const hoje = new Date();
-                const diffTime = Math.abs(hoje - ultimaCompraDate);
-                cliente.diasDesdeUltima = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                if (cliente.diasDesdeUltima <= 30) {
-                    cliente.status = "ativo";
-                } else if (cliente.diasDesdeUltima <= 60) {
-                    cliente.status = "risco";
-                } else {
-                    cliente.status = "inativo";
-                }
+        function abrirMenu() {
 
-                if (cliente.totalFaturamento >= 50000) {
-                    cliente.nivel = "<i class='fas fa-gem'></i> Diamante";
-                    cliente.corNivel = "#8b5cf6";
-                } else if (cliente.totalFaturamento >= 25000) {
-                    cliente.nivel = "<i class='fas fa-trophy'></i> Ouro";
-                    cliente.corNivel = "#fbbf24";
-                } else if (cliente.totalFaturamento >= 10000) {
-                    cliente.nivel = "<i class='fas fa-medal'></i> Prata";
-                    cliente.corNivel = "#9ca3af";
-                } else if (cliente.totalFaturamento >= 5000) {
-                    cliente.nivel = "<i class='fas fa-award'></i> Bronze";
-                    cliente.corNivel = "#cd7f32";
-                } else {
-                    cliente.nivel = "<i class='fas fa-star'></i> Iniciante";
-                    cliente.corNivel = "#60a5fa";
-                }
-            }
+            if (!sidebar) return;
 
-            return clientes;
-        }
+            sidebar.classList.add(
+                "open"
+            );
 
-        function atualizarEstatisticasCRM(clientes) {
-            const total = Object.keys(clientes).length;
-            const ativos = Object.values(clientes).filter(c => c.status === "ativo").length;
-            const recentes = Object.values(clientes).filter(c => c.diasDesdeUltima <= 7).length;
-            const ticketMedioGeral = total > 0 ? Object.values(clientes).reduce((sum, c) => sum + c.ticketMedio, 0) / total :
-                0;
+            if (menuOverlay) {
 
-            document.getElementById('totalClientes').innerHTML = total;
-            document.getElementById('clientesAtivos').innerHTML = ativos;
-            document.getElementById('clientesRecentes').innerHTML = recentes;
-            document.getElementById('ticketMedioGeral').innerHTML = Math.round(ticketMedioGeral).toLocaleString() + ' MT';
-        }
-
-        function renderizarClientes() {
-            let clientesArray = Object.values(clientesData);
-
-            if (searchTerm) {
-                clientesArray = clientesArray.filter(c =>
-                    c.numero.toLowerCase().includes(searchTerm.toLowerCase())
+                menuOverlay.classList.add(
+                    "active"
                 );
+
             }
 
-            switch (crmFilterAtual) {
-                case "top":
-                    clientesArray = clientesArray.sort((a, b) => b.totalFaturamento - a.totalFaturamento).slice(0, 10);
-                    break;
-                case "ativos":
-                    clientesArray = clientesArray.filter(c => c.status === "ativo");
-                    break;
-                case "inativos":
-                    clientesArray = clientesArray.filter(c => c.status === "inativo");
-                    break;
-                case "vip":
-                    clientesArray = clientesArray.filter(c => c.totalFaturamento >= 25000);
-                    break;
-                default:
-                    clientesArray = clientesArray.sort((a, b) => b.totalFaturamento - a.totalFaturamento);
+            if (menuToggle) {
+
+                menuToggle.setAttribute(
+                    "aria-expanded",
+                    "true"
+                );
+
             }
 
-            const container = document.getElementById('clientesList');
-            if (clientesArray.length === 0) {
-                container.innerHTML = '<div class="empty-state">Nenhum cliente encontrado</div>';
-                return;
-            }
-
-            container.innerHTML = clientesArray.map(cliente => `
-                    <div class="client-card" data-numero="${cliente.numero}">
-                        <div class="client-header">
-                            <div class="client-number">
-                                <i class="fas fa-user-circle"></i>
-                                ${cliente.numero}
-                            </div>
-                            <div class="client-badge" style="background: ${cliente.corNivel}20; color: ${cliente.corNivel}; border: 1px solid ${cliente.corNivel}">
-                                ${cliente.nivel}
-                            </div>
-                        </div>
-                        <div class="client-stats">
-                            <div class="client-stat">
-                                <div class="value">${cliente.totalCompras}</div>
-                                <div class="label">Compras</div>
-                            </div>
-                            <div class="client-stat">
-                                <div class="value">${Math.round(cliente.totalMB).toLocaleString()}</div>
-                                <div class="label">MB Total</div>
-                            </div>
-                            <div class="client-stat">
-                                <div class="value">${Math.round(cliente.totalFaturamento).toLocaleString()} MT</div>
-                                <div class="label">Total Gasto</div>
-                            </div>
-                            <div class="client-stat">
-                                <div class="value">${Math.round(cliente.ticketMedio).toLocaleString()} MT</div>
-                                <div class="label">Ticket Médio</div>
-                            </div>
-                        </div>
-                        <div class="client-tags">
-                            <span class="client-tag"><i class="fas fa-calendar"></i> ${formatDate(cliente.ultimaCompra)}</span>
-                            <span class="client-tag"><i class="fas fa-clock"></i> ${cliente.diasDesdeUltima} dias</span>
-                            <span class="client-tag"><i class="fas fa-tag"></i> ${cliente.grupos[0] || 'N/A'}${cliente.grupos.length > 1 ? ` +${cliente.grupos.length - 1}` : ''}</span>
-                        </div>
-                        <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
-                            <button class="btn btn-outline ver-detalhes-btn" data-numero="${cliente.numero}" style="padding: 6px 16px; font-size: 12px;">
-                                <i class="fas fa-eye"></i> Detalhes
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
-
-            document.querySelectorAll('.ver-detalhes-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const numero = btn.dataset.numero;
-                    mostrarDetalhesCliente(numero);
-                });
-            });
         }
 
-        function mostrarDetalhesCliente(numero) {
-            const cliente = clientesData[numero];
-            if (!cliente) return;
 
-            const ultimas5Compras = cliente.compras.slice(0, 5);
+        function fecharMenu() {
 
-            const html = `
-                    <div style="max-height: 60vh; overflow-y: auto;">
-                        <div class="crm-stat-card" style="margin-bottom: 20px;">
-                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                                <div><strong><i class="fas fa-phone-alt"></i> Número:</strong> ${cliente.numero}</div>
-                                <div><strong><i class="fas fa-crown"></i> Nível:</strong> <span style="color: ${cliente.corNivel}">${cliente.nivel}</span></div>
-                                <div><strong><i class="fas fa-calendar-plus"></i> Primeira Compra:</strong> ${formatDate(cliente.primeiraCompra)}</div>
-                                <div><strong><i class="fas fa-calendar-check"></i> Última Compra:</strong> ${formatDate(cliente.ultimaCompra)}</div>
-                                <div><strong><i class="fas fa-hourglass-half"></i> Dias Inativo:</strong> ${cliente.diasDesdeUltima}</div>
-                                <div><strong><i class="fas fa-chart-simple"></i> Status:</strong> ${cliente.status === "ativo" ? "<i class='fas fa-circle' style='color:#10b981;'></i> Ativo" : (cliente.status === "risco" ? "<i class='fas fa-exclamation-triangle' style='color:#fbbf24;'></i> Risco" : "<i class='fas fa-circle' style='color:#6b7280;'></i> Inativo")}</div>
-                            </div>
-                        </div>
-                        
-                        <div class="crm-stat-card" style="margin-bottom: 20px;">
-                            <h4 style="margin-bottom: 15px;"><i class="fas fa-coins"></i> Resumo Financeiro</h4>
-                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                                <div><strong>Total Gasto:</strong> ${Math.round(cliente.totalFaturamento).toLocaleString()} MT</div>
-                                <div><strong>Total Lucro:</strong> <span class="profit-positive">+${Math.round(cliente.totalLucro).toLocaleString()} MT</span></div>
-                                <div><strong>Ticket Médio:</strong> ${Math.round(cliente.ticketMedio).toLocaleString()} MT</div>
-                                <div><strong>Total Compras:</strong> ${cliente.totalCompras}</div>
-                                <div><strong>Total MB:</strong> ${Math.round(cliente.totalMB).toLocaleString()} MB</div>
-                                <div><strong>Total GB:</strong> ${cliente.totalGB.toFixed(2)} GB</div>
-                            </div>
-                        </div>
-                        
-                        <div class="crm-stat-card" style="margin-bottom: 20px;">
-                            <h4 style="margin-bottom: 15px;"><i class="fas fa-tags"></i> Grupos Comprados</h4>
-                            <div class="client-tags">
-                                ${cliente.grupos.map(g => `<span class="client-tag">${g}</span>`).join('')}
-                            </div>
-                        </div>
-                        
-                        <div class="crm-stat-card" style="margin-bottom: 20px;">
-                            <h4 style="margin-bottom: 15px;"><i class="fas fa-clock"></i> Últimas Compras</h4>
-                            ${ultimas5Compras.length > 0 ? `
-                                    <div class="table-wrapper">
-                                        <table style="width: 100%; font-size: 12px;">
-                                            <thead>
-                                                <tr><th>Data</th><th>MB</th><th>Valor</th><th>Tipo</th><th>Grupo</th></tr>
-                                            </thead>
-                                            <tbody>
-                                                ${ultimas5Compras.map(c => `
-                                                        <tr>
-                                                            <td>${formatDateTime(c.data)}</td>
-                                                            <td>${c.mb} MB</td>
-                                                            <td>${Math.round(c.valor).toLocaleString()} MT</td>
-                                                            <td>${c.tipo ? `<span class="badge-pacote ${c.tipo}">${c.tipo}</span>` : 'Normal'}</td>
-                                                            <td>${c.grupo || 'N/A'}</td>
-                                                        </tr>
-                                                    `).join('')}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                ` : '<div class="empty-state">Nenhuma compra encontrada</div>'}
-                        </div>
-                    </div>
-                `;
+            if (!sidebar) return;
 
-            document.getElementById('modalClienteTitulo').innerHTML = `<i class="fas fa-user"></i> ${cliente.numero}`;
-            document.getElementById('modalClienteConteudo').innerHTML = html;
-            document.getElementById('modalCliente').style.display = 'flex';
-        }
+            sidebar.classList.remove(
+                "open"
+            );
 
-        // ===== FUNÇÕES DE PACOTES =====
+            if (menuOverlay) {
 
-        function carregarPacotes() {
-            const pacotesRef = ref(database, `pacotes/${currentUser.uid}`);
-            onValue(pacotesRef, (snapshot) => {
-                pacotesData = snapshot.val() || {};
-                renderizarPacotes();
-            });
-        }
+                menuOverlay.classList.remove(
+                    "active"
+                );
 
-        function renderizarPacotes() {
-            const container = document.getElementById('listaPacotes');
-            let pacotesArray = Object.entries(pacotesData).map(([id, pacote]) => ({ id, ...pacote }));
-
-            if (filtroPacoteAtual !== 'todos') {
-                pacotesArray = pacotesArray.filter(p => p.tipo === filtroPacoteAtual);
             }
 
-            if (pacotesArray.length === 0) {
-                container.innerHTML = '<div class="empty-state">Nenhum pacote cadastrado</div>';
-                return;
+            if (menuToggle) {
+
+                menuToggle.setAttribute(
+                    "aria-expanded",
+                    "false"
+                );
+
             }
 
-            container.innerHTML = pacotesArray.map(pacote => `
-                    <div class="pacote-item" data-id="${pacote.id}">
-                        <div class="pacote-tipo ${pacote.tipo}">
-                            ${pacote.tipo === 'semanal' ? '📅' : pacote.tipo === 'mensal' ? '📆' : pacote.tipo === 'diamante' ? '💎' : '♾️'}
-                            ${pacote.tipo.toUpperCase()}
-                        </div>
-                        <div class="pacote-detalhes">
-                            <span>📦 <strong>${pacote.gb} GB</strong></span>
-                            <span>💰 <span class="valor">${Math.round(pacote.valor).toLocaleString()} MT</span></span>
-                            <span>📊 <strong>${Math.round(pacote.gb * 1024)} MB</strong></span>
-                        </div>
-                        ${pacote.vantagem ? `<div style="font-size: 13px; color: #60a5fa; margin-bottom: 10px;"><i class="fas fa-star"></i> ${pacote.vantagem}</div>` : ''}
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <span class="pacote-badge ${pacote.tipo}">${pacote.tipo}</span>
-                            ${pacote.grupo ? `<span class="client-tag"><i class="fas fa-users"></i> ${pacote.grupo}</span>` : ''}
-                            <span style="margin-left: auto; font-size: 12px; color: #6b7280;">${formatDate(pacote.createdAt)}</span>
-                        </div>
-                        <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
-                            <button class="btn btn-outline editar-pacote-btn" data-id="${pacote.id}" style="padding: 6px 16px; font-size: 12px;">
-                                <i class="fas fa-edit"></i> Editar
-                            </button>
-                            <button class="btn btn-danger excluir-pacote-btn" data-id="${pacote.id}" style="padding: 6px 16px; font-size: 12px;">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
+        }
 
-            document.querySelectorAll('.editar-pacote-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const id = btn.dataset.id;
-                    abrirModalPacote(id);
-                });
-            });
 
-            document.querySelectorAll('.excluir-pacote-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
+        if (menuToggle) {
+
+            menuToggle.addEventListener(
+                "click",
+                function (e) {
+
+                    e.preventDefault();
+
                     e.stopPropagation();
-                    const id = btn.dataset.id;
-                    if (confirm('Tem certeza que deseja excluir este pacote?')) {
-                        await remove(ref(database, `pacotes/${currentUser.uid}/${id}`));
-                        mostrarToast('Pacote excluído!');
+
+                    if (
+                        sidebar &&
+                        sidebar.classList.contains(
+                            "open"
+                        )
+                    ) {
+
+                        fecharMenu();
+
                     }
-                });
-            });
+                    else {
 
-            atualizarVendasPorPacote();
-        }
+                        abrirMenu();
 
-        function atualizarVendasPorPacote() {
-            const vendasSemanais = salesData.filter(v => v.tipo === 'semanal');
-            const vendasMensais = salesData.filter(v => v.tipo === 'mensal');
-            const vendasDiamante = salesData.filter(v => v.tipo === 'diamante' || v.tipo === 'ilimitado');
-
-            document.getElementById('vendasSemanais').innerHTML = vendasSemanais.length > 0 ?
-                vendasSemanais.slice(0, 5).map(v => `
-                        <div class="rank-item">
-                            <span class="rank-name">${v.numero}</span>
-                            <span class="rank-value">${Math.round(v.valor_venda).toLocaleString()} MT</span>
-                        </div>
-                    `).join('') : '<div class="empty-state">Nenhuma venda semanal</div>';
-
-            document.getElementById('vendasMensais').innerHTML = vendasMensais.length > 0 ?
-                vendasMensais.slice(0, 5).map(v => `
-                        <div class="rank-item">
-                            <span class="rank-name">${v.numero}</span>
-                            <span class="rank-value">${Math.round(v.valor_venda).toLocaleString()} MT</span>
-                        </div>
-                    `).join('') : '<div class="empty-state">Nenhuma venda mensal</div>';
-
-            document.getElementById('vendasDiamante').innerHTML = vendasDiamante.length > 0 ?
-                vendasDiamante.slice(0, 5).map(v => `
-                        <div class="rank-item">
-                            <span class="rank-name">${v.numero}</span>
-                            <span class="rank-value">${Math.round(v.valor_venda).toLocaleString()} MT</span>
-                        </div>
-                    `).join('') : '<div class="empty-state">Nenhuma venda diamante</div>';
-        }
-
-        function abrirModalPacote(id = null) {
-            pacoteEditando = id;
-            const modal = document.getElementById('modalPacote');
-            const titulo = document.getElementById('modalPacoteTitulo');
-
-            if (id && pacotesData[id]) {
-                const pacote = pacotesData[id];
-                titulo.innerHTML = '<i class="fas fa-edit"></i> Editar Pacote';
-                document.getElementById('pacoteTipo').value = pacote.tipo;
-                document.getElementById('pacoteGb').value = pacote.gb;
-                document.getElementById('pacoteValor').value = pacote.valor;
-                document.getElementById('pacoteVantagem').value = pacote.vantagem || '';
-                document.getElementById('pacoteGrupo').value = pacote.grupo || '';
-            } else {
-                titulo.innerHTML = '<i class="fas fa-box"></i> Novo Pacote';
-                document.getElementById('pacoteTipo').value = 'semanal';
-                document.getElementById('pacoteGb').value = '';
-                document.getElementById('pacoteValor').value = '';
-                document.getElementById('pacoteVantagem').value = '';
-                document.getElementById('pacoteGrupo').value = '';
-            }
-
-            modal.style.display = 'flex';
-        }
-
-        async function salvarPacote() {
-            const tipo = document.getElementById('pacoteTipo').value;
-            const gb = parseFloat(document.getElementById('pacoteGb').value);
-            const valor = parseFloat(document.getElementById('pacoteValor').value);
-            const vantagem = document.getElementById('pacoteVantagem').value.trim();
-            const grupo = document.getElementById('pacoteGrupo').value.trim() || 'Pacotes';
-
-            if (!gb || gb <= 0) {
-                mostrarToast('Digite uma quantidade válida de GB', true);
-                return;
-            }
-            if (!valor || valor <= 0) {
-                mostrarToast('Digite um valor válido', true);
-                return;
-            }
-
-            const pacoteData = {
-                tipo,
-                gb,
-                valor,
-                vantagem,
-                grupo: normalizarGrupo(grupo),
-                updatedAt: new Date().toISOString()
-            };
-
-            const pacotesRef = ref(database, `pacotes/${currentUser.uid}`);
-
-            if (pacoteEditando && pacotesData[pacoteEditando]) {
-                await set(ref(database, `pacotes/${currentUser.uid}/${pacoteEditando}`), {
-                    ...pacotesData[pacoteEditando],
-                    ...pacoteData
-                });
-                mostrarToast('Pacote atualizado!');
-            } else {
-                pacoteData.createdAt = new Date().toISOString();
-                await push(pacotesRef, pacoteData);
-                mostrarToast('Pacote adicionado!');
-            }
-
-            document.getElementById('modalPacote').style.display = 'none';
-            pacoteEditando = null;
-        }
-
-        // ===== FUNÇÕES DE VENDAS =====
-
-        function carregarVendas() {
-            const salesRef = ref(database, `vendas/${currentUser.uid}`);
-            onValue(salesRef, (snapshot) => {
-                const data = snapshot.val() || {};
-                salesData = Object.entries(data).map(([id, sale]) => ({ id, ...sale })).sort((a, b) => new Date(b
-                    .createdAt) - new Date(a.createdAt));
-
-                clientesData = processarClientes();
-                atualizarEstatisticasCRM(clientesData);
-                renderizarClientes();
-                atualizarTudo();
-
-                if (document.getElementById('panelPacotes').style.display !== 'none') {
-                    atualizarVendasPorPacote();
-                }
-            });
-        }
-
-        function atualizarTudo() {
-            const totalFaturamento = salesData.reduce((s, v) => s + (v.valor_venda || 0), 0);
-            const totalCusto = salesData.reduce((s, v) => s + (v.custo || 0), 0);
-            const totalLucro = salesData.reduce((s, v) => s + (v.lucro || 0), 0);
-            const totalGB = salesData.reduce((s, v) => s + (v.gb || 0), 0);
-            const margem = totalFaturamento > 0 ? (totalLucro / totalFaturamento) * 100 : 0;
-            const hoje = formatDate(new Date().toISOString());
-            const lucroHoje = salesData.filter(v => formatDate(v.createdAt) === hoje).reduce((s, v) => s + (v.lucro || 0),
-            0);
-
-            document.getElementById('faturamento').innerHTML = Math.round(totalFaturamento).toLocaleString() + ' MT';
-            document.getElementById('custo').innerHTML = Math.round(totalCusto).toLocaleString() + ' MT';
-            document.getElementById('lucro').innerHTML = Math.round(totalLucro).toLocaleString() + ' MT';
-            document.getElementById('lucroDiario').innerHTML = Math.round(lucroHoje).toLocaleString() + ' MT';
-            document.getElementById('margem').innerHTML = margem.toFixed(1) + '%';
-            document.getElementById('totalGB').innerHTML = totalGB.toFixed(2) + ' GB';
-            document.getElementById('totalVendas').innerHTML = salesData.length;
-
-            atualizarGraficoDiario();
-            atualizarRitmo();
-            atualizarTopClientes();
-            atualizarTopClientesFaturamento();
-            atualizarTopGrupos();
-            atualizarNovosNumeros();
-            atualizarGraficoMensal();
-            atualizarTopDias();
-            atualizarTabela();
-        }
-
-        function atualizarGraficoDiario() {
-            const vendasPorDia = {};
-            salesData.forEach(v => {
-                const data = formatDate(v.createdAt);
-                if (!vendasPorDia[data]) vendasPorDia[data] = 0;
-                vendasPorDia[data] += v.valor_venda || 0;
-            });
-            const dias = Object.keys(vendasPorDia).sort().slice(-15);
-            const valores = dias.map(d => vendasPorDia[d]);
-            const media = valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length : 0;
-            const melhorDia = dias.length ? dias.reduce((a, b) => vendasPorDia[a] > vendasPorDia[b] ? a : b) : null;
-            document.getElementById('mediaFaturamento').innerHTML = Math.round(media).toLocaleString() + ' MT';
-            document.getElementById('totalDias').innerHTML = dias.length;
-            document.getElementById('melhorDiaValor').innerHTML = melhorDia ?
-                `${melhorDia} (${Math.round(vendasPorDia[melhorDia]).toLocaleString()} MT)` : '--';
-            if (charts.diario) charts.diario.destroy();
-            charts.diario = new Chart(document.getElementById('graficoDiario'), {
-                type: 'line',
-                data: {
-                    labels: dias,
-                    datasets: [{
-                        label: 'Faturamento (MT)',
-                        data: valores,
-                        borderColor: '#34d399',
-                        backgroundColor: 'rgba(52,211,153,0.1)',
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#3b82f6'
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: true }
-            });
-        }
-
-        function atualizarRitmo() {
-            const ultimas24h = [];
-            for (let i = 23; i >= 0; i--) {
-                const h = new Date();
-                h.setHours(h.getHours() - i, 0, 0, 0);
-                ultimas24h.push(h);
-            }
-            const vendasPorHora = ultimas24h.map(hora => {
-                const vendas = salesData.filter(v => {
-                    const d = new Date(v.createdAt);
-                    return d >= hora && d < new Date(hora.getTime() + 3600000);
-                });
-                return {
-                    label: `${hora.getHours().toString().padStart(2,'0')}:00`,
-                    totalMB: vendas.reduce((s, v) => s + (v.mb || 0), 0),
-                    totalVendas: vendas.length
-                };
-            });
-            const mediaMB = vendasPorHora.reduce((s, h) => s + h.totalMB, 0) / 24;
-            const ritmoAlto = vendasPorHora.map(h => h.totalMB > mediaMB ? h.totalMB : 0);
-            const ritmoNormal = vendasPorHora.map(h => h.totalMB <= mediaMB ? h.totalMB : 0);
-            const vendasAlto = vendasPorHora.filter(h => h.totalMB > mediaMB);
-            document.getElementById('altoVendasHora').innerHTML = vendasAlto.reduce((s, h) => s + h.totalVendas, 0);
-            document.getElementById('altoVolume').innerHTML = Math.round(vendasAlto.reduce((s, h) => s + h.totalMB, 0))
-                .toLocaleString();
-            document.getElementById('altoMedia').innerHTML = Math.round(vendasAlto.length ? vendasAlto.reduce((s, h) => s + h
-                .totalMB, 0) / vendasAlto.length : 0);
-            document.getElementById('normalVendasHora').innerHTML = vendasPorHora.filter(h => h.totalMB <= mediaMB).reduce((
-                s, h) => s + h.totalVendas, 0);
-            document.getElementById('normalVolume').innerHTML = Math.round(vendasPorHora.filter(h => h.totalMB <= mediaMB)
-                .reduce((s, h) => s + h.totalMB, 0)).toLocaleString();
-            document.getElementById('normalMedia').innerHTML = Math.round(vendasPorHora.filter(h => h.totalMB <= mediaMB)
-                .length ? vendasPorHora.filter(h => h.totalMB <= mediaMB).reduce((s, h) => s + h.totalMB, 0) / vendasPorHora
-                .filter(h => h.totalMB <= mediaMB).length : 0);
-            if (charts.ritmoAlto) charts.ritmoAlto.destroy();
-            if (charts.ritmoNormal) charts.ritmoNormal.destroy();
-            charts.ritmoAlto = new Chart(document.getElementById('graficoRitmoAlto'), {
-                type: 'line',
-                data: {
-                    labels: vendasPorHora.map(h => h.label),
-                    datasets: [{
-                        label: 'MB (Alto)',
-                        data: ritmoAlto,
-                        borderColor: '#ff6b6b',
-                        backgroundColor: 'rgba(255,68,68,0.1)',
-                        fill: true,
-                        tension: 0.3
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: true }
-            });
-            charts.ritmoNormal = new Chart(document.getElementById('graficoRitmoNormal'), {
-                type: 'line',
-                data: {
-                    labels: vendasPorHora.map(h => h.label),
-                    datasets: [{
-                        label: 'MB (Normal)',
-                        data: ritmoNormal,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59,130,246,0.1)',
-                        fill: true,
-                        tension: 0.3
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: true }
-            });
-        }
-
-        function atualizarTopClientes() {
-            const filtrados = salesData.filter(v => getDataFiltro(v.createdAt, topFiltroAtual));
-            const clientes = {};
-            filtrados.forEach(v => {
-                if (!clientes[v.numero]) clientes[v.numero] = { mb: 0, compras: 0 };
-                clientes[v.numero].mb += v.mb;
-                clientes[v.numero].compras++;
-            });
-            const top = Object.entries(clientes).sort((a, b) => b[1].mb - a[1].mb).slice(0, 5);
-            document.getElementById('topClientes').innerHTML = top.length ? top.map(([n, d], i) =>
-                    `<div class="rank-item"><span class="rank-number">${i+1}º</span><span class="rank-name">${n.substring(0,22)}</span><span class="rank-value">${Math.round(d.mb).toLocaleString()} MB (${d.compras})</span></div>`
-                    ).join('') : '<div class="empty-state">Nenhum dado</div>';
-        }
-
-        function atualizarTopClientesFaturamento() {
-            const filtrados = salesData.filter(v => getDataFiltro(v.createdAt, topFiltroFaturamentoAtual));
-            const clientes = {};
-            filtrados.forEach(v => {
-                if (!clientes[v.numero]) clientes[v.numero] = { fat: 0 };
-                clientes[v.numero].fat += v.valor_venda;
-            });
-            const top = Object.entries(clientes).sort((a, b) => b[1].fat - a[1].fat).slice(0, 5);
-            document.getElementById('topClientesFaturamento').innerHTML = top.length ? top.map(([n, d], i) =>
-                    `<div class="rank-item"><span class="rank-number">${i+1}º</span><span class="rank-name">${n.substring(0,22)}</span><span class="rank-value">${Math.round(d.fat).toLocaleString()} MT</span></div>`
-                    ).join('') : '<div class="empty-state">Nenhum dado</div>';
-        }
-
-        function atualizarTopGrupos() {
-            const filtrados = salesData.filter(v => getDataFiltro(v.createdAt, topGrupoFiltroAtual));
-            const grupos = {};
-            filtrados.forEach(v => {
-                const g = v.grupo || 'N/A';
-                if (!grupos[g]) grupos[g] = { fat: 0, vendas: 0 };
-                grupos[g].fat += v.valor_venda;
-                grupos[g].vendas++;
-            });
-            const top = Object.entries(grupos).sort((a, b) => b[1].fat - a[1].fat).slice(0, 5);
-            document.getElementById('topGrupos').innerHTML = top.length ? top.map(([g, d], i) =>
-                    `<div class="rank-item"><span class="rank-number">${i+1}º</span><span class="rank-name">${g.substring(0,22)}</span><span class="rank-value">${Math.round(d.fat).toLocaleString()} MT</span></div>`
-                    ).join('') : '<div class="empty-state">Nenhum dado</div>';
-        }
-
-        function atualizarNovosNumeros() {
-            const hoje = formatDate(new Date().toISOString());
-            const semanaAtras = new Date();
-            semanaAtras.setDate(semanaAtras.getDate() - 7);
-            const comprasHoje = salesData.filter(v => formatDate(v.createdAt) === hoje);
-            const numerosNovos = [];
-            [...new Set(comprasHoje.map(v => v.numero))].forEach(num => {
-                const comprouSemana = salesData.some(v => v.numero === num && formatDate(v.createdAt) !== hoje &&
-                    new Date(v.createdAt) >= semanaAtras);
-                if (!comprouSemana) numerosNovos.push({
-                    numero: num,
-                    mb: comprasHoje.filter(v => v.numero === num).reduce((s, v) => s + v.mb, 0)
-                });
-            });
-            document.getElementById('novosNumerosList').innerHTML = numerosNovos.length ? numerosNovos.map(n =>
-                    `<div class="new-number-item"><i class="fas fa-bell" style="color:#34d399; margin-right:8px"></i> ${n.numero} - ${n.mb} MB</div>`
-                    ).join('') : '<div class="empty-state">Nenhum novo número hoje</div>';
-        }
-
-        function atualizarTopDias() {
-            const dias = {};
-            salesData.forEach(v => {
-                const d = formatDate(v.createdAt);
-                if (!dias[d]) dias[d] = { fat: 0 };
-                dias[d].fat += v.valor_venda;
-            });
-            const top = Object.entries(dias).sort((a, b) => b[1].fat - a[1].fat).slice(0, 5);
-            document.getElementById('topDias').innerHTML = top.length ? top.map(([d, val], i) =>
-                    `<div class="rank-item"><span class="rank-number">${i+1}º</span><span class="rank-name">${d}</span><span class="rank-value">${Math.round(val.fat).toLocaleString()} MT</span></div>`
-                    ).join('') : '<div class="empty-state">Nenhum dado</div>';
-        }
-
-        function atualizarGraficoMensal() {
-            const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-            const ultimos6 = [];
-            for (let i = 5; i >= 0; i--) {
-                const d = new Date();
-                d.setMonth(d.getMonth() - i);
-                ultimos6.push(`${meses[d.getMonth()]}/${d.getFullYear()}`);
-            }
-            const valores = ultimos6.map(mesAno => salesData.filter(v => {
-                const d = new Date(v.createdAt);
-                return `${meses[d.getMonth()]}/${d.getFullYear()}` === mesAno;
-            }).reduce((s, v) => s + (v.valor_venda || 0), 0));
-            if (charts.mensal) charts.mensal.destroy();
-            charts.mensal = new Chart(document.getElementById('graficoMensal'), {
-                type: 'line',
-                data: {
-                    labels: ultimos6,
-                    datasets: [{
-                        label: 'Faturamento (MT)',
-                        data: valores,
-                        borderColor: '#60a5fa',
-                        backgroundColor: 'rgba(96,165,250,0.1)',
-                        fill: true,
-                        tension: 0.3
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: true }
-            });
-        }
-
-        function atualizarTabela() {
-            const periodo = document.getElementById('filtroPeriodo')?.value || 'todos';
-            const numero = document.getElementById('filtroNumero')?.value.toLowerCase() || '';
-            const grupo = document.getElementById('filtroGrupo')?.value.toLowerCase() || '';
-            const tipoPacote = document.getElementById('filtroTipoPacote')?.value || 'todos';
-
-            let filtrados = salesData.filter(v => getDataFiltro(v.createdAt, periodo));
-            if (numero) filtrados = filtrados.filter(v => v.numero?.toLowerCase().includes(numero));
-            if (grupo) filtrados = filtrados.filter(v => (v.grupo || '').toLowerCase().includes(grupo));
-            if (tipoPacote !== 'todos') {
-                filtrados = filtrados.filter(v => (v.tipo || 'normal') === tipoPacote);
-            }
-
-            const tbody = document.getElementById('listaVendas');
-            if (!filtrados.length) {
-                tbody.innerHTML = '<tr><td colspan="10" class="empty-state">Nenhuma venda encontrada</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = filtrados.map(v => {
-                const tipo = v.tipo || 'normal';
-                const badgeTipo = tipo === 'normal' ? '<span class="badge-pacote normal">Normal</span>' :
-                    `<span class="badge-pacote ${tipo}">${tipo}</span>`;
-                return `
-                        <tr>
-                            <td>${formatDateTime(v.createdAt)}</td>
-                            <td>${v.mb} MB</td>
-                            <td>${(v.gb||0).toFixed(2)} GB</td>
-                            <td>${badgeTipo}</td>
-                            <td>${Math.round(v.valor_venda).toLocaleString()} MT</td>
-                            <td>${Math.round(v.custo).toLocaleString()} MT</td>
-                            <td class="profit-positive">+${Math.round(v.lucro).toLocaleString()} MT</td>
-                            <td>${v.numero}</td>
-                            <td>${v.grupo||'N/A'}</td>
-                            <td><button class="delete-btn" data-id="${v.id}"><i class="fas fa-trash-alt"></i></button></td>
-                        </tr>
-                    `;
-            }).join('');
-
-            document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', () => {
-                vendaParaExcluir = btn.dataset.id;
-                document.getElementById('modalExcluir').style.display = 'flex';
-            }));
-        }
-
-        async function excluirVenda() {
-            if (vendaParaExcluir) {
-                await remove(ref(database, `vendas/${currentUser.uid}/${vendaParaExcluir}`));
-                mostrarToast('<i class="fas fa-trash-alt"></i> Venda excluída com sucesso!');
-                document.getElementById('modalExcluir').style.display = 'none';
-                vendaParaExcluir = null;
-            }
-        }
-
-        async function adicionarVendaManual() {
-            const mb = parseInt(document.getElementById('novaVendaMB').value);
-            const numero = document.getElementById('novaVendaNumero').value;
-            let grupo = document.getElementById('novaVendaGrupo').value || 'GRUPO_PADRAO';
-            const tipo = document.getElementById('novaVendaTipo').value;
-
-            if (!mb || mb <= 0) {
-                mostrarToast('Digite uma quantidade válida em MB', true);
-                return;
-            }
-            if (!numero) {
-                mostrarToast('Digite o número do cliente', true);
-                return;
-            }
-
-            grupo = normalizarGrupo(grupo);
-
-            const configRef = ref(database, `configuracoes/${currentUser.uid}/${grupo}`);
-            const configSnap = await get(configRef);
-            let precoVendaGB = 28;
-            let precoCustoGB = 21;
-            if (configSnap.exists()) {
-                precoVendaGB = configSnap.val().venda || 28;
-                precoCustoGB = configSnap.val().custo || 21;
-            }
-
-            const gb = mb / 1024;
-            let valor_venda = gb * precoVendaGB;
-            let custo = gb * precoCustoGB;
-
-            if (tipo !== 'normal') {
-                const valorPacote = parseFloat(document.getElementById('novaVendaValorPacote').value);
-                const gbPacote = parseFloat(document.getElementById('novaVendaGbPacote').value);
-
-                if (valorPacote && valorPacote > 0) {
-                    valor_venda = valorPacote;
-                    custo = (gbPacote || gb) * precoCustoGB;
-                } else {
-                    const pacoteRef = ref(database, `pacotes/${currentUser.uid}`);
-                    const pacoteSnap = await get(pacoteRef);
-                    const pacotes = pacoteSnap.val() || {};
-                    const pacoteEncontrado = Object.values(pacotes).find(p => p.tipo === tipo);
-                    if (pacoteEncontrado) {
-                        valor_venda = pacoteEncontrado.valor;
-                        custo = pacoteEncontrado.gb * precoCustoGB;
                     }
+
                 }
-            }
+            );
 
-            const lucro = valor_venda - custo;
-
-            const salesRef = ref(database, `vendas/${currentUser.uid}`);
-            await push(salesRef, {
-                mb: mb,
-                gb: gb,
-                valor_venda: valor_venda,
-                custo: custo,
-                lucro: lucro,
-                numero: numero,
-                grupo: grupo,
-                tipo: tipo,
-                createdAt: new Date().toISOString()
-            });
-
-            const tipoMsg = tipo !== 'normal' ? ` [${tipo.toUpperCase()}]` : '';
-            mostrarToast(`<i class="fas fa-check-circle"></i> ${numero} comprou ${mb} MB${tipoMsg} no grupo ${grupo}`);
-
-            document.getElementById('novaVendaMB').value = '';
-            document.getElementById('novaVendaNumero').value = '';
-            document.getElementById('novaVendaGrupo').value = '';
-            document.getElementById('novaVendaValorPacote').value = '';
-            document.getElementById('novaVendaGbPacote').value = '';
         }
 
-        // ===== CONFIGURAÇÕES =====
 
-        async function carregarConfiguracoes() {
-            const configRef = ref(database, `configuracoes/${currentUser.uid}`);
-            const snapshot = await get(configRef);
-            const configs = snapshot.val() || {};
-            const container = document.getElementById('configGrupos');
-            if (!container) return;
-            container.innerHTML = '';
-            const grupos = Object.keys(configs).length ? configs : { "GRUPO_PADRAO": { venda: 28, custo: 21 } };
-            for (const [grupo, precos] of Object.entries(grupos)) {
-                const div = document.createElement('div');
-                div.className = 'config-group-item';
-                div.innerHTML = `
-                        <div class="config-group-name"><i class="fas fa-folder-open"></i> ${grupo}</div>
-                        <div class="config-inputs">
-                            <input type="number" id="venda_${grupo.replace(/[^a-z0-9]/gi,'_')}" placeholder="Preço Venda (MT/GB)" value="${Math.round(precos.venda)}" step="1">
-                            <input type="number" id="custo_${grupo.replace(/[^a-z0-9]/gi,'_')}" placeholder="Preço Custo (MT/GB)" value="${Math.round(precos.custo)}" step="1">
-                            ${grupo !== "GRUPO_PADRAO" ? `<button class="btn btn-outline" onclick="removerGrupoFirebase('${grupo}')" style="padding: 8px 20px;"><i class="fas fa-trash-alt"></i> Excluir</button>` : ''}
-                        </div>
+        if (menuOverlay) {
+
+            menuOverlay.addEventListener(
+                "click",
+                function () {
+
+                    fecharMenu();
+
+                }
+            );
+
+        }
+
+
+        // ======================================
+        // MENU DOS PAINÉIS
+        // ======================================
+
+        document
+            .querySelectorAll(
+                ".menu-item[data-panel]"
+            )
+            .forEach(
+                function (item) {
+
+                    item.addEventListener(
+                        "click",
+                        function (e) {
+
+                            e.preventDefault();
+
+                            e.stopPropagation();
+
+
+                            const panel =
+                                this.getAttribute(
+                                    "data-panel"
+                                );
+
+
+                            if (
+                                panel &&
+                                typeof window.showPanel ===
+                                "function"
+                            ) {
+
+                                window.showPanel(
+                                    panel
+                                );
+
+                            }
+
+
+                            if (
+                                window.innerWidth <=
+                                768
+                            ) {
+
+                                fecharMenu();
+
+                            }
+
+                        }
+                    );
+
+                }
+            );
+
+
+        // ======================================
+        // BOTÃO ATUALIZAR
+        // ======================================
+
+        const btnAtualizar =
+            document.getElementById(
+                "btnAtualizar"
+            );
+
+
+        if (btnAtualizar) {
+
+            btnAtualizar.addEventListener(
+                "click",
+                async function () {
+
+
+                    const textoOriginal =
+                        this.innerHTML;
+
+
+                    this.disabled = true;
+
+
+                    this.innerHTML = `
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Atualizando...
                     `;
-                container.appendChild(div);
-            }
+
+
+                    try {
+
+
+                        if (
+                            typeof window.carregarDashboard ===
+                            "function"
+                        ) {
+
+                            await window.carregarDashboard();
+
+                        }
+
+
+                        if (
+                            typeof window.carregarTabela ===
+                            "function"
+                        ) {
+
+                            await window.carregarTabela();
+
+                        }
+
+
+                        if (
+                            typeof window.carregarRelatorios ===
+                            "function"
+                        ) {
+
+                            await window.carregarRelatorios();
+
+                        }
+
+
+                    }
+                    catch (erro) {
+
+                        console.error(
+                            "Erro ao atualizar:",
+                            erro
+                        );
+
+                        alert(
+                            "Erro ao atualizar o dashboard."
+                        );
+
+                    }
+                    finally {
+
+
+                        this.disabled = false;
+
+
+                        this.innerHTML =
+                            textoOriginal;
+
+                    }
+
+                }
+            );
+
         }
 
-        window.removerGrupoFirebase = async (grupo) => {
-            if (grupo === "GRUPO_PADRAO") {
-                mostrarToast('Não é possível remover o GRUPO_PADRAO', true);
-                return;
-            }
-            await remove(ref(database, `configuracoes/${currentUser.uid}/${grupo}`));
-            mostrarToast(`Grupo ${grupo} removido!`);
-            carregarConfiguracoes();
-        };
 
-        async function salvarConfiguracoes() {
-            const novas = {};
-            const items = document.querySelectorAll('#configGrupos .config-group-item');
-            for (const item of items) {
-                const nomeGrupo = item.querySelector('.config-group-name').innerText.replace(/[📁]/g, '').trim();
-                const vendaInput = item.querySelector('input[placeholder*="Venda"]');
-                const custoInput = item.querySelector('input[placeholder*="Custo"]');
-                if (vendaInput && custoInput) novas[nomeGrupo] = {
-                    venda: Math.round(parseFloat(vendaInput.value)),
-                    custo: Math.round(parseFloat(custoInput.value))
-                };
-            }
-            const novoNome = document.getElementById('novoGrupoNome')?.value;
-            const novoVenda = document.getElementById('novoGrupoVenda')?.value;
-            const novoCusto = document.getElementById('novoGrupoCusto')?.value;
-            if (novoNome && novoVenda && novoCusto) {
-                const nomeNormalizado = normalizarGrupo(novoNome);
-                novas[nomeNormalizado] = {
-                    venda: Math.round(parseFloat(novoVenda)),
-                    custo: Math.round(parseFloat(novoCusto))
-                };
-                document.getElementById('novoGrupoNome').value = '';
-                document.getElementById('novoGrupoVenda').value = '';
-                document.getElementById('novoGrupoCusto').value = '';
-            }
-            await set(ref(database, `configuracoes/${currentUser.uid}`), novas);
-            mostrarToast('Configurações salvas!');
-            carregarConfiguracoes();
+        // ======================================
+        // MOSTRAR DASHBOARD INICIAL
+        // ======================================
+
+        if (
+            typeof window.showPanel ===
+            "function"
+        ) {
+
+            window.showPanel(
+                "dashboard"
+            );
+
         }
 
-        // ===== NAVEGAÇÃO =====
 
-        window.showPanel = function(panelId) {
-            document.getElementById('panelDashboard').style.display = panelId === 'dashboard' ? 'block' : 'none';
-            document.getElementById('panelCRM').style.display = panelId === 'crm' ? 'block' : 'none';
-            document.getElementById('panelPacotes').style.display = panelId === 'pacotes' ? 'block' : 'none';
-            document.getElementById('panelTutorial').style.display = panelId === 'tutorial' ? 'block' : 'none';
-            document.getElementById('panelConfig').style.display = panelId === 'config' ? 'block' : 'none';
+    }
+);
 
-            if (panelId === 'config') carregarConfiguracoes();
-            if (panelId === 'crm') renderizarClientes();
-            if (panelId === 'pacotes') {
-                renderizarPacotes();
-                atualizarVendasPorPacote();
-            }
+</script>
 
-            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
-            document.querySelector(`.menu-item[data-panel="${panelId}"]`)?.classList.add('active');
-            if (window.innerWidth <= 768) {
-                document.getElementById('sidebar')?.classList.remove('open');
-                document.getElementById('menuOverlay')?.classList.remove('active');
-            }
-        };
 
-        function toggleSidebar() {
-            document.getElementById('sidebar')?.classList.toggle('open');
-            document.getElementById('menuOverlay')?.classList.toggle('active');
-        }
-
-        function closeSidebar() {
-            document.getElementById('sidebar')?.classList.remove('open');
-            document.getElementById('menuOverlay')?.classList.remove('active');
-        }
-
-        function logout() {
-            signOut(auth);
-            localStorage.removeItem('userData');
-            window.location.href = 'index.html';
-        }
-
-        // ===== EVENT LISTENERS =====
-
-        document.getElementById('menuToggleBtn')?.addEventListener('click', toggleSidebar);
-        document.getElementById('menuOverlay')?.addEventListener('click', closeSidebar);
-        document.getElementById('logoutBtn')?.addEventListener('click', logout);
-        document.getElementById('refreshBtn')?.addEventListener('click', () => location.reload());
-        document.getElementById('salvarConfigBtn')?.addEventListener('click', salvarConfiguracoes);
-        document.getElementById('registrarVendaBtn')?.addEventListener('click', adicionarVendaManual);
-        document.getElementById('adicionarGrupoBtn')?.addEventListener('click', salvarConfiguracoes);
-        document.getElementById('fecharModalClienteBtn')?.addEventListener('click', () => document.getElementById(
-            'modalCliente').style.display = 'none');
-        document.getElementById('cancelarExcluirBtn')?.addEventListener('click', () => document.getElementById(
-            'modalExcluir').style.display = 'none');
-        document.getElementById('confirmarExcluirBtn')?.addEventListener('click', excluirVenda);
-        document.getElementById('filtroPeriodo')?.addEventListener('change', atualizarTabela);
-        document.getElementById('filtroNumero')?.addEventListener('input', atualizarTabela);
-        document.getElementById('filtroGrupo')?.addEventListener('input', atualizarTabela);
-        document.getElementById('filtroTipoPacote')?.addEventListener('change', atualizarTabela);
-        document.getElementById('limparBuscaBtn')?.addEventListener('click', () => {
-            document.getElementById('searchCliente').value = '';
-            searchTerm = '';
-            renderizarClientes();
-        });
-        document.getElementById('searchCliente')?.addEventListener('input', (e) => {
-            searchTerm = e.target.value;
-            renderizarClientes();
-        });
-
-        document.getElementById('adicionarPacoteBtn')?.addEventListener('click', () => abrirModalPacote(null));
-        document.getElementById('cancelarPacoteBtn')?.addEventListener('click', () => {
-            document.getElementById('modalPacote').style.display = 'none';
-            pacoteEditando = null;
-        });
-        document.getElementById('salvarPacoteBtn')?.addEventListener('click', salvarPacote);
-
-        document.querySelectorAll('[data-pacote-filtro]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('[data-pacote-filtro]').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                filtroPacoteAtual = btn.dataset.pacoteFiltro;
-                renderizarPacotes();
-            });
-        });
-
-        document.getElementById('novaVendaTipo')?.addEventListener('change', (e) => {
-            const tipo = e.target.value;
-            const campoValor = document.getElementById('campoValorPacote');
-            const campoGb = document.getElementById('campoGbPacote');
-
-            if (tipo !== 'normal') {
-                campoValor.style.display = 'block';
-                campoGb.style.display = 'block';
-            } else {
-                campoValor.style.display = 'none';
-                campoGb.style.display = 'none';
-            }
-        });
-
-        document.querySelectorAll('[data-panel]').forEach(item => item.addEventListener('click', () => window.showPanel(
-            item.getAttribute('data-panel'))));
-
-        document.querySelectorAll('[data-top]').forEach(btn => btn.addEventListener('click', () => {
-            document.querySelectorAll('[data-top]').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            topFiltroAtual = btn.getAttribute('data-top');
-            atualizarTopClientes();
-        }));
-
-        document.querySelectorAll('[data-top-faturamento]').forEach(btn => btn.addEventListener('click', () => {
-            document.querySelectorAll('[data-top-faturamento]').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            topFiltroFaturamentoAtual = btn.getAttribute('data-top-faturamento');
-            atualizarTopClientesFaturamento();
-        }));
-
-        document.querySelectorAll('[data-top-grupo]').forEach(btn => btn.addEventListener('click', () => {
-            document.querySelectorAll('[data-top-grupo]').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            topGrupoFiltroAtual = btn.getAttribute('data-top-grupo');
-            atualizarTopGrupos();
-        }));
-
-        document.querySelectorAll('[data-crm-filter]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('[data-crm-filter]').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                crmFilterAtual = btn.getAttribute('data-crm-filter');
-                renderizarClientes();
-            });
-        });
-
-        // ===== INICIALIZAÇÃO =====
-
-        carregarVendas();
-        carregarPacotes();
-
-        window.addEventListener('resize', () => {
-            if (window.innerWidth > 768) closeSidebar();
-        });
-
-        // Inicializar mostrando o dashboard
-        window.showPanel('dashboard');
-    </script>
 </body>
+
 </html>
