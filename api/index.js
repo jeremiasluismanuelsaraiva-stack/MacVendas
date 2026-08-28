@@ -5,7 +5,7 @@ const app = express();
 
 
 // =====================================================
-// MIDDLEWARES
+// CONFIGURAÇÕES
 // =====================================================
 
 app.use(cors());
@@ -23,50 +23,27 @@ app.use(express.urlencoded({
 // ROTAS DA API
 // =====================================================
 
-app.use(
-    "/dashboard",
-    require("./dashboard")
-);
+app.use("/dashboard", require("./dashboard"));
 
-app.use(
-    "/vendas",
-    require("./vendas")
-);
+app.use("/vendas", require("./vendas"));
 
-app.use(
-    "/clientes",
-    require("./clientes")
-);
+app.use("/clientes", require("./clientes"));
 
-app.use(
-    "/grupos",
-    require("./grupos")
-);
+app.use("/pedidos", require("./pedidos"));
 
-app.use(
-    "/pacotes",
-    require("./pacotes")
-);
+app.use("/dispositivos", require("./dispositivos"));
 
-app.use(
-    "/pedidos",
-    require("./pedidos")
-);
+app.use("/pacotes", require("./pacotes"));
 
-app.use(
-    "/dispositivos",
-    require("./dispositivos")
-);
+app.use("/grupos", require("./grupos"));
 
-app.use(
-    "/configuracoes",
-    require("./configuracoes")
-);
+app.use("/configuracoes", require("./configuracoes"));
+
+app.use("/relatorios", require("./relatorios"));
 
 
 // =====================================================
 // STATUS DA API
-// GET /
 // =====================================================
 
 app.get("/", (req, res) => {
@@ -75,14 +52,11 @@ app.get("/", (req, res) => {
 
         success: true,
 
-        nome:
-            "Sistema SSD API",
+        nome: "Sistema SSD API",
 
-        versao:
-            "1.0.0",
+        versao: "1.0.0",
 
-        status:
-            "Online"
+        status: "Online"
 
     });
 
@@ -99,11 +73,9 @@ app.use((req, res) => {
 
         success: false,
 
-        error:
-            "Rota não encontrada.",
+        error: "Rota não encontrada.",
 
-        rota:
-            req.originalUrl
+        rota: req.originalUrl
 
     });
 
@@ -121,10 +93,7 @@ app.use((err, req, res, next) => {
         err
     );
 
-
-    res.status(
-        err.status || 500
-    ).json({
+    res.status(500).json({
 
         success: false,
 
