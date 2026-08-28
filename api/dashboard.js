@@ -95,7 +95,7 @@ router.get("/", (req, res) => {
 
 
             // =============================================
-            // VALOR DA VENDA
+            // VALOR
             // =============================================
 
             const valor =
@@ -178,11 +178,11 @@ router.get("/", (req, res) => {
             let gb =
                 Number(
                     venda.gb ??
+                    venda.gb_pacote ??
+                    venda.gbPacote ??
                     0
                 );
 
-
-            // Se não tiver GB, calcula através dos MB
 
             if (
                 gb === 0 &&
@@ -236,10 +236,6 @@ router.get("/", (req, res) => {
 
             dashboard: {
 
-                // -----------------------------------------
-                // FINANCEIRO
-                // -----------------------------------------
-
                 faturamento:
                     Number(
                         faturamento.toFixed(2)
@@ -255,11 +251,6 @@ router.get("/", (req, res) => {
                         lucro.toFixed(2)
                     ),
 
-
-                // -----------------------------------------
-                // INTERNET
-                // -----------------------------------------
-
                 totalGB:
                     Number(
                         totalGB.toFixed(2)
@@ -270,36 +261,16 @@ router.get("/", (req, res) => {
                         totalMB.toFixed(2)
                     ),
 
-
-                // -----------------------------------------
-                // VENDAS
-                // -----------------------------------------
-
                 vendas:
                     listaVendas.length,
 
                 vendasHoje,
 
-
-                // -----------------------------------------
-                // CLIENTES
-                // -----------------------------------------
-
                 clientes:
                     listaClientes.length,
 
-
-                // -----------------------------------------
-                // PEDIDOS
-                // -----------------------------------------
-
                 pedidos:
                     listaPedidos.length,
-
-
-                // -----------------------------------------
-                // DISPOSITIVOS
-                // -----------------------------------------
 
                 dispositivos:
                     listaDispositivos.length
@@ -315,7 +286,6 @@ router.get("/", (req, res) => {
             "Erro ao carregar dashboard:",
             err
         );
-
 
         res.status(500).json({
 
