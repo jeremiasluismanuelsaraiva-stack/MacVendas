@@ -1,8 +1,14 @@
+// ==========================================
+// DASHBOARD
+// ==========================================
+
 const API = window.location.origin;
 
-// ================================
+
+// ==========================================
 // FORMATAR NÚMEROS
-// ================================
+// ==========================================
+
 function numero(valor) {
 
     return Number(valor || 0).toLocaleString("pt-PT");
@@ -10,53 +16,65 @@ function numero(valor) {
 }
 
 
-// ================================
+// ==========================================
 // CARREGAR DASHBOARD
-// ================================
+// ==========================================
+
 async function carregarDashboard() {
 
     try {
 
-        const resposta =
-            await fetch(API + "/dashboard-data");
+        console.log("A carregar dashboard...");
+
+        const resposta = await fetch(
+            API + "/dashboard",
+            {
+                method: "GET",
+                cache: "no-store"
+            }
+        );
+
 
         if (!resposta.ok) {
 
-            console.error(
-                "Erro HTTP:",
-                resposta.status
+            throw new Error(
+                "Erro HTTP: " + resposta.status
             );
-
-            return;
 
         }
 
-        const json =
-            await resposta.json();
+
+        const json = await resposta.json();
+
+
+        console.log(
+            "Resposta do dashboard:",
+            json
+        );
 
 
         if (!json.success) {
 
-            console.error(
-                "API retornou erro:",
-                json
+            throw new Error(
+                json.error ||
+                "A API retornou erro."
             );
-
-            return;
 
         }
 
 
         const d =
-            json.dashboard;
+            json.dashboard || {};
 
 
-        // ================================
+        // ==========================================
         // VENDAS
-        // ================================
+        // ==========================================
 
         const totalVendas =
-            document.getElementById("totalVendas");
+            document.getElementById(
+                "totalVendas"
+            );
 
         if (totalVendas) {
 
@@ -66,12 +84,14 @@ async function carregarDashboard() {
         }
 
 
-        // ================================
+        // ==========================================
         // CLIENTES
-        // ================================
+        // ==========================================
 
         const totalClientes =
-            document.getElementById("totalClientes");
+            document.getElementById(
+                "totalClientes"
+            );
 
         if (totalClientes) {
 
@@ -81,12 +101,14 @@ async function carregarDashboard() {
         }
 
 
-        // ================================
+        // ==========================================
         // PEDIDOS
-        // ================================
+        // ==========================================
 
         const totalPedidos =
-            document.getElementById("totalPedidos");
+            document.getElementById(
+                "totalPedidos"
+            );
 
         if (totalPedidos) {
 
@@ -96,12 +118,14 @@ async function carregarDashboard() {
         }
 
 
-        // ================================
+        // ==========================================
         // DISPOSITIVOS
-        // ================================
+        // ==========================================
 
         const totalDispositivos =
-            document.getElementById("totalDispositivos");
+            document.getElementById(
+                "totalDispositivos"
+            );
 
         if (totalDispositivos) {
 
@@ -111,12 +135,14 @@ async function carregarDashboard() {
         }
 
 
-        // ================================
+        // ==========================================
         // TOTAL GB
-        // ================================
+        // ==========================================
 
         const totalGB =
-            document.getElementById("totalGB");
+            document.getElementById(
+                "totalGB"
+            );
 
         if (totalGB) {
 
@@ -126,12 +152,14 @@ async function carregarDashboard() {
         }
 
 
-        // ================================
+        // ==========================================
         // FATURAMENTO
-        // ================================
+        // ==========================================
 
         const faturamento =
-            document.getElementById("faturamento");
+            document.getElementById(
+                "faturamento"
+            );
 
         if (faturamento) {
 
@@ -141,12 +169,14 @@ async function carregarDashboard() {
         }
 
 
-        // ================================
+        // ==========================================
         // LUCRO
-        // ================================
+        // ==========================================
 
         const lucro =
-            document.getElementById("lucro");
+            document.getElementById(
+                "lucro"
+            );
 
         if (lucro) {
 
@@ -156,12 +186,14 @@ async function carregarDashboard() {
         }
 
 
-        // ================================
+        // ==========================================
         // CUSTO
-        // ================================
+        // ==========================================
 
         const custo =
-            document.getElementById("custo");
+            document.getElementById(
+                "custo"
+            );
 
         if (custo) {
 
@@ -171,12 +203,14 @@ async function carregarDashboard() {
         }
 
 
-        // ================================
+        // ==========================================
         // VENDAS HOJE
-        // ================================
+        // ==========================================
 
         const vendasHoje =
-            document.getElementById("vendasHoje");
+            document.getElementById(
+                "vendasHoje"
+            );
 
         if (vendasHoje) {
 
@@ -186,35 +220,110 @@ async function carregarDashboard() {
         }
 
 
+        // ==========================================
+        // REMOVER CARREGANDO
+        // ==========================================
+
+        document
+            .querySelectorAll(
+                ".carregando"
+            )
+            .forEach(elemento => {
+
+                if (
+                    elemento.textContent
+                        .trim()
+                        .toLowerCase()
+                        .includes("carregando")
+                ) {
+
+                    elemento.textContent = "0";
+
+                }
+
+            });
+
+
         console.log(
-            "Dashboard atualizado:",
-            d
+            "Dashboard atualizado com sucesso."
         );
 
     }
-
-    catch (e) {
+    catch (erro) {
 
         console.error(
             "Erro ao carregar dashboard:",
-            e
+            erro
         );
+
+
+        // Mostrar 0 em vez de ficar eternamente
+        // em "Carregando..."
+
+        const ids = [
+
+            "totalVendas",
+            "totalClientes",
+            "totalPedidos",
+            "totalDispositivos",
+            "totalGB",
+            "faturamento",
+            "lucro",
+            "custo",
+            "vendasHoje"
+
+        ];
+
+
+        ids.forEach(id => {
+
+            const elemento =
+                document.getElementById(id);
+
+            if (
+                elemento &&
+                elemento.textContent
+                    .trim()
+                    .toLowerCase()
+                    .includes("carregando")
+            ) {
+
+                elemento.textContent = "0";
+
+            }
+
+        });
 
     }
 
 }
 
 
-// ================================
-// CARREGAR AO ABRIR
-// ================================
+// ==========================================
+// DISPONIBILIZAR PARA O APP
+// ==========================================
 
-carregarDashboard();
+window.carregarDashboard =
+    carregarDashboard;
 
 
-// ================================
-// ATUALIZAR A CADA 5 SEGUNDOS
-// ================================
+// ==========================================
+// CARREGAR QUANDO A PÁGINA ABRIR
+// ==========================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        carregarDashboard();
+
+    }
+);
+
+
+// ==========================================
+// ATUALIZAÇÃO AUTOMÁTICA
+// ==========================================
 
 setInterval(
     carregarDashboard,
