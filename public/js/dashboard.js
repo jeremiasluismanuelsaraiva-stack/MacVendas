@@ -1,5 +1,5 @@
 // ==========================================
-// DASHBOARD
+// DASHBOARD - public/js/dashboard.js
 // ==========================================
 
 const API = window.location.origin;
@@ -11,58 +11,48 @@ const API = window.location.origin;
 
 function numero(valor) {
 
-    return Number(valor || 0)
-        .toLocaleString("pt-PT");
+    return Number(valor || 0).toLocaleString("pt-PT");
 
 }
 
 
 // ==========================================
-// FORMATAR DINHEIRO
+// FORMATAR DATA
 // ==========================================
 
-function dinheiro(valor) {
+function atualizarData() {
 
-    return Number(valor || 0)
-        .toLocaleString("pt-PT", {
+    const elemento = document.getElementById("data");
 
-            minimumFractionDigits: 2,
+    if (!elemento) {
+        return;
+    }
 
-            maximumFractionDigits: 2
-
-        }) + " MT";
+    elemento.textContent =
+        new Date().toLocaleString("pt-PT");
 
 }
 
 
 // ==========================================
-// CARREGAR ESTATÍSTICAS
+// CARREGAR ESTATÍSTICAS DO DASHBOARD
 // ==========================================
 
 async function carregarDashboard() {
 
     try {
 
-        console.log(
-            "Carregando estatísticas do Dashboard..."
-        );
-
-
         const resposta =
-            await fetch(
-                API + "/relatorios",
-                {
-                    method: "GET",
-                    cache: "no-store"
-                }
-            );
+            await fetch(API + "/relatorios", {
+                method: "GET",
+                cache: "no-store"
+            });
 
 
         if (!resposta.ok) {
 
             throw new Error(
-                "Erro HTTP: " +
-                resposta.status
+                "Erro HTTP: " + resposta.status
             );
 
         }
@@ -72,16 +62,10 @@ async function carregarDashboard() {
             await resposta.json();
 
 
-        console.log(
-            "Resposta /relatorios:",
-            dados
-        );
-
-
-        if (!dados.success) {
+        if (!dados || !dados.success) {
 
             console.error(
-                "API retornou erro:",
+                "Resposta inválida da API:",
                 dados
             );
 
@@ -98,18 +82,13 @@ async function carregarDashboard() {
         // TOTAL DE VENDAS
         // ==========================================
 
-        const elementoVendas =
-            document.getElementById(
-                "vendas"
-            );
+        const vendas =
+            document.getElementById("vendas");
 
+        if (vendas) {
 
-        if (elementoVendas) {
-
-            elementoVendas.textContent =
-                numero(
-                    resumo.totalVendas
-                );
+            vendas.textContent =
+                numero(resumo.totalVendas);
 
         }
 
@@ -118,18 +97,13 @@ async function carregarDashboard() {
         // FATURAMENTO
         // ==========================================
 
-        const elementoValor =
-            document.getElementById(
-                "valor"
-            );
+        const valor =
+            document.getElementById("valor");
 
+        if (valor) {
 
-        if (elementoValor) {
-
-            elementoValor.textContent =
-                dinheiro(
-                    resumo.faturamento
-                );
+            valor.textContent =
+                numero(resumo.faturamento) + " MT";
 
         }
 
@@ -138,18 +112,13 @@ async function carregarDashboard() {
         // CLIENTES
         // ==========================================
 
-        const elementoClientes =
-            document.getElementById(
-                "clientes"
-            );
+        const clientes =
+            document.getElementById("clientes");
 
+        if (clientes) {
 
-        if (elementoClientes) {
-
-            elementoClientes.textContent =
-                numero(
-                    resumo.totalClientes
-                );
+            clientes.textContent =
+                numero(resumo.totalClientes);
 
         }
 
@@ -158,18 +127,13 @@ async function carregarDashboard() {
         // DISPOSITIVOS
         // ==========================================
 
-        const elementoDispositivos =
-            document.getElementById(
-                "disp"
-            );
+        const dispositivos =
+            document.getElementById("disp");
 
+        if (dispositivos) {
 
-        if (elementoDispositivos) {
-
-            elementoDispositivos.textContent =
-                numero(
-                    resumo.totalDispositivos
-                );
+            dispositivos.textContent =
+                numero(resumo.totalDispositivos);
 
         }
 
@@ -178,18 +142,13 @@ async function carregarDashboard() {
         // TOTAL GB
         // ==========================================
 
-        const elementoGB =
-            document.getElementById(
-                "totalGB"
-            );
+        const totalGB =
+            document.getElementById("totalGB");
 
+        if (totalGB) {
 
-        if (elementoGB) {
-
-            elementoGB.textContent =
-                numero(
-                    resumo.totalGB
-                );
+            totalGB.textContent =
+                numero(resumo.totalGB);
 
         }
 
@@ -198,18 +157,13 @@ async function carregarDashboard() {
         // LUCRO
         // ==========================================
 
-        const elementoLucro =
-            document.getElementById(
-                "lucro"
-            );
+        const lucro =
+            document.getElementById("lucro");
 
+        if (lucro) {
 
-        if (elementoLucro) {
-
-            elementoLucro.textContent =
-                dinheiro(
-                    resumo.lucro
-                );
+            lucro.textContent =
+                numero(resumo.lucro) + " MT";
 
         }
 
@@ -218,18 +172,13 @@ async function carregarDashboard() {
         // CUSTO
         // ==========================================
 
-        const elementoCusto =
-            document.getElementById(
-                "custo"
-            );
+        const custo =
+            document.getElementById("custo");
 
+        if (custo) {
 
-        if (elementoCusto) {
-
-            elementoCusto.textContent =
-                dinheiro(
-                    resumo.custo
-                );
+            custo.textContent =
+                numero(resumo.custo) + " MT";
 
         }
 
@@ -238,58 +187,28 @@ async function carregarDashboard() {
         // PEDIDOS
         // ==========================================
 
-        const elementoPedidos =
-            document.getElementById(
-                "pedidos"
-            );
+        const pedidos =
+            document.getElementById("pedidos");
 
+        if (pedidos) {
 
-        if (elementoPedidos) {
-
-            elementoPedidos.textContent =
-                numero(
-                    resumo.totalPedidos
-                );
+            pedidos.textContent =
+                numero(resumo.totalPedidos);
 
         }
 
 
-        // ==========================================
-        // ATUALIZAR GRÁFICOS
-        // ==========================================
-
-        if (
-            typeof window.atualizarGraficos ===
-            "function"
-        ) {
-
-            try {
-
-                window.atualizarGraficos(
-                    dados
-                );
-
-            }
-            catch (erroGrafico) {
-
-                console.error(
-                    "Erro ao atualizar gráficos:",
-                    erroGrafico
-                );
-
-            }
-
-        }
-
-
-        atualizarData();
+        console.log(
+            "Dashboard atualizado:",
+            resumo
+        );
 
 
     }
     catch (erro) {
 
         console.error(
-            "ERRO AO CARREGAR DASHBOARD:",
+            "Erro ao carregar dashboard:",
             erro
         );
 
@@ -305,11 +224,6 @@ async function carregarDashboard() {
 async function carregarTabela() {
 
     try {
-
-        console.log(
-            "Carregando vendas..."
-        );
-
 
         const resposta =
             await fetch(
@@ -331,56 +245,28 @@ async function carregarTabela() {
         }
 
 
-        const respostaJSON =
+        const json =
             await resposta.json();
 
 
-        let vendas = [];
+        // A API /vendas atualmente pode
+        // retornar diretamente um array.
 
-
-        // ==========================================
-        // API PODE RETORNAR ARRAY DIRETO
-        // ==========================================
-
-        if (
-            Array.isArray(
-                respostaJSON
-            )
-        ) {
-
-            vendas =
-                respostaJSON;
-
-        }
-
-
-        // ==========================================
-        // OU { vendas: [] }
-        // ==========================================
-
-        else if (
-            Array.isArray(
-                respostaJSON.vendas
-            )
-        ) {
-
-            vendas =
-                respostaJSON.vendas;
-
-        }
+        const vendas =
+            Array.isArray(json)
+                ? json
+                : (
+                    Array.isArray(json.vendas)
+                        ? json.vendas
+                        : []
+                );
 
 
         const lista =
-            document.getElementById(
-                "lista"
-            );
+            document.getElementById("lista");
 
 
         if (!lista) {
-
-            console.warn(
-                "Elemento #lista não encontrado."
-            );
 
             return;
 
@@ -390,13 +276,7 @@ async function carregarTabela() {
         lista.innerHTML = "";
 
 
-        // ==========================================
-        // SEM VENDAS
-        // ==========================================
-
-        if (
-            vendas.length === 0
-        ) {
+        if (vendas.length === 0) {
 
             lista.innerHTML = `
 
@@ -409,9 +289,7 @@ async function carregarTabela() {
                             padding:20px;
                         "
                     >
-
                         Nenhuma venda encontrada.
-
                     </td>
 
                 </tr>
@@ -423,144 +301,77 @@ async function carregarTabela() {
         }
 
 
-        // ==========================================
-        // MOSTRAR VENDAS
-        // ==========================================
+        vendas.forEach(venda => {
 
-        vendas.forEach(
-            venda => {
+            const tr =
+                document.createElement("tr");
 
-                const tr =
-                    document.createElement(
-                        "tr"
+
+            const quantidade =
+                venda.mb !== undefined &&
+                venda.mb !== null
+                    ? numero(venda.mb) + " MB"
+                    : (
+                        venda.gb !== undefined
+                            ? numero(venda.gb) + " GB"
+                            : "-"
                     );
 
 
-                // ==========================================
-                // NÚMERO
-                // ==========================================
-
-                const numeroCliente =
-                    venda.numero ||
-                    "-";
-
-
-                // ==========================================
-                // MB
-                // ==========================================
-
-                let mb =
-                    Number(
-                        venda.mb || 0
+            const valorVenda =
+                venda.valor_venda !== undefined
+                    ? venda.valor_venda
+                    : (
+                        venda.valor !== undefined
+                            ? venda.valor
+                            : 0
                     );
 
 
-                // Se não tiver MB mas tiver GB
-                if (
-                    mb === 0 &&
-                    venda.gb
-                ) {
-
-                    mb =
-                        Number(
-                            venda.gb
-                        ) * 1024;
-
-                }
+            const status =
+                venda.status ||
+                "Concluído";
 
 
-                // ==========================================
-                // VALOR
-                // ==========================================
+            tr.innerHTML = `
 
-                const valor =
-                    venda.valor_venda ??
-                    venda.valor_pacote ??
-                    venda.valor ??
-                    0;
+                <td>
+                    ${venda.numero || "-"}
+                </td>
 
+                <td>
+                    ${quantidade}
+                </td>
 
-                // ==========================================
-                // STATUS
-                // ==========================================
+                <td>
+                    ${numero(valorVenda)} MT
+                </td>
 
-                const status =
-                    venda.status ||
-                    "Concluído";
+                <td>
 
+                    <span class="status ok">
+                        ${status}
+                    </span>
 
-                tr.innerHTML = `
+                </td>
 
-                    <td>
-                        ${numeroCliente}
-                    </td>
-
-                    <td>
-                        ${numero(mb)} MB
-                    </td>
-
-                    <td>
-                        ${dinheiro(valor)}
-                    </td>
-
-                    <td>
-
-                        <span class="status ok">
-
-                            ${status}
-
-                        </span>
-
-                    </td>
-
-                `;
+            `;
 
 
-                lista.appendChild(
-                    tr
-                );
+            lista.appendChild(tr);
 
-            }
-        );
+        });
 
 
     }
     catch (erro) {
 
         console.error(
-            "ERRO AO CARREGAR VENDAS:",
+            "Erro ao carregar vendas:",
             erro
         );
 
     }
-
-}
-
-
-// ==========================================
-// ATUALIZAR DATA
-// ==========================================
-
-function atualizarData() {
-
-    const elemento =
-        document.getElementById(
-            "data"
-        );
-
-
-    if (!elemento) {
-
-        return;
-
-    }
-
-
-    elemento.textContent =
-        new Date()
-            .toLocaleString(
-                "pt-PT"
-            );
 
 }
 
@@ -572,199 +383,30 @@ function atualizarData() {
 async function atualizarDashboard() {
 
     console.log(
-        "================================="
+        "Atualizando dashboard..."
     );
 
-    console.log(
-        "ATUALIZANDO DASHBOARD"
-    );
+    atualizarData();
 
-    console.log(
-        "================================="
-    );
+    await carregarDashboard();
 
-
-    const botao =
-        document.getElementById(
-            "atualizarBtn"
-        );
-
-
-    const botaoRefresh =
-        document.getElementById(
-            "refreshBtn"
-        );
-
-
-    const botoes = [
-        botao,
-        botaoRefresh
-    ];
-
-
-    // ==========================================
-    // DESATIVAR BOTÃO
-    // ==========================================
-
-    botoes.forEach(
-        elemento => {
-
-            if (!elemento) {
-                return;
-            }
-
-            elemento.disabled = true;
-
-            elemento.classList.add(
-                "loading"
-            );
-
-        }
-    );
-
-
-    try {
-
-        await Promise.all([
-
-            carregarDashboard(),
-
-            carregarTabela()
-
-        ]);
-
-
-        console.log(
-            "Dashboard atualizado com sucesso."
-        );
-
-
-    }
-    catch (erro) {
-
-        console.error(
-            "Erro ao atualizar:",
-            erro
-        );
-
-    }
-    finally {
-
-        // ==========================================
-        // REATIVAR BOTÃO
-        // ==========================================
-
-        botoes.forEach(
-            elemento => {
-
-                if (!elemento) {
-                    return;
-                }
-
-                elemento.disabled =
-                    false;
-
-                elemento.classList.remove(
-                    "loading"
-                );
-
-            }
-        );
-
-    }
+    await carregarTabela();
 
 }
 
 
 // ==========================================
-// INICIALIZAR BOTÃO ATUALIZAR
-// ==========================================
-
-function inicializarBotaoAtualizar() {
-
-    const seletores = [
-
-        "#atualizarBtn",
-
-        "#refreshBtn",
-
-        ".btn-atualizar",
-
-        ".refresh-btn",
-
-        "[data-action='atualizar']"
-
-    ];
-
-
-    const botoes =
-        document.querySelectorAll(
-            seletores.join(",")
-        );
-
-
-    console.log(
-        "Botões de atualizar encontrados:",
-        botoes.length
-    );
-
-
-    botoes.forEach(
-        botao => {
-
-            // Evitar adicionar evento duas vezes
-            if (
-                botao.dataset.dashboardEvento ===
-                "true"
-            ) {
-
-                return;
-
-            }
-
-
-            botao.dataset.dashboardEvento =
-                "true";
-
-
-            botao.addEventListener(
-                "click",
-                async function(e) {
-
-                    e.preventDefault();
-
-                    e.stopPropagation();
-
-
-                    await atualizarDashboard();
-
-                }
-            );
-
-        }
-    );
-
-}
-
-
-// ==========================================
-// DISPONIBILIZAR FUNÇÕES GLOBALMENTE
+// DISPONIBILIZAR PARA O APP.JS
 // ==========================================
 
 window.carregarDashboard =
     carregarDashboard;
 
-
 window.carregarTabela =
     carregarTabela;
 
-
 window.atualizarDashboard =
     atualizarDashboard;
-
-
-window.atualizarData =
-    atualizarData;
 
 
 // ==========================================
@@ -773,31 +415,13 @@ window.atualizarData =
 
 document.addEventListener(
     "DOMContentLoaded",
-    function() {
-
-        console.log(
-            "================================="
-        );
-
-        console.log(
-            "DASHBOARD.JS INICIADO"
-        );
-
-        console.log(
-            "================================="
-        );
-
+    function () {
 
         atualizarData();
 
-
         carregarDashboard();
 
-
         carregarTabela();
-
-
-        inicializarBotaoAtualizar();
 
     }
 );
@@ -807,21 +431,17 @@ document.addEventListener(
 // ATUALIZAÇÃO AUTOMÁTICA
 // ==========================================
 
+// Atualiza os números a cada 5 segundos.
+
 setInterval(
-    function() {
-
-        carregarDashboard();
-
-    },
+    carregarDashboard,
     5000
 );
 
 
+// Atualiza a tabela a cada 5 segundos.
+
 setInterval(
-    function() {
-
-        carregarTabela();
-
-    },
+    carregarTabela,
     5000
 );
