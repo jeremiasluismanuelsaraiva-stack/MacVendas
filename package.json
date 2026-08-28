@@ -1,8 +1,7 @@
-
 {
-  "name": "sistema-ssd-api",
+  "name": "moz-tech",
   "version": "1.0.0",
-  "description": "API do Sistema SSD",
+  "description": "MOZ TECH",
   "main": "api/index.js",
   "type": "commonjs",
   "scripts": {
