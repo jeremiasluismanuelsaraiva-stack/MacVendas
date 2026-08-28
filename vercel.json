@@ -6,8 +6,12 @@
       "destination": "/api/index.js"
     },
     {
+      "source": "/",
+      "destination": "/public/dashboard.html"
+    },
+    {
       "source": "/:path*",
       "destination": "/public/:path*"
     }
-  }
+  ]
 }
