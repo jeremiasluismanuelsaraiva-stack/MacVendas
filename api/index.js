@@ -5,7 +5,7 @@ const app = express();
 
 
 // =====================================================
-// CONFIGURAÇÕES
+// MIDDLEWARES
 // =====================================================
 
 app.use(cors());
@@ -23,27 +23,55 @@ app.use(express.urlencoded({
 // ROTAS DA API
 // =====================================================
 
-app.use("/dashboard", require("./dashboard"));
+app.use(
+    "/dashboard",
+    require("./dashboard")
+);
 
-app.use("/vendas", require("./vendas"));
+app.use(
+    "/vendas",
+    require("./vendas")
+);
 
-app.use("/clientes", require("./clientes"));
+app.use(
+    "/clientes",
+    require("./clientes")
+);
 
-app.use("/pedidos", require("./pedidos"));
+app.use(
+    "/pedidos",
+    require("./pedidos")
+);
 
-app.use("/dispositivos", require("./dispositivos"));
+app.use(
+    "/dispositivos",
+    require("./dispositivos")
+);
 
-app.use("/pacotes", require("./pacotes"));
+app.use(
+    "/pacotes",
+    require("./pacotes")
+);
 
-app.use("/grupos", require("./grupos"));
+app.use(
+    "/grupos",
+    require("./grupos")
+);
 
-app.use("/configuracoes", require("./configuracoes"));
+app.use(
+    "/configuracoes",
+    require("./configuracoes")
+);
 
-app.use("/relatorios", require("./relatorios"));
+app.use(
+    "/relatorios",
+    require("./relatorios")
+);
 
 
 // =====================================================
 // STATUS DA API
+// GET /
 // =====================================================
 
 app.get("/", (req, res) => {
@@ -52,7 +80,7 @@ app.get("/", (req, res) => {
 
         success: true,
 
-        nome: "MOZ TECH",
+        nome: "Sistema SSD API",
 
         versao: "1.0.0",
 
@@ -93,7 +121,9 @@ app.use((err, req, res, next) => {
         err
     );
 
-    res.status(500).json({
+    res.status(
+        err.status || 500
+    ).json({
 
         success: false,
 
