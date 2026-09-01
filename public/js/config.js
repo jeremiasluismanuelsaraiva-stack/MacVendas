@@ -1,18 +1,18 @@
 const API = window.location.origin;
 
 
-// =====================================
+// =====================================================
 // CARREGAR CONFIGURAÇÕES
-// =====================================
+// =====================================================
 
 async function carregarConfiguracoes() {
 
     try {
 
-        const resposta =
-            await fetch(
-                API + "/configuracoes"
-            );
+        const resposta = await fetch(
+            API + "/configuracoes"
+        );
+
 
         if (!resposta.ok) {
 
@@ -22,14 +22,14 @@ async function carregarConfiguracoes() {
 
         }
 
-        const json =
-            await resposta.json();
+
+        const json = await resposta.json();
 
 
         if (!json.success) {
 
             console.error(
-                "Erro da API:",
+                "[CONFIG] Erro da API:",
                 json
             );
 
@@ -43,7 +43,13 @@ async function carregarConfiguracoes() {
 
 
         if (configuracoes.length === 0) {
+
+            console.warn(
+                "[CONFIG] Nenhuma configuração encontrada."
+            );
+
             return;
+
         }
 
 
@@ -51,9 +57,9 @@ async function carregarConfiguracoes() {
             configuracoes[0];
 
 
-        // =====================================
-        // CAMPOS
-        // =====================================
+        // =================================================
+        // NOME DA EMPRESA
+        // =================================================
 
         const nomeEmpresa =
             document.getElementById(
@@ -61,10 +67,16 @@ async function carregarConfiguracoes() {
             );
 
         if (nomeEmpresa) {
+
             nomeEmpresa.value =
                 cfg.nomeEmpresa || "";
+
         }
 
+
+        // =================================================
+        // TELEFONE
+        // =================================================
 
         const telefone =
             document.getElementById(
@@ -72,10 +84,16 @@ async function carregarConfiguracoes() {
             );
 
         if (telefone) {
+
             telefone.value =
                 cfg.telefone || "";
+
         }
 
+
+        // =================================================
+        // EMAIL
+        // =================================================
 
         const email =
             document.getElementById(
@@ -83,10 +101,16 @@ async function carregarConfiguracoes() {
             );
 
         if (email) {
+
             email.value =
                 cfg.email || "";
+
         }
 
+
+        // =================================================
+        // MOEDA
+        // =================================================
 
         const moeda =
             document.getElementById(
@@ -94,10 +118,16 @@ async function carregarConfiguracoes() {
             );
 
         if (moeda) {
+
             moeda.value =
                 cfg.moeda || "MT";
+
         }
 
+
+        // =================================================
+        // VENDA POR GB
+        // =================================================
 
         const vendaGB =
             document.getElementById(
@@ -105,10 +135,16 @@ async function carregarConfiguracoes() {
             );
 
         if (vendaGB) {
+
             vendaGB.value =
                 cfg.vendaGB ?? 0;
+
         }
 
+
+        // =================================================
+        // CUSTO POR GB
+        // =================================================
 
         const custoGB =
             document.getElementById(
@@ -116,10 +152,16 @@ async function carregarConfiguracoes() {
             );
 
         if (custoGB) {
+
             custoGB.value =
                 cfg.custoGB ?? 0;
+
         }
 
+
+        // =================================================
+        // USSD
+        // =================================================
 
         const ussd =
             document.getElementById(
@@ -127,10 +169,16 @@ async function carregarConfiguracoes() {
             );
 
         if (ussd) {
+
             ussd.value =
                 cfg.ussd || "*162#";
+
         }
 
+
+        // =================================================
+        // TEMA
+        // =================================================
 
         const tema =
             document.getElementById(
@@ -138,10 +186,16 @@ async function carregarConfiguracoes() {
             );
 
         if (tema) {
+
             tema.value =
                 cfg.tema || "dark";
+
         }
 
+
+        // =================================================
+        // IDIOMA
+        // =================================================
 
         const idioma =
             document.getElementById(
@@ -149,17 +203,23 @@ async function carregarConfiguracoes() {
             );
 
         if (idioma) {
+
             idioma.value =
                 cfg.idioma || "pt";
+
         }
 
+
+        console.log(
+            "[CONFIG] Configurações carregadas."
+        );
 
     }
 
     catch (erro) {
 
         console.error(
-            "Erro ao carregar configurações:",
+            "[CONFIG] Erro ao carregar configurações:",
             erro
         );
 
@@ -168,9 +228,9 @@ async function carregarConfiguracoes() {
 }
 
 
-// =====================================
+// =====================================================
 // OBTER DADOS DO FORMULÁRIO
-// =====================================
+// =====================================================
 
 function obterDadosConfiguracoes() {
 
@@ -179,22 +239,26 @@ function obterDadosConfiguracoes() {
         nomeEmpresa:
             document.getElementById(
                 "nomeEmpresa"
-            )?.value || "",
+            )?.value?.trim() || "",
+
 
         telefone:
             document.getElementById(
                 "telefone"
-            )?.value || "",
+            )?.value?.trim() || "",
+
 
         email:
             document.getElementById(
                 "email"
-            )?.value || "",
+            )?.value?.trim() || "",
+
 
         moeda:
             document.getElementById(
                 "moeda"
             )?.value || "MT",
+
 
         vendaGB:
             Number(
@@ -203,6 +267,7 @@ function obterDadosConfiguracoes() {
                 )?.value || 0
             ),
 
+
         custoGB:
             Number(
                 document.getElementById(
@@ -210,15 +275,18 @@ function obterDadosConfiguracoes() {
                 )?.value || 0
             ),
 
+
         ussd:
             document.getElementById(
                 "ussd"
-            )?.value || "*162#",
+            )?.value?.trim() || "*162#",
+
 
         tema:
             document.getElementById(
                 "tema"
             )?.value || "dark",
+
 
         idioma:
             document.getElementById(
@@ -230,13 +298,17 @@ function obterDadosConfiguracoes() {
 }
 
 
-// =====================================
+// =====================================================
 // SALVAR CONFIGURAÇÕES
-// =====================================
+// =====================================================
 
 async function salvarConfiguracoes() {
 
     try {
+
+        // =================================================
+        // BUSCAR CONFIGURAÇÃO EXISTENTE
+        // =================================================
 
         const resposta =
             await fetch(
@@ -262,8 +334,10 @@ async function salvarConfiguracoes() {
 
         if (
             json.success &&
-            json.configuracoes &&
-            json.configuracoes.length
+            Array.isArray(
+                json.configuracoes
+            ) &&
+            json.configuracoes.length > 0
         ) {
 
             id =
@@ -272,6 +346,10 @@ async function salvarConfiguracoes() {
         }
 
 
+        // =================================================
+        // OBTER DADOS
+        // =================================================
+
         const dados =
             obterDadosConfiguracoes();
 
@@ -279,9 +357,9 @@ async function salvarConfiguracoes() {
         let salvarResposta;
 
 
-        // =====================================
+        // =================================================
         // ATUALIZAR
-        // =====================================
+        // =================================================
 
         if (id) {
 
@@ -295,21 +373,25 @@ async function salvarConfiguracoes() {
                         method: "PUT",
 
                         headers: {
+
                             "Content-Type":
                                 "application/json"
+
                         },
 
                         body:
-                            JSON.stringify(dados)
+                            JSON.stringify(
+                                dados
+                            )
 
                     }
                 );
 
         }
 
-        // =====================================
+        // =================================================
         // CRIAR
-        // =====================================
+        // =================================================
 
         else {
 
@@ -321,12 +403,16 @@ async function salvarConfiguracoes() {
                         method: "POST",
 
                         headers: {
+
                             "Content-Type":
                                 "application/json"
+
                         },
 
                         body:
-                            JSON.stringify(dados)
+                            JSON.stringify(
+                                dados
+                            )
 
                     }
                 );
@@ -334,14 +420,26 @@ async function salvarConfiguracoes() {
         }
 
 
+        // =================================================
+        // VERIFICAR RESPOSTA
+        // =================================================
+
         if (!salvarResposta.ok) {
 
             let erroApi = {};
 
+
             try {
+
                 erroApi =
                     await salvarResposta.json();
-            } catch (_) {}
+
+            }
+            catch (_) {
+
+                erroApi = {};
+
+            }
 
 
             throw new Error(
@@ -352,20 +450,28 @@ async function salvarConfiguracoes() {
         }
 
 
+        console.log(
+            "[CONFIG] Configurações guardadas."
+        );
+
+
         alert(
             "Configurações guardadas com sucesso!"
         );
 
 
-        await carregarConfiguracoes();
+        // =================================================
+        // RECARREGAR CONFIGURAÇÕES
+        // =================================================
 
+        await carregarConfiguracoes();
 
     }
 
     catch (erro) {
 
         console.error(
-            "Erro ao guardar configurações:",
+            "[CONFIG] Erro ao guardar configurações:",
             erro
         );
 
@@ -379,48 +485,118 @@ async function salvarConfiguracoes() {
 }
 
 
-// =====================================
-// DISPONIBILIZAR FUNÇÕES
-// =====================================
+// =====================================================
+// DISPONIBILIZAR FUNÇÕES GLOBALMENTE
+// =====================================================
 
 window.carregarConfiguracoes =
     carregarConfiguracoes;
+
 
 window.salvarConfiguracoes =
     salvarConfiguracoes;
 
 
-// =====================================
+// =====================================================
 // INICIALIZAÇÃO
-// =====================================
+// =====================================================
 
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
+function inicializarConfiguracoes() {
 
-        carregarConfiguracoes();
-
-
-        const btn =
-            document.getElementById(
-                "btnSalvarConfiguracoes"
-            );
+    console.log(
+        "[CONFIG] Inicializando..."
+    );
 
 
-        if (btn) {
+    // =================================================
+    // CARREGAR CONFIGURAÇÕES
+    // =================================================
 
-            btn.addEventListener(
-                "click",
-                (evento) => {
+    carregarConfiguracoes();
 
-                    evento.preventDefault();
 
-                    salvarConfiguracoes();
+    // =================================================
+    // BOTÃO SALVAR
+    // =================================================
 
-                }
-            );
+    const btn =
+        document.getElementById(
+            "btnSalvarConfiguracoes"
+        );
 
-        }
+
+    if (!btn) {
+
+        console.warn(
+            "[CONFIG] #btnSalvarConfiguracoes não encontrado."
+        );
+
+        return;
 
     }
-);
+
+
+    // =================================================
+    // EVITAR EVENTO DUPLICADO
+    // =================================================
+
+    if (
+        btn.dataset.configInicializado ===
+        "true"
+    ) {
+
+        return;
+
+    }
+
+
+    btn.dataset.configInicializado =
+        "true";
+
+
+    // =================================================
+    // CLIQUE NO BOTÃO
+    // =================================================
+
+    btn.addEventListener(
+        "click",
+        function (evento) {
+
+            evento.preventDefault();
+
+            salvarConfiguracoes();
+
+        }
+    );
+
+
+    console.log(
+        "[CONFIG] Sistema de configurações pronto."
+    );
+
+}
+
+
+// =====================================================
+// DOM READY
+// =====================================================
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        inicializarConfiguracoes,
+        {
+            once: true
+        }
+    );
+
+}
+else {
+
+    inicializarConfiguracoes();
+
+}
