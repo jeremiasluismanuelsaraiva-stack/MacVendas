@@ -16,7 +16,9 @@
 
 
     let carregandoDashboard = false;
+
     let carregandoVendas = false;
+
     let botaoConfigurado = false;
 
 
@@ -42,7 +44,9 @@
             valor === undefined ||
             valor === ""
         ) {
+
             return "0";
+
         }
 
 
@@ -56,13 +60,13 @@
         }
 
 
-        return n.toLocaleString("pt-MZ", {
-
-            minimumFractionDigits: 0,
-
-            maximumFractionDigits: 2
-
-        });
+        return n.toLocaleString(
+            "pt-MZ",
+            {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            }
+        );
 
     }
 
@@ -78,7 +82,9 @@
             valor === undefined ||
             valor === ""
         ) {
+
             return "0,00 MT";
+
         }
 
 
@@ -92,13 +98,13 @@
         }
 
 
-        return n.toLocaleString("pt-MZ", {
-
-            minimumFractionDigits: 2,
-
-            maximumFractionDigits: 2
-
-        }) + " MT";
+        return n.toLocaleString(
+            "pt-MZ",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        ) + " MT";
 
     }
 
@@ -122,7 +128,8 @@
             i++
         ) {
 
-            const campo = campos[i];
+            const campo =
+                campos[i];
 
 
             if (
@@ -212,35 +219,42 @@
             "..."
         );
 
+
         atualizar(
             "valor",
             "..."
         );
+
 
         atualizar(
             "clientes",
             "..."
         );
 
+
         atualizar(
             "disp",
             "..."
         );
+
 
         atualizar(
             "totalGB",
             "..."
         );
 
+
         atualizar(
             "lucro",
             "..."
         );
 
+
         atualizar(
             "custo",
             "..."
         );
+
 
         atualizar(
             "pedidos",
@@ -271,18 +285,23 @@
 
         if (carregandoDashboard) {
 
+            console.log(
+                "[MOZ TECH] Dashboard já está carregando."
+            );
+
             return null;
 
         }
 
 
-        carregandoDashboard = true;
+        carregandoDashboard =
+            true;
 
 
         try {
 
             console.log(
-                "[MOZ TECH] Carregando dashboard..."
+                "[MOZ TECH] GET /api/dashboard"
             );
 
 
@@ -290,18 +309,14 @@
                 await fetch(
                     API + "/dashboard",
                     {
-
                         method: "GET",
 
                         headers: {
-
                             "Accept":
                                 "application/json"
-
                         },
 
                         cache: "no-store"
-
                     }
                 );
 
@@ -327,37 +342,80 @@
 
 
             console.log(
-                "[MOZ TECH] Dashboard:",
+                "[MOZ TECH] Resposta dashboard:",
                 json
             );
 
 
+            /*
+             * Aceita:
+             *
+             * {
+             *     success: true,
+             *     dashboard: {...}
+             * }
+             */
+
+
             if (
-                !json ||
-                json.success !== true
+                !json
             ) {
 
                 throw new Error(
+                    "Resposta vazia da API."
+                );
 
-                    json?.error ||
-                    "Resposta inválida da API."
+            }
 
+
+            if (
+                json.success === false
+            ) {
+
+                throw new Error(
+                    json.error ||
+                    "API retornou erro."
                 );
 
             }
 
 
             const d =
-                json.dashboard || {};
+                json.dashboard ||
+                json.data ||
+                json;
+
+
+            if (
+                !d ||
+                typeof d !== "object"
+            ) {
+
+                throw new Error(
+                    "Dados do dashboard inválidos."
+                );
+
+            }
 
 
             // =================================================
             // VENDAS
             // =================================================
 
+            const vendas =
+                primeiroValor(
+                    d,
+                    [
+                        "vendas",
+                        "totalVendas",
+                        "total_vendas"
+                    ]
+                );
+
+
             atualizar(
                 "vendas",
-                numero(d.vendas)
+                numero(vendas)
             );
 
 
@@ -365,9 +423,20 @@
             // FATURAMENTO
             // =================================================
 
+            const faturamento =
+                primeiroValor(
+                    d,
+                    [
+                        "faturamento",
+                        "totalFaturamento",
+                        "total_faturamento"
+                    ]
+                );
+
+
             atualizar(
                 "valor",
-                dinheiro(d.faturamento)
+                dinheiro(faturamento)
             );
 
 
@@ -375,9 +444,20 @@
             // CLIENTES
             // =================================================
 
+            const clientes =
+                primeiroValor(
+                    d,
+                    [
+                        "clientes",
+                        "totalClientes",
+                        "total_clientes"
+                    ]
+                );
+
+
             atualizar(
                 "clientes",
-                numero(d.clientes)
+                numero(clientes)
             );
 
 
@@ -385,9 +465,20 @@
             // DISPOSITIVOS
             // =================================================
 
+            const dispositivos =
+                primeiroValor(
+                    d,
+                    [
+                        "dispositivos",
+                        "totalDispositivos",
+                        "total_dispositivos"
+                    ]
+                );
+
+
             atualizar(
                 "disp",
-                numero(d.dispositivos)
+                numero(dispositivos)
             );
 
 
@@ -395,9 +486,21 @@
             // TOTAL GB
             // =================================================
 
+            const totalGB =
+                primeiroValor(
+                    d,
+                    [
+                        "totalGB",
+                        "totalGb",
+                        "total_gb",
+                        "gb"
+                    ]
+                );
+
+
             atualizar(
                 "totalGB",
-                numero(d.totalGB) +
+                numero(totalGB) +
                 " GB"
             );
 
@@ -406,9 +509,20 @@
             // LUCRO
             // =================================================
 
+            const lucro =
+                primeiroValor(
+                    d,
+                    [
+                        "lucro",
+                        "totalLucro",
+                        "total_lucro"
+                    ]
+                );
+
+
             atualizar(
                 "lucro",
-                dinheiro(d.lucro)
+                dinheiro(lucro)
             );
 
 
@@ -416,9 +530,20 @@
             // CUSTO
             // =================================================
 
+            const custo =
+                primeiroValor(
+                    d,
+                    [
+                        "custo",
+                        "totalCusto",
+                        "total_custo"
+                    ]
+                );
+
+
             atualizar(
                 "custo",
-                dinheiro(d.custo)
+                dinheiro(custo)
             );
 
 
@@ -426,9 +551,20 @@
             // PEDIDOS
             // =================================================
 
+            const pedidos =
+                primeiroValor(
+                    d,
+                    [
+                        "pedidos",
+                        "totalPedidos",
+                        "total_pedidos"
+                    ]
+                );
+
+
             atualizar(
                 "pedidos",
-                numero(d.pedidos)
+                numero(pedidos)
             );
 
 
@@ -453,7 +589,7 @@
 
 
             console.log(
-                "[MOZ TECH] Dashboard OK."
+                "[MOZ TECH] Dashboard carregado com sucesso."
             );
 
 
@@ -463,18 +599,9 @@
         catch (erro) {
 
             console.error(
-                "[MOZ TECH] Erro dashboard:",
+                "[MOZ TECH] Erro ao carregar dashboard:",
                 erro
             );
-
-
-            /*
-             * IMPORTANTE:
-             * Não substituir os valores por "Erro".
-             *
-             * Se uma atualização falhar temporariamente,
-             * mantemos os últimos valores apresentados.
-             */
 
 
             const data =
@@ -511,18 +638,23 @@
 
         if (carregandoVendas) {
 
+            console.log(
+                "[MOZ TECH] Vendas já estão carregando."
+            );
+
             return [];
 
         }
 
 
-        carregandoVendas = true;
+        carregandoVendas =
+            true;
 
 
         try {
 
             console.log(
-                "[MOZ TECH] Carregando vendas..."
+                "[MOZ TECH] GET /api/vendas"
             );
 
 
@@ -530,18 +662,14 @@
                 await fetch(
                     API + "/vendas",
                     {
-
                         method: "GET",
 
                         headers: {
-
                             "Accept":
                                 "application/json"
-
                         },
 
                         cache: "no-store"
-
                     }
                 );
 
@@ -567,7 +695,7 @@
 
 
             console.log(
-                "[MOZ TECH] Vendas:",
+                "[MOZ TECH] Resposta vendas:",
                 json
             );
 
@@ -576,7 +704,7 @@
 
 
             // =================================================
-            // API RETORNOU ARRAY
+            // ARRAY DIRETO
             // =================================================
 
             if (
@@ -647,7 +775,7 @@
 
 
             console.log(
-                "[MOZ TECH] Vendas OK:",
+                "[MOZ TECH] Total de vendas:",
                 vendas.length
             );
 
@@ -658,15 +786,14 @@
         catch (erro) {
 
             console.error(
-                "[MOZ TECH] Erro vendas:",
+                "[MOZ TECH] Erro ao carregar vendas:",
                 erro
             );
 
 
             /*
-             * Não apagar uma tabela que já
-             * contém dados por causa de uma
-             * falha temporária.
+             * Não apaga os dados existentes
+             * se a atualização falhar.
              */
 
 
@@ -695,6 +822,10 @@
 
         if (!lista) {
 
+            console.warn(
+                "[MOZ TECH] #lista não encontrado."
+            );
+
             return;
 
         }
@@ -716,9 +847,7 @@
                             padding:20px;
                         "
                     >
-
                         Nenhuma venda encontrada.
-
                     </td>
 
                 </tr>
@@ -731,61 +860,55 @@
 
 
         lista.innerHTML =
-
             vendas
-
                 .slice(0, 20)
-
                 .map(
                     function (venda) {
 
-
-                        // =========================================
+                        // =================================
                         // NÚMERO
-                        // =========================================
+                        // =================================
 
                         const numeroVenda =
-
                             primeiroValor(
                                 venda,
                                 [
                                     "numero",
                                     "telefone",
                                     "phone",
-                                    "msisdn"
+                                    "msisdn",
+                                    "numeroCliente",
+                                    "numero_cliente"
                                 ]
-                            ) || "-";
+                            ) ||
+                            "-";
 
 
-                        // =========================================
+                        // =================================
                         // MB
-                        // =========================================
+                        // =================================
 
                         const mb =
-
                             Number(
-
                                 primeiroValor(
                                     venda,
                                     [
                                         "mb",
                                         "MB",
                                         "megabytes",
-                                        "quantidadeMB"
+                                        "quantidadeMB",
+                                        "quantidade_mb"
                                     ]
                                 )
-
                             ) || 0;
 
 
-                        // =========================================
+                        // =================================
                         // GB
-                        // =========================================
+                        // =================================
 
                         const gb =
-
                             Number(
-
                                 primeiroValor(
                                     venda,
                                     [
@@ -794,16 +917,16 @@
                                         "gbPacote",
                                         "gb_pacote",
                                         "gbpacote",
-                                        "quantidadeGB"
+                                        "quantidadeGB",
+                                        "quantidade_gb"
                                     ]
                                 )
-
                             ) || 0;
 
 
-                        // =========================================
+                        // =================================
                         // QUANTIDADE
-                        // =========================================
+                        // =================================
 
                         let quantidade =
                             "-";
@@ -816,7 +939,6 @@
                                 " GB";
 
                         }
-
                         else if (mb > 0) {
 
                             quantidade =
@@ -826,12 +948,11 @@
                         }
 
 
-                        // =========================================
+                        // =================================
                         // VALOR
-                        // =========================================
+                        // =================================
 
                         const valor =
-
                             primeiroValor(
                                 venda,
                                 [
@@ -846,12 +967,11 @@
                             );
 
 
-                        // =========================================
+                        // =================================
                         // STATUS
-                        // =========================================
+                        // =================================
 
                         const status =
-
                             primeiroValor(
                                 venda,
                                 [
@@ -862,51 +982,40 @@
                             "Concluído";
 
 
-                        // =========================================
+                        // =================================
                         // HTML
-                        // =========================================
+                        // =================================
 
                         return `
 
                             <tr>
 
                                 <td>
-
                                     ${escapar(
                                         numeroVenda
                                     )}
-
                                 </td>
 
-
                                 <td>
-
                                     ${escapar(
                                         quantidade
                                     )}
-
                                 </td>
 
-
                                 <td>
-
                                     ${escapar(
                                         dinheiro(valor)
                                     )}
-
                                 </td>
-
 
                                 <td>
 
                                     <span
                                         class="status ok"
                                     >
-
                                         ${escapar(
                                             status
                                         )}
-
                                     </span>
 
                                 </td>
@@ -917,7 +1026,6 @@
 
                     }
                 )
-
                 .join("");
 
     }
@@ -929,6 +1037,11 @@
 
     async function carregarTudo() {
 
+        console.log(
+            "[MOZ TECH] Atualizando dashboard completo..."
+        );
+
+
         await Promise.allSettled([
 
             carregarDashboard(),
@@ -936,6 +1049,11 @@
             carregarVendas()
 
         ]);
+
+
+        console.log(
+            "[MOZ TECH] Atualização concluída."
+        );
 
     }
 
@@ -976,7 +1094,6 @@
             "click",
             async function (event) {
 
-
                 event.preventDefault();
 
 
@@ -988,6 +1105,11 @@
                     return;
 
                 }
+
+
+                console.log(
+                    "[MOZ TECH] Atualizar clicado."
+                );
 
 
                 const original =
@@ -1014,6 +1136,14 @@
                     await carregarTudo();
 
                 }
+                catch (erro) {
+
+                    console.error(
+                        "[MOZ TECH] Erro no botão:",
+                        erro
+                    );
+
+                }
                 finally {
 
                     botao.disabled =
@@ -1032,138 +1162,7 @@
 
 
     // =====================================================
-    // MENU MOBILE
-    // =====================================================
-
-    function configurarMenuMobile() {
-
-        const menuToggle =
-            elemento("menuToggle");
-
-
-        const sidebar =
-            elemento("sidebar");
-
-
-        const overlay =
-            elemento("menuOverlay");
-
-
-        if (
-            !menuToggle ||
-            !sidebar
-        ) {
-
-            return;
-
-        }
-
-
-        function abrirMenu() {
-
-            sidebar.classList.add(
-                "open"
-            );
-
-
-            if (overlay) {
-
-                overlay.classList.add(
-                    "active"
-                );
-
-            }
-
-
-            menuToggle.setAttribute(
-                "aria-expanded",
-                "true"
-            );
-
-        }
-
-
-        function fecharMenu() {
-
-            sidebar.classList.remove(
-                "open"
-            );
-
-
-            if (overlay) {
-
-                overlay.classList.remove(
-                    "active"
-                );
-
-            }
-
-
-            menuToggle.setAttribute(
-                "aria-expanded",
-                "false"
-            );
-
-        }
-
-
-        menuToggle.addEventListener(
-            "click",
-            function (event) {
-
-                event.preventDefault();
-
-
-                if (
-                    sidebar.classList.contains(
-                        "open"
-                    )
-                ) {
-
-                    fecharMenu();
-
-                }
-                else {
-
-                    abrirMenu();
-
-                }
-
-            }
-        );
-
-
-        if (overlay) {
-
-            overlay.addEventListener(
-                "click",
-                fecharMenu
-            );
-
-        }
-
-
-        document.addEventListener(
-            "keydown",
-            function (event) {
-
-                if (
-                    event.key ===
-                    "Escape"
-                ) {
-
-                    fecharMenu();
-
-                }
-
-            }
-        );
-
-    }
-
-
-    // =====================================================
-    // EXPORTAR
+    // EXPORTAR PARA WINDOW
     // =====================================================
 
     window.carregarDashboard =
@@ -1186,28 +1185,69 @@
     // INICIALIZAÇÃO
     // =====================================================
 
-    document.addEventListener(
-        "DOMContentLoaded",
-        async function () {
+    function iniciarDashboard() {
 
-            console.log(
-                "[MOZ TECH] Dashboard iniciado."
+        console.log(
+            "========================================"
+        );
+
+        console.log(
+            "MOZ TECH - DASHBOARD.JS"
+        );
+
+        console.log(
+            "========================================"
+        );
+
+
+        configurarBotaoAtualizar();
+
+
+        mostrarCarregando();
+
+
+        /*
+         * O primeiro carregamento é feito aqui.
+         */
+
+        carregarTudo()
+            .catch(
+                function (erro) {
+
+                    console.error(
+                        "[MOZ TECH] Erro inicial:",
+                        erro
+                    );
+
+                }
             );
 
-
-            mostrarCarregando();
-
-
-            configurarBotaoAtualizar();
+    }
 
 
-            configurarMenuMobile();
+    // =====================================================
+    // DOM READY
+    // =====================================================
 
+    if (
+        document.readyState ===
+        "loading"
+    ) {
 
-            await carregarTudo();
+        document.addEventListener(
+            "DOMContentLoaded",
+            iniciarDashboard,
+            {
+                once: true
+            }
+        );
 
-        }
-    );
+    }
+    else {
+
+        iniciarDashboard();
+
+    }
 
 
     // =====================================================
@@ -1217,15 +1257,12 @@
     setInterval(
         function () {
 
+            /*
+             * Atualiza os dados sem
+             * interferir no menu.
+             */
+
             carregarDashboard();
-
-        },
-        5000
-    );
-
-
-    setInterval(
-        function () {
 
             carregarVendas();
 
