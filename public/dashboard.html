@@ -12,17 +12,20 @@
 
     <title>MOZ TECH - Dashboard</title>
 
+
     <!-- FONT AWESOME -->
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     >
 
-    <!-- CSS PRINCIPAL -->
+
+    <!-- CSS -->
     <link
         rel="stylesheet"
         href="/css/style.css"
     >
+
 
     <style>
 
@@ -32,21 +35,32 @@
 
         html,
         body {
+
             width: 100%;
             min-height: 100%;
             margin: 0;
             padding: 0;
+
         }
+
 
         body {
+
             overflow-x: hidden;
+
         }
 
+
         .app-container {
+
             min-height: 100vh;
+
             display: flex;
+
             position: relative;
+
         }
+
 
 
         /* =====================================================
@@ -54,6 +68,7 @@
         ===================================================== */
 
         .sidebar {
+
             width: 260px;
             min-width: 260px;
             min-height: 100vh;
@@ -76,7 +91,9 @@
 
             transition:
                 transform 0.3s ease;
+
         }
+
 
 
         /* =====================================================
@@ -84,6 +101,7 @@
         ===================================================== */
 
         .main-content {
+
             width: 100%;
 
             margin-left: 260px;
@@ -94,7 +112,9 @@
 
             transition:
                 margin-left 0.3s ease;
+
         }
+
 
 
         /* =====================================================
@@ -102,30 +122,37 @@
         ===================================================== */
 
         .sidebar-header {
+
             padding: 25px 20px;
 
             border-bottom:
                 1px solid
                 var(--border-color);
+
         }
+
 
         .sidebar-header h2 {
+
             margin: 0;
 
-            color:
-                var(--text-primary);
+            color: var(--text-primary);
 
             font-size: 22px;
+
         }
+
 
         .sidebar-header p {
+
             margin: 5px 0 0;
 
-            color:
-                var(--text-secondary);
+            color: var(--text-secondary);
 
             font-size: 13px;
+
         }
+
 
 
         /* =====================================================
@@ -133,10 +160,14 @@
         ===================================================== */
 
         .sidebar-menu {
+
             padding: 15px 10px;
+
         }
 
+
         .menu-item {
+
             width: 100%;
 
             display: flex;
@@ -155,8 +186,7 @@
 
             background: transparent;
 
-            color:
-                var(--text-primary);
+            color: var(--text-primary);
 
             text-decoration: none;
 
@@ -170,36 +200,51 @@
                 background 0.2s,
                 color 0.2s,
                 transform 0.2s;
+
         }
+
 
         .menu-item:hover {
+
             background:
                 rgba(0, 102, 204, 0.08);
+
         }
+
 
         .menu-item:active {
+
             transform: scale(0.98);
+
         }
 
+
         .menu-item.active {
+
             background:
                 var(--accent-color);
 
             color: #fff;
+
         }
 
+
         .menu-item i {
+
             width: 20px;
 
             text-align: center;
+
         }
 
 
+
         /* =====================================================
-           BOTÃO 3 BARRAS
+           BOTÃO MOBILE
         ===================================================== */
 
         .menu-toggle {
+
             display: none;
 
             position: fixed;
@@ -226,16 +271,22 @@
             font-size: 20px;
 
             align-items: center;
+
             justify-content: center;
 
             box-shadow:
                 0 4px 15px rgba(0,0,0,0.15);
+
         }
 
+
         .menu-toggle:hover {
+
             background:
                 var(--accent-hover);
+
         }
+
 
 
         /* =====================================================
@@ -243,6 +294,7 @@
         ===================================================== */
 
         .menu-overlay {
+
             display: none;
 
             position: fixed;
@@ -253,11 +305,16 @@
                 rgba(0, 0, 0, 0.55);
 
             z-index: 999;
+
         }
 
+
         .menu-overlay.active {
+
             display: block;
+
         }
+
 
 
         /* =====================================================
@@ -265,6 +322,7 @@
         ===================================================== */
 
         .dashboard-header {
+
             display: flex;
 
             align-items: center;
@@ -274,26 +332,37 @@
             gap: 15px;
 
             margin-bottom: 25px;
+
         }
 
+
         .dashboard-title h1 {
+
             margin: 0;
 
             font-size: 28px;
+
         }
 
+
         .dashboard-title p {
+
             margin: 5px 0 0;
 
             color:
                 var(--text-secondary);
+
         }
 
+
         .header-actions {
+
             display: flex;
 
             gap: 10px;
+
         }
+
 
 
         /* =====================================================
@@ -301,6 +370,7 @@
         ===================================================== */
 
         .refresh-btn {
+
             border:
                 1px solid
                 var(--border-color);
@@ -319,23 +389,30 @@
 
             font-weight: 600;
 
-            transition:
-                0.2s;
+            transition: 0.2s;
+
         }
 
+
         .refresh-btn:hover {
+
             border-color:
                 var(--accent-color);
 
             color:
                 var(--accent-color);
+
         }
 
+
         .refresh-btn:disabled {
+
             opacity: 0.6;
 
             cursor: wait;
+
         }
+
 
 
         /* =====================================================
@@ -343,6 +420,7 @@
         ===================================================== */
 
         .stats-grid {
+
             display: grid;
 
             grid-template-columns:
@@ -354,9 +432,12 @@
             gap: 15px;
 
             margin-bottom: 25px;
+
         }
 
+
         .stat-card {
+
             background:
                 var(--bg-secondary);
 
@@ -370,9 +451,12 @@
 
             box-shadow:
                 var(--card-shadow);
+
         }
 
+
         .stat-card .stat-icon {
+
             width: 42px;
             height: 42px;
 
@@ -381,6 +465,7 @@
             display: flex;
 
             align-items: center;
+
             justify-content: center;
 
             background:
@@ -390,9 +475,12 @@
                 var(--accent-color);
 
             margin-bottom: 12px;
+
         }
 
+
         .stat-card h3 {
+
             margin: 0;
 
             font-size: 13px;
@@ -401,9 +489,12 @@
                 var(--text-secondary);
 
             font-weight: 500;
+
         }
 
+
         .stat-card .stat-value {
+
             margin-top: 6px;
 
             font-size: 24px;
@@ -412,7 +503,9 @@
 
             color:
                 var(--text-primary);
+
         }
+
 
 
         /* =====================================================
@@ -420,6 +513,7 @@
         ===================================================== */
 
         .section {
+
             background:
                 var(--bg-secondary);
 
@@ -435,9 +529,12 @@
 
             box-shadow:
                 var(--card-shadow);
+
         }
 
+
         .section-header {
+
             display: flex;
 
             align-items: center;
@@ -445,13 +542,18 @@
             justify-content: space-between;
 
             margin-bottom: 15px;
+
         }
 
+
         .section-header h2 {
+
             margin: 0;
 
             font-size: 19px;
+
         }
+
 
 
         /* =====================================================
@@ -459,19 +561,26 @@
         ===================================================== */
 
         .table-container {
+
             width: 100%;
 
             overflow-x: auto;
+
         }
 
+
         table {
+
             width: 100%;
 
             border-collapse: collapse;
+
         }
+
 
         th,
         td {
+
             padding: 12px;
 
             border-bottom:
@@ -481,14 +590,19 @@
             text-align: left;
 
             font-size: 14px;
+
         }
 
+
         th {
+
             color:
                 var(--text-secondary);
 
             font-weight: 600;
+
         }
+
 
 
         /* =====================================================
@@ -496,6 +610,7 @@
         ===================================================== */
 
         .status {
+
             display: inline-block;
 
             padding: 5px 9px;
@@ -503,15 +618,20 @@
             border-radius: 20px;
 
             font-size: 12px;
+
         }
 
+
         .status.ok {
+
             background:
                 rgba(0, 204, 102, 0.12);
 
             color:
                 var(--success);
+
         }
+
 
 
         /* =====================================================
@@ -519,8 +639,11 @@
         ===================================================== */
 
         .panel {
+
             width: 100%;
+
         }
+
 
 
         /* =====================================================
@@ -528,6 +651,7 @@
         ===================================================== */
 
         .tutorial-content pre {
+
             background: #111;
 
             color: #eee;
@@ -539,9 +663,12 @@
             overflow-x: auto;
 
             font-size: 13px;
+
         }
 
+
         .credential-box {
+
             display: grid;
 
             grid-template-columns:
@@ -553,9 +680,12 @@
             gap: 10px;
 
             margin-bottom: 25px;
+
         }
 
+
         .credential-item {
+
             padding: 15px;
 
             border:
@@ -563,24 +693,33 @@
                 var(--border-color);
 
             border-radius: 10px;
+
         }
 
+
         .credential-label {
+
             font-size: 11px;
 
             color:
                 var(--text-secondary);
 
             margin-bottom: 5px;
+
         }
 
+
         .credential-value {
+
             word-break: break-all;
 
             font-weight: 600;
+
         }
 
+
         .copy-btn {
+
             border: none;
 
             border-radius: 10px;
@@ -593,7 +732,9 @@
             color: #fff;
 
             cursor: pointer;
+
         }
+
 
 
         /* =====================================================
@@ -603,43 +744,66 @@
         @media (max-width: 768px) {
 
             .menu-toggle {
+
                 display: flex;
+
             }
+
 
             .sidebar {
+
                 transform:
                     translateX(-100%);
+
             }
+
 
             .sidebar.open {
+
                 transform:
                     translateX(0);
+
             }
 
+
             .main-content {
+
                 margin-left: 0;
 
                 padding:
                     75px 15px 20px;
+
             }
 
+
             .dashboard-header {
+
                 flex-direction: column;
 
                 align-items: flex-start;
+
             }
+
 
             .header-actions {
+
                 width: 100%;
+
             }
+
 
             .refresh-btn {
+
                 width: 100%;
+
             }
 
+
             .stats-grid {
+
                 grid-template-columns:
                     repeat(2, 1fr);
+
             }
 
         }
@@ -648,7 +812,9 @@
         @media (max-width: 450px) {
 
             .stats-grid {
+
                 grid-template-columns: 1fr;
+
             }
 
         }
@@ -658,13 +824,14 @@
 </head>
 
 
+
 <body>
 
 <div class="app-container">
 
 
     <!-- =====================================================
-         BOTÃO DAS 3 BARRAS
+         BOTÃO MOBILE
     ====================================================== -->
 
     <button
@@ -680,6 +847,7 @@
     </button>
 
 
+
     <!-- =====================================================
          OVERLAY
     ====================================================== -->
@@ -688,6 +856,7 @@
         id="menuOverlay"
         class="menu-overlay"
     ></div>
+
 
 
     <!-- =====================================================
@@ -702,8 +871,11 @@
         <div class="sidebar-header">
 
             <h2>
+
                 <i class="fas fa-bolt"></i>
+
                 MOZ TECH
+
             </h2>
 
             <p>
@@ -711,6 +883,7 @@
             </p>
 
         </div>
+
 
 
         <nav class="sidebar-menu">
@@ -724,7 +897,9 @@
 
                 <i class="fas fa-chart-line"></i>
 
-                <span>Dashboard</span>
+                <span>
+                    Dashboard
+                </span>
 
             </button>
 
@@ -737,7 +912,9 @@
 
                 <i class="fas fa-users"></i>
 
-                <span>CRM Avançado</span>
+                <span>
+                    CRM Avançado
+                </span>
 
             </button>
 
@@ -750,7 +927,9 @@
 
                 <i class="fas fa-box"></i>
 
-                <span>Pacotes</span>
+                <span>
+                    Pacotes
+                </span>
 
             </button>
 
@@ -763,7 +942,9 @@
 
                 <i class="fas fa-cart-shopping"></i>
 
-                <span>Pedidos</span>
+                <span>
+                    Pedidos
+                </span>
 
             </button>
 
@@ -776,7 +957,9 @@
 
                 <i class="fas fa-mobile-screen"></i>
 
-                <span>Dispositivos</span>
+                <span>
+                    Dispositivos
+                </span>
 
             </button>
 
@@ -789,7 +972,9 @@
 
                 <i class="fas fa-code"></i>
 
-                <span>API / Tutorial</span>
+                <span>
+                    API / Tutorial
+                </span>
 
             </button>
 
@@ -802,7 +987,9 @@
 
                 <i class="fas fa-gear"></i>
 
-                <span>Configurações</span>
+                <span>
+                    Configurações
+                </span>
 
             </button>
 
@@ -812,8 +999,9 @@
     </aside>
 
 
+
     <!-- =====================================================
-         CONTEÚDO PRINCIPAL
+         CONTEÚDO
     ====================================================== -->
 
     <main class="main-content">
@@ -828,7 +1016,9 @@
             class="panel"
         >
 
+
             <div class="dashboard-header">
+
 
                 <div class="dashboard-title">
 
@@ -866,7 +1056,10 @@
             </div>
 
 
-            <!-- ESTATÍSTICAS -->
+
+            <!-- =================================================
+                 ESTATÍSTICAS
+            ================================================== -->
 
             <div class="stats-grid">
 
@@ -874,7 +1067,9 @@
                 <div class="stat-card">
 
                     <div class="stat-icon">
+
                         <i class="fas fa-shopping-cart"></i>
+
                     </div>
 
                     <h3>
@@ -891,10 +1086,13 @@
                 </div>
 
 
+
                 <div class="stat-card">
 
                     <div class="stat-icon">
+
                         <i class="fas fa-money-bill"></i>
+
                     </div>
 
                     <h3>
@@ -911,10 +1109,13 @@
                 </div>
 
 
+
                 <div class="stat-card">
 
                     <div class="stat-icon">
+
                         <i class="fas fa-users"></i>
+
                     </div>
 
                     <h3>
@@ -931,10 +1132,13 @@
                 </div>
 
 
+
                 <div class="stat-card">
 
                     <div class="stat-icon">
+
                         <i class="fas fa-mobile-screen"></i>
+
                     </div>
 
                     <h3>
@@ -951,10 +1155,13 @@
                 </div>
 
 
+
                 <div class="stat-card">
 
                     <div class="stat-icon">
+
                         <i class="fas fa-database"></i>
+
                     </div>
 
                     <h3>
@@ -965,16 +1172,19 @@
                         class="stat-value"
                         id="totalGB"
                     >
-                        0
+                        0 GB
                     </div>
 
                 </div>
 
 
+
                 <div class="stat-card">
 
                     <div class="stat-icon">
+
                         <i class="fas fa-chart-line"></i>
+
                     </div>
 
                     <h3>
@@ -991,10 +1201,13 @@
                 </div>
 
 
+
                 <div class="stat-card">
 
                     <div class="stat-icon">
+
                         <i class="fas fa-coins"></i>
+
                     </div>
 
                     <h3>
@@ -1011,10 +1224,13 @@
                 </div>
 
 
+
                 <div class="stat-card">
 
                     <div class="stat-icon">
+
                         <i class="fas fa-clock"></i>
+
                     </div>
 
                     <h3>
@@ -1032,6 +1248,7 @@
 
 
             </div>
+
 
 
             <!-- =================================================
@@ -1086,9 +1303,7 @@
                                     colspan="4"
                                     style="text-align:center;padding:20px"
                                 >
-
                                     Carregando...
-
                                 </td>
 
                             </tr>
@@ -1104,6 +1319,7 @@
         </div>
 
 
+
         <!-- =================================================
              CRM
         ================================================== -->
@@ -1117,19 +1333,21 @@
             <div class="section">
 
                 <h2>
+
                     <i class="fas fa-users"></i>
+
                     CRM Avançado
+
                 </h2>
 
                 <div id="crmConteudo">
-
                     Carregando clientes...
-
                 </div>
 
             </div>
 
         </div>
+
 
 
         <!-- =================================================
@@ -1145,19 +1363,21 @@
             <div class="section">
 
                 <h2>
+
                     <i class="fas fa-box"></i>
+
                     Pacotes
+
                 </h2>
 
                 <div id="pacotesConteudo">
-
                     Carregando pacotes...
-
                 </div>
 
             </div>
 
         </div>
+
 
 
         <!-- =================================================
@@ -1173,19 +1393,21 @@
             <div class="section">
 
                 <h2>
+
                     <i class="fas fa-cart-shopping"></i>
+
                     Pedidos
+
                 </h2>
 
                 <div id="pedidosConteudo">
-
                     Carregando pedidos...
-
                 </div>
 
             </div>
 
         </div>
+
 
 
         <!-- =================================================
@@ -1201,14 +1423,15 @@
             <div class="section">
 
                 <h2>
+
                     <i class="fas fa-mobile-screen"></i>
+
                     Dispositivos
+
                 </h2>
 
                 <div id="dispositivosConteudo">
-
                     Carregando dispositivos...
-
                 </div>
 
             </div>
@@ -1216,8 +1439,9 @@
         </div>
 
 
+
         <!-- =================================================
-             TUTORIAL / API
+             TUTORIAL
         ================================================== -->
 
         <div
@@ -1229,12 +1453,16 @@
             <div class="section">
 
                 <h2>
+
                     <i class="fas fa-code"></i>
+
                     API para Integração
+
                 </h2>
 
 
                 <div class="tutorial-content">
+
 
                     <h3>
                         Suas Credenciais de API
@@ -1242,6 +1470,7 @@
 
 
                     <div class="credential-box">
+
 
                         <div class="credential-item">
 
@@ -1292,6 +1521,7 @@
                             Copiar API Key
                         </button>
 
+
                     </div>
 
 
@@ -1300,16 +1530,18 @@
                     </h3>
 
 
-                    <pre>fetch('https://moztech-je-gz92.vercel.app/api/vendas', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    uid: "SEU_UID",
-    apiKey: "SUA_API_KEY",
-    mb: 1500,
-    numero: "849000001",
-    grupo: "Doce_Megas"
-  })
+                    <pre>fetch('/api/vendas', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        uid: "SEU_UID",
+        apiKey: "SUA_API_KEY",
+        mb: 1500,
+        numero: "849000001",
+        grupo: "Doce_Megas"
+    })
 })</pre>
 
 
@@ -1318,25 +1550,29 @@
                     </h3>
 
 
-                    <pre>fetch('https://moztech-je-gz92.vercel.app/api/vendas', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    uid: "SEU_UID",
-    apiKey: "SUA_API_KEY",
-    tipo: "semanal",
-    valorPacote: 500,
-    gbPacote: 10,
-    numero: "849000001",
-    grupo: "Pacotes_Semanais"
-  })
+                    <pre>fetch('/api/vendas', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        uid: "SEU_UID",
+        apiKey: "SUA_API_KEY",
+        tipo: "semanal",
+        valorPacote: 500,
+        gbPacote: 10,
+        numero: "849000001",
+        grupo: "Pacotes_Semanais"
+    })
 })</pre>
+
 
                 </div>
 
             </div>
 
         </div>
+
 
 
         <!-- =================================================
@@ -1352,14 +1588,15 @@
             <div class="section">
 
                 <h2>
+
                     <i class="fas fa-gear"></i>
+
                     Configurações
+
                 </h2>
 
                 <div id="configConteudo">
-
                     Carregando configurações...
-
                 </div>
 
             </div>
@@ -1370,6 +1607,7 @@
     </main>
 
 </div>
+
 
 
 <!-- =========================================================
@@ -1391,833 +1629,6 @@
 <script src="/js/dispositivos.js"></script>
 
 <script src="/js/config.js"></script>
-
-
-<!-- =========================================================
-     CONTROLO DO DASHBOARD
-========================================================== -->
-
-<script>
-
-(function () {
-
-    "use strict";
-
-
-    /* =====================================================
-       API
-    ===================================================== */
-
-    const API =
-        window.location.origin;
-
-
-    /* =====================================================
-       FORMATAR NÚMEROS
-    ===================================================== */
-
-    function numero(valor) {
-
-        return Number(valor || 0)
-            .toLocaleString("pt-PT");
-
-    }
-
-
-    /* =====================================================
-       CARREGAR DASHBOARD
-    ===================================================== */
-
-    async function carregarDashboardPrincipal() {
-
-        try {
-
-            console.log(
-                "A carregar /dashboard..."
-            );
-
-
-            const resposta =
-                await fetch(
-                    API + "/dashboard",
-                    {
-                        method: "GET",
-
-                        cache: "no-store",
-
-                        headers: {
-                            "Accept":
-                                "application/json"
-                        }
-                    }
-                );
-
-
-            if (!resposta.ok) {
-
-                throw new Error(
-                    "Erro HTTP: " +
-                    resposta.status
-                );
-
-            }
-
-
-            const dados =
-                await resposta.json();
-
-
-            console.log(
-                "Resposta /dashboard:",
-                dados
-            );
-
-
-            if (!dados.success) {
-
-                throw new Error(
-                    dados.error ||
-                    "A API retornou erro."
-                );
-
-            }
-
-
-            const d =
-                dados.dashboard || {};
-
-
-            /* =============================================
-               VENDAS
-            ============================================= */
-
-            const vendas =
-                document.getElementById(
-                    "vendas"
-                );
-
-            if (vendas) {
-
-                vendas.textContent =
-                    numero(d.vendas);
-
-            }
-
-
-            /* =============================================
-               FATURAMENTO
-            ============================================= */
-
-            const valor =
-                document.getElementById(
-                    "valor"
-                );
-
-            if (valor) {
-
-                valor.textContent =
-                    numero(
-                        d.faturamento
-                    ) + " MT";
-
-            }
-
-
-            /* =============================================
-               CLIENTES
-            ============================================= */
-
-            const clientes =
-                document.getElementById(
-                    "clientes"
-                );
-
-            if (clientes) {
-
-                clientes.textContent =
-                    numero(d.clientes);
-
-            }
-
-
-            /* =============================================
-               DISPOSITIVOS
-            ============================================= */
-
-            const disp =
-                document.getElementById(
-                    "disp"
-                );
-
-            if (disp) {
-
-                disp.textContent =
-                    numero(
-                        d.dispositivos
-                    );
-
-            }
-
-
-            /* =============================================
-               TOTAL GB
-            ============================================= */
-
-            const totalGB =
-                document.getElementById(
-                    "totalGB"
-                );
-
-            if (totalGB) {
-
-                totalGB.textContent =
-                    numero(
-                        d.totalGB
-                    ) + " GB";
-
-            }
-
-
-            /* =============================================
-               LUCRO
-            ============================================= */
-
-            const lucro =
-                document.getElementById(
-                    "lucro"
-                );
-
-            if (lucro) {
-
-                lucro.textContent =
-                    numero(
-                        d.lucro
-                    ) + " MT";
-
-            }
-
-
-            /* =============================================
-               CUSTO
-            ============================================= */
-
-            const custo =
-                document.getElementById(
-                    "custo"
-                );
-
-            if (custo) {
-
-                custo.textContent =
-                    numero(
-                        d.custo
-                    ) + " MT";
-
-            }
-
-
-            /* =============================================
-               PEDIDOS
-            ============================================= */
-
-            const pedidos =
-                document.getElementById(
-                    "pedidos"
-                );
-
-            if (pedidos) {
-
-                pedidos.textContent =
-                    numero(
-                        d.pedidos
-                    );
-
-            }
-
-
-            /* =============================================
-               DATA
-            ============================================= */
-
-            const data =
-                document.getElementById(
-                    "data"
-                );
-
-            if (data) {
-
-                data.textContent =
-                    new Date()
-                        .toLocaleString(
-                            "pt-MZ"
-                        );
-
-            }
-
-
-            console.log(
-                "Dashboard carregado com sucesso."
-            );
-
-
-            return dados;
-
-        }
-        catch (erro) {
-
-            console.error(
-                "Erro ao carregar dashboard:",
-                erro
-            );
-
-
-            const data =
-                document.getElementById(
-                    "data"
-                );
-
-            if (data) {
-
-                data.textContent =
-                    "Erro ao carregar";
-
-            }
-
-
-            return null;
-
-        }
-
-    }
-
-
-    /* =====================================================
-       CARREGAR VENDAS
-    ===================================================== */
-
-    async function carregarTabelaPrincipal() {
-
-        try {
-
-            const resposta =
-                await fetch(
-                    API + "/vendas",
-                    {
-                        method: "GET",
-
-                        cache: "no-store",
-
-                        headers: {
-                            "Accept":
-                                "application/json"
-                        }
-                    }
-                );
-
-
-            if (!resposta.ok) {
-
-                throw new Error(
-                    "Erro HTTP: " +
-                    resposta.status
-                );
-
-            }
-
-
-            const json =
-                await resposta.json();
-
-
-            const vendas =
-                Array.isArray(json)
-                    ? json
-                    : (
-                        Array.isArray(
-                            json.vendas
-                        )
-                            ? json.vendas
-                            : []
-                    );
-
-
-            const lista =
-                document.getElementById(
-                    "lista"
-                );
-
-
-            if (!lista) {
-
-                return;
-
-            }
-
-
-            lista.innerHTML = "";
-
-
-            if (
-                vendas.length === 0
-            ) {
-
-                lista.innerHTML = `
-                    <tr>
-                        <td
-                            colspan="4"
-                            style="
-                                text-align:center;
-                                padding:20px;
-                            "
-                        >
-                            Nenhuma venda encontrada.
-                        </td>
-                    </tr>
-                `;
-
-                return;
-
-            }
-
-
-            /* Mostrar somente as últimas vendas */
-
-            vendas
-                .slice(0, 20)
-                .forEach(function (venda) {
-
-                    const tr =
-                        document.createElement(
-                            "tr"
-                        );
-
-
-                    const mb =
-                        Number(
-                            venda.mb || 0
-                        );
-
-
-                    const gb =
-                        Number(
-                            venda.gb || 0
-                        );
-
-
-                    let quantidade =
-                        "";
-
-
-                    if (mb > 0) {
-
-                        quantidade =
-                            numero(mb) +
-                            " MB";
-
-                    }
-                    else if (gb > 0) {
-
-                        quantidade =
-                            numero(gb) +
-                            " GB";
-
-                    }
-                    else {
-
-                        quantidade =
-                            "0";
-
-                    }
-
-
-                    const valor =
-                        Number(
-                            venda.valor_venda ??
-                            venda.valor ??
-                            venda.valor_pacote ??
-                            0
-                        );
-
-
-                    const status =
-                        venda.status ||
-                        "Concluído";
-
-
-                    tr.innerHTML = `
-
-                        <td>
-                            ${venda.numero || "-"}
-                        </td>
-
-                        <td>
-                            ${quantidade}
-                        </td>
-
-                        <td>
-                            ${numero(valor)} MT
-                        </td>
-
-                        <td>
-                            <span class="status ok">
-                                ${status}
-                            </span>
-                        </td>
-
-                    `;
-
-
-                    lista.appendChild(tr);
-
-                });
-
-
-        }
-        catch (erro) {
-
-            console.error(
-                "Erro ao carregar vendas:",
-                erro
-            );
-
-
-            const lista =
-                document.getElementById(
-                    "lista"
-                );
-
-
-            if (lista) {
-
-                lista.innerHTML = `
-                    <tr>
-                        <td
-                            colspan="4"
-                            style="
-                                text-align:center;
-                                padding:20px;
-                            "
-                        >
-                            Erro ao carregar vendas.
-                        </td>
-                    </tr>
-                `;
-
-            }
-
-        }
-
-    }
-
-
-    /* =====================================================
-       FUNÇÕES GLOBAIS
-       Compatibilidade com app.js
-    ===================================================== */
-
-    window.carregarDashboard =
-        carregarDashboardPrincipal;
-
-
-    window.carregarTabela =
-        carregarTabelaPrincipal;
-
-
-    /* =====================================================
-       BOTÃO ATUALIZAR
-    ===================================================== */
-
-    function configurarAtualizar() {
-
-        const botao =
-            document.getElementById(
-                "btnAtualizar"
-            );
-
-
-        if (!botao) {
-
-            console.error(
-                "Botão Atualizar não encontrado."
-            );
-
-            return;
-
-        }
-
-
-        /* Evitar adicionar o evento duas vezes */
-
-        if (
-            botao.dataset.configurado ===
-            "true"
-        ) {
-
-            return;
-
-        }
-
-
-        botao.dataset.configurado =
-            "true";
-
-
-        botao.addEventListener(
-            "click",
-            async function (event) {
-
-                event.preventDefault();
-
-                event.stopPropagation();
-
-
-                if (botao.disabled) {
-
-                    return;
-
-                }
-
-
-                const texto =
-                    botao.innerHTML;
-
-
-                botao.disabled = true;
-
-
-                botao.innerHTML = `
-                    <i class="fas fa-spinner fa-spin"></i>
-                    Atualizando...
-                `;
-
-
-                try {
-
-                    await Promise.all([
-                        carregarDashboardPrincipal(),
-                        carregarTabelaPrincipal()
-                    ]);
-
-                }
-                finally {
-
-                    botao.disabled = false;
-
-                    botao.innerHTML =
-                        texto;
-
-                }
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       MENU 3 BARRAS
-    ===================================================== */
-
-    function configurarMenuMobile() {
-
-        const menuToggle =
-            document.getElementById(
-                "menuToggle"
-            );
-
-
-        const sidebar =
-            document.getElementById(
-                "sidebar"
-            );
-
-
-        const overlay =
-            document.getElementById(
-                "menuOverlay"
-            );
-
-
-        if (!menuToggle) {
-
-            console.error(
-                "menuToggle não encontrado."
-            );
-
-            return;
-
-        }
-
-
-        if (!sidebar) {
-
-            console.error(
-                "sidebar não encontrada."
-            );
-
-            return;
-
-        }
-
-
-        function abrirMenu() {
-
-            sidebar.classList.add(
-                "open"
-            );
-
-
-            if (overlay) {
-
-                overlay.classList.add(
-                    "active"
-                );
-
-            }
-
-
-            menuToggle.setAttribute(
-                "aria-expanded",
-                "true"
-            );
-
-        }
-
-
-        function fecharMenu() {
-
-            sidebar.classList.remove(
-                "open"
-            );
-
-
-            if (overlay) {
-
-                overlay.classList.remove(
-                    "active"
-                );
-
-            }
-
-
-            menuToggle.setAttribute(
-                "aria-expanded",
-                "false"
-            );
-
-        }
-
-
-        menuToggle.addEventListener(
-            "click",
-            function (event) {
-
-                event.preventDefault();
-
-                event.stopPropagation();
-
-
-                if (
-                    sidebar.classList.contains(
-                        "open"
-                    )
-                ) {
-
-                    fecharMenu();
-
-                }
-                else {
-
-                    abrirMenu();
-
-                }
-
-            }
-        );
-
-
-        if (overlay) {
-
-            overlay.addEventListener(
-                "click",
-                function () {
-
-                    fecharMenu();
-
-                }
-            );
-
-        }
-
-
-        /* Fechar com ESC */
-
-        document.addEventListener(
-            "keydown",
-            function (event) {
-
-                if (
-                    event.key ===
-                    "Escape"
-                ) {
-
-                    fecharMenu();
-
-                }
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       INICIAR
-    ===================================================== */
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        async function () {
-
-            console.log(
-                "MOZ TECH Dashboard iniciado."
-            );
-
-
-            configurarAtualizar();
-
-            configurarMenuMobile();
-
-
-            /* Dashboard inicial */
-
-            await carregarDashboardPrincipal();
-
-            await carregarTabelaPrincipal();
-
-        }
-    );
-
-
-    /* =====================================================
-       ATUALIZAÇÃO AUTOMÁTICA
-    ===================================================== */
-
-    setInterval(
-        carregarDashboardPrincipal,
-        5000
-    );
-
-
-    setInterval(
-        carregarTabelaPrincipal,
-        5000
-    );
-
-
-})();
-
-</script>
 
 
 </body>
