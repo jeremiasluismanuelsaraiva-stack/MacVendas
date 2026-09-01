@@ -23,6 +23,11 @@
     --sidebar-width: 260px;
 }
 
+
+/* =====================================================
+   TEMA ESCURO
+===================================================== */
+
 [data-theme="dark"] {
     --bg-primary: #0a0a0a;
     --bg-secondary: #151525;
@@ -395,7 +400,7 @@ button {
 
 
 /* =====================================================
-   CABEÇALHO DO PAINEL
+   CABEÇALHO DOS PAINÉIS
 ===================================================== */
 
 .panel-header,
@@ -421,7 +426,7 @@ button {
 
 
 /* =====================================================
-   CARDS DO DASHBOARD
+   CARDS
 ===================================================== */
 
 .dashboard-cards,
@@ -867,10 +872,11 @@ pre {
 
 
 /* =====================================================
-   BOTÃO DAS 3 BARRAS
+   BOTÃO MENU MOBILE - 3 BARRAS
 ===================================================== */
 
 .menu-toggle {
+
     display: none;
 
     position: fixed;
@@ -881,12 +887,15 @@ pre {
     width: 45px;
     height: 45px;
 
+    padding: 0;
+
     z-index: 10000;
 
     align-items: center;
     justify-content: center;
 
-    border: 1px solid var(--border-color);
+    border:
+        1px solid var(--border-color);
 
     border-radius: 10px;
 
@@ -894,20 +903,86 @@ pre {
 
     color: var(--text-primary);
 
-    font-size: 20px;
+    font-size: 21px;
+
+    line-height: 1;
 
     cursor: pointer;
 
     box-shadow:
         0 3px 12px
         rgba(0, 0, 0, 0.15);
+
+    -webkit-tap-highlight-color: transparent;
+
+    user-select: none;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
 }
 
 
 .menu-toggle:hover {
+
     background: var(--accent-color);
 
     color: #ffffff;
+
+}
+
+
+.menu-toggle:active {
+
+    transform: scale(0.94);
+
+}
+
+
+/*
+   IMPORTANTE:
+   Mantém o ícone como 3 barras.
+*/
+
+.menu-toggle i {
+
+    display: block;
+
+    width: 20px;
+
+    height: 20px;
+
+    line-height: 20px;
+
+    text-align: center;
+
+}
+
+
+/*
+   Se o JavaScript trocar para fa-xmark,
+   escondemos o X e criamos as 3 barras
+   visualmente.
+*/
+
+.menu-toggle i.fa-xmark {
+
+    font-size: 0;
+
+}
+
+
+.menu-toggle i.fa-xmark::before {
+
+    content: "\f0c9";
+
+    font-family: "Font Awesome 6 Free";
+
+    font-weight: 900;
+
+    font-size: 21px;
+
 }
 
 
@@ -916,6 +991,7 @@ pre {
 ===================================================== */
 
 .menu-overlay {
+
     display: none;
 
     position: fixed;
@@ -926,11 +1002,20 @@ pre {
 
     background:
         rgba(0, 0, 0, 0.55);
+
+    opacity: 0;
+
+    transition:
+        opacity 0.3s ease;
 }
 
 
 .menu-overlay.active {
+
     display: block;
+
+    opacity: 1;
+
 }
 
 
@@ -939,6 +1024,7 @@ pre {
 ===================================================== */
 
 .theme-toggle {
+
     position: fixed;
 
     top: 20px;
@@ -972,6 +1058,7 @@ pre {
 ===================================================== */
 
 .container {
+
     max-width: 500px;
 
     margin: 50px auto;
@@ -981,6 +1068,7 @@ pre {
 
 
 .auth-card {
+
     background: var(--bg-secondary);
 
     border-radius: 20px;
@@ -995,6 +1083,7 @@ pre {
 
 
 .auth-header {
+
     text-align: center;
 
     margin-bottom: 30px;
@@ -1002,6 +1091,7 @@ pre {
 
 
 .auth-header i {
+
     font-size: 60px;
 
     color: var(--accent-color);
@@ -1011,6 +1101,7 @@ pre {
 
 
 .auth-header h2 {
+
     font-size: 24px;
 
     margin-bottom: 10px;
@@ -1018,6 +1109,7 @@ pre {
 
 
 .auth-header p {
+
     color: var(--text-secondary);
 
     font-size: 14px;
@@ -1025,6 +1117,7 @@ pre {
 
 
 .auth-footer {
+
     text-align: center;
 
     margin-top: 25px;
@@ -1037,6 +1130,7 @@ pre {
 
 
 .auth-footer span {
+
     color: var(--accent-color);
 
     cursor: pointer;
@@ -1050,6 +1144,7 @@ pre {
 ===================================================== */
 
 .message {
+
     padding: 12px;
 
     border-radius: 10px;
@@ -1063,6 +1158,7 @@ pre {
 
 
 .message.error {
+
     background:
         rgba(255, 68, 68, 0.1);
 
@@ -1076,6 +1172,7 @@ pre {
 
 
 .message.success {
+
     background:
         rgba(0, 204, 102, 0.1);
 
@@ -1093,6 +1190,7 @@ pre {
 ===================================================== */
 
 .loading {
+
     display: none;
 
     text-align: center;
@@ -1102,11 +1200,13 @@ pre {
 
 
 .loading.show {
+
     display: block;
 }
 
 
 .spinner {
+
     width: 40px;
     height: 40px;
 
@@ -1128,116 +1228,270 @@ pre {
 @keyframes spin {
 
     to {
+
         transform:
             rotate(360deg);
+
     }
 
 }
 
 
 /* =====================================================
-   RESPONSIVO
+   RESPONSIVO - TABLET / MOBILE
 ===================================================== */
 
 @media (max-width: 768px) {
 
     :root {
+
         --sidebar-width: 260px;
+
     }
 
+
+    /* ================================================
+       BOTÃO 3 BARRAS
+    ================================================ */
 
     .menu-toggle {
+
         display: flex;
+
     }
 
 
+    /* ================================================
+       SIDEBAR FECHADA
+    ================================================ */
+
     .sidebar {
+
         transform:
             translateX(-100%);
 
         width: var(--sidebar-width);
 
         z-index: 5000;
+
+        visibility: hidden;
+
+        transition:
+            transform 0.3s ease,
+            visibility 0.3s ease;
+
     }
 
+
+    /* ================================================
+       SIDEBAR ABERTA
+    ================================================ */
 
     .sidebar.open {
+
         transform:
             translateX(0);
+
+        visibility: visible;
+
     }
 
 
+    /* ================================================
+       CONTEÚDO
+    ================================================ */
+
     .main-content {
+
         width: 100%;
 
         margin-left: 0;
 
-        padding: 75px 15px 20px;
+        padding:
+            75px 15px 20px;
+
     }
 
+
+    /* ================================================
+       CARDS
+    ================================================ */
 
     .dashboard-cards,
     .stats-grid,
     .cards-grid {
+
         grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
 
         gap: 10px;
+
     }
 
 
     .card,
     .stat-card,
     .dashboard-card {
+
         padding: 15px;
+
     }
 
 
     .card-value,
     .stat-value,
     .dashboard-value {
+
         font-size: 20px;
+
     }
 
+
+    /* ================================================
+       CABEÇALHOS
+    ================================================ */
 
     .panel-header,
     .page-header {
+
         flex-direction: column;
 
         align-items: flex-start;
+
     }
 
 
+    /* ================================================
+       LOGIN
+    ================================================ */
+
     .container {
+
         margin: 20px auto;
 
         padding: 15px;
+
     }
 
 
     .auth-card {
+
         padding: 25px;
+
+    }
+
+
+    /* ================================================
+       OVERLAY
+    ================================================ */
+
+    .menu-overlay {
+
+        z-index: 4000;
+
+    }
+
+
+    /*
+       Sidebar fica acima do overlay.
+    */
+
+    .sidebar {
+
+        z-index: 5000;
+
+    }
+
+
+    .menu-toggle {
+
+        z-index: 10000;
+
     }
 
 }
 
+
+/* =====================================================
+   MOBILE PEQUENO
+===================================================== */
 
 @media (max-width: 480px) {
 
     .dashboard-cards,
     .stats-grid,
     .cards-grid {
+
         grid-template-columns: 1fr;
+
     }
 
 
     .credential-box {
+
         grid-template-columns: 1fr;
+
     }
 
 
     table {
+
         min-width: 600px;
+
+    }
+
+
+    .menu-toggle {
+
+        top: 12px;
+
+        left: 12px;
+
+        width: 44px;
+
+        height: 44px;
+
+    }
+
+
+    .main-content {
+
+        padding:
+            70px 12px 20px;
+
+    }
+
+}
+
+
+/* =====================================================
+   ACESSIBILIDADE
+===================================================== */
+
+.menu-toggle:focus-visible {
+
+    outline:
+        3px solid
+        rgba(0, 102, 204, 0.35);
+
+    outline-offset: 2px;
+
+}
+
+
+/* =====================================================
+   EVITAR SCROLL DO BODY QUANDO MENU ESTÁ ABERTO
+===================================================== */
+
+@media (max-width: 768px) {
+
+    body.menu-open {
+
+        overflow: hidden;
+
     }
 
 }
