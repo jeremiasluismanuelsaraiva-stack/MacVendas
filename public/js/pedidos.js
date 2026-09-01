@@ -1,482 +1,823 @@
-const API = window.location.origin;
+// =====================================================
+// MOZ TECH
+// PEDIDOS.JS
+// =====================================================
+
+(function () {
+
+    "use strict";
 
 
-// =====================================
-// CARREGAR PEDIDOS
-// =====================================
+    // =====================================================
+    // CONFIGURAÇÃO DA API
+    // =====================================================
 
-async function carregarPedidos() {
+    const API = window.location.origin;
 
-    try {
 
-        const resposta =
-            await fetch(API + "/pedidos");
+    // =====================================================
+    // ELEMENTO
+    // =====================================================
 
-        if (!resposta.ok) {
+    function elemento(id) {
 
-            throw new Error(
-                "Erro HTTP: " + resposta.status
+        return document.getElementById(id);
+
+    }
+
+
+    // =====================================================
+    // ESCAPAR HTML
+    // =====================================================
+
+    function escapar(valor) {
+
+        return String(valor ?? "")
+
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+    }
+
+
+    // =====================================================
+    // CARREGAR PEDIDOS
+    // GET /pedidos
+    // =====================================================
+
+    async function carregarPedidos() {
+
+        console.log(
+            "[MOZ TECH] Carregando pedidos..."
+        );
+
+
+        try {
+
+            const resposta =
+                await fetch(
+                    API + "/pedidos",
+                    {
+                        method: "GET",
+
+                        headers: {
+                            "Accept":
+                                "application/json"
+                        },
+
+                        cache: "no-store"
+                    }
+                );
+
+
+            console.log(
+                "[MOZ TECH] Pedidos HTTP:",
+                resposta.status
             );
 
-        }
 
-        const json =
-            await resposta.json();
+            if (!resposta.ok) {
+
+                throw new Error(
+                    "Erro HTTP: " +
+                    resposta.status
+                );
+
+            }
 
 
-        if (!json.success) {
+            const json =
+                await resposta.json();
 
-            console.error(
-                "Erro da API:",
+
+            console.log(
+                "[MOZ TECH] Resposta pedidos:",
                 json
             );
 
-            return;
 
-        }
+            // =================================================
+            // VERIFICAR RESPOSTA
+            // =================================================
 
+            if (
+                !json ||
+                json.success !== true
+            ) {
 
-        const tabela =
-            document.getElementById(
-                "tabelaPedidos"
-            );
-
-
-        if (!tabela) return;
-
-
-        tabela.innerHTML = "";
-
-
-        const pedidos =
-            json.pedidos || [];
-
-
-        // =====================================
-        // NENHUM PEDIDO
-        // =====================================
-
-        if (pedidos.length === 0) {
-
-            tabela.innerHTML = `
-                <tr>
-
-                    <td
-                        colspan="8"
-                        style="text-align:center;padding:25px;"
-                    >
-                        Nenhum pedido encontrado.
-
-                    </td>
-
-                </tr>
-            `;
-
-            return;
-
-        }
-
-
-        // =====================================
-        // MOSTRAR PEDIDOS
-        // =====================================
-
-        pedidos.forEach(pedido => {
-
-            const tr =
-                document.createElement("tr");
-
-
-            tr.innerHTML = `
-
-                <td>
-                    ${pedido.id || "-"}
-                </td>
-
-                <td>
-                    ${pedido.cliente || "-"}
-                </td>
-
-                <td>
-                    ${pedido.numero || "-"}
-                </td>
-
-                <td>
-                    ${pedido.pacote || "-"}
-                </td>
-
-                <td>
-                    ${pedido.gb || 0} GB
-                </td>
-
-                <td>
-                    ${pedido.valor || 0} MT
-                </td>
-
-                <td>
-                    ${pedido.estado || "Pendente"}
-                </td>
-
-                <td>
-
-                    <button
-                        class="btn btn-outline"
-                        data-editar-pedido="${pedido.id}"
-                    >
-                        <i class="fas fa-edit"></i>
-                        Editar
-                    </button>
-
-
-                    <button
-                        class="btn btn-outline"
-                        data-remover-pedido="${pedido.id}"
-                    >
-                        <i class="fas fa-trash"></i>
-                        Remover
-                    </button>
-
-                </td>
-
-            `;
-
-
-            tabela.appendChild(tr);
-
-        });
-
-
-        // =====================================
-        // BOTÃO EDITAR
-        // =====================================
-
-        tabela
-            .querySelectorAll(
-                "[data-editar-pedido]"
-            )
-            .forEach(botao => {
-
-                botao.addEventListener(
-                    "click",
-                    function () {
-
-                        const id =
-                            this.getAttribute(
-                                "data-editar-pedido"
-                            );
-
-                        editarPedido(id);
-
-                    }
+                throw new Error(
+                    json?.error ||
+                    "Resposta inválida da API."
                 );
 
-            });
+            }
 
 
-        // =====================================
-        // BOTÃO REMOVER
-        // =====================================
+            // =================================================
+            // TABELA
+            // =================================================
 
-        tabela
-            .querySelectorAll(
-                "[data-remover-pedido]"
-            )
-            .forEach(botao => {
-
-                botao.addEventListener(
-                    "click",
-                    function () {
-
-                        const id =
-                            this.getAttribute(
-                                "data-remover-pedido"
-                            );
-
-                        removerPedido(id);
-
-                    }
+            const tabela =
+                elemento(
+                    "tabelaPedidos"
                 );
 
-            });
 
-    }
+            if (!tabela) {
 
-    catch (erro) {
+                console.warn(
+                    "[MOZ TECH] #tabelaPedidos não encontrado."
+                );
 
-        console.error(
-            "Erro ao carregar pedidos:",
-            erro
-        );
+                return [];
 
-    }
-
-}
+            }
 
 
-// =====================================
-// ADICIONAR PEDIDO
-// =====================================
+            // =================================================
+            // PEDIDOS
+            // =================================================
 
-async function adicionarPedido(dados) {
+            const pedidos =
+                Array.isArray(
+                    json.pedidos
+                )
+                    ? json.pedidos
+                    : [];
 
-    try {
 
-        const resposta =
-            await fetch(
-                API + "/pedidos",
-                {
+            // =================================================
+            // LIMPAR TABELA
+            // =================================================
 
-                    method: "POST",
+            tabela.innerHTML = "";
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
 
-                    body:
-                        JSON.stringify(dados)
+            // =================================================
+            // NENHUM PEDIDO
+            // =================================================
+
+            if (
+                pedidos.length === 0
+            ) {
+
+                tabela.innerHTML = `
+
+                    <tr>
+
+                        <td
+                            colspan="8"
+                            style="
+                                text-align:center;
+                                padding:25px;
+                            "
+                        >
+
+                            Nenhum pedido encontrado.
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+                return [];
+
+            }
+
+
+            // =================================================
+            // MOSTRAR PEDIDOS
+            // =================================================
+
+            pedidos.forEach(
+                function (pedido) {
+
+                    const tr =
+                        document.createElement(
+                            "tr"
+                        );
+
+
+                    const id =
+                        pedido.id ?? "-";
+
+
+                    const cliente =
+                        pedido.cliente ?? "-";
+
+
+                    const numero =
+                        pedido.numero ?? "-";
+
+
+                    const pacote =
+                        pedido.pacote ?? "-";
+
+
+                    const gb =
+                        pedido.gb ?? 0;
+
+
+                    const valor =
+                        pedido.valor ?? 0;
+
+
+                    const estado =
+                        pedido.estado ||
+                        "Pendente";
+
+
+                    tr.innerHTML = `
+
+                        <td>
+                            ${escapar(id)}
+                        </td>
+
+                        <td>
+                            ${escapar(cliente)}
+                        </td>
+
+                        <td>
+                            ${escapar(numero)}
+                        </td>
+
+                        <td>
+                            ${escapar(pacote)}
+                        </td>
+
+                        <td>
+                            ${escapar(gb)} GB
+                        </td>
+
+                        <td>
+                            ${escapar(valor)} MT
+                        </td>
+
+                        <td>
+
+                            <span class="status">
+
+                                ${escapar(estado)}
+
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            <button
+                                type="button"
+                                class="btn btn-outline"
+                                data-editar-pedido="${escapar(id)}"
+                            >
+
+                                <i class="fas fa-edit"></i>
+
+                                Editar
+
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="btn btn-outline"
+                                data-remover-pedido="${escapar(id)}"
+                            >
+
+                                <i class="fas fa-trash"></i>
+
+                                Remover
+
+                            </button>
+
+                        </td>
+
+                    `;
+
+
+                    tabela.appendChild(
+                        tr
+                    );
 
                 }
             );
 
 
-        const json =
-            await resposta.json();
+            // =================================================
+            // BOTÃO EDITAR
+            // =================================================
+
+            tabela
+                .querySelectorAll(
+                    "[data-editar-pedido]"
+                )
+                .forEach(
+                    function (botao) {
+
+                        botao.addEventListener(
+                            "click",
+                            function (event) {
+
+                                event.preventDefault();
+
+                                event.stopPropagation();
 
 
-        if (!resposta.ok) {
+                                const id =
+                                    this.getAttribute(
+                                        "data-editar-pedido"
+                                    );
 
-            throw new Error(
-                json.error ||
-                "Erro ao adicionar pedido."
+
+                                editarPedido(id);
+
+                            }
+                        );
+
+                    }
+                );
+
+
+            // =================================================
+            // BOTÃO REMOVER
+            // =================================================
+
+            tabela
+                .querySelectorAll(
+                    "[data-remover-pedido]"
+                )
+                .forEach(
+                    function (botao) {
+
+                        botao.addEventListener(
+                            "click",
+                            function (event) {
+
+                                event.preventDefault();
+
+                                event.stopPropagation();
+
+
+                                const id =
+                                    this.getAttribute(
+                                        "data-remover-pedido"
+                                    );
+
+
+                                removerPedido(id);
+
+                            }
+                        );
+
+                    }
+                );
+
+
+            console.log(
+                "[MOZ TECH] Pedidos carregados:",
+                pedidos.length
             );
+
+
+            return pedidos;
+
+        }
+        catch (erro) {
+
+            console.error(
+                "[MOZ TECH] Erro ao carregar pedidos:",
+                erro
+            );
+
+
+            const tabela =
+                elemento(
+                    "tabelaPedidos"
+                );
+
+
+            if (tabela) {
+
+                tabela.innerHTML = `
+
+                    <tr>
+
+                        <td
+                            colspan="8"
+                            style="
+                                text-align:center;
+                                padding:25px;
+                            "
+                        >
+
+                            Não foi possível carregar
+                            os pedidos.
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+            }
+
+
+            return [];
+
+        }
+
+    }
+
+
+    // =====================================================
+    // ADICIONAR PEDIDO
+    // POST /pedidos
+    // =====================================================
+
+    async function adicionarPedido(dados) {
+
+        console.log(
+            "[MOZ TECH] Adicionando pedido:",
+            dados
+        );
+
+
+        try {
+
+            const resposta =
+                await fetch(
+                    API + "/pedidos",
+                    {
+
+                        method: "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json",
+
+                            "Accept":
+                                "application/json"
+
+                        },
+
+                        body:
+                            JSON.stringify(
+                                dados
+                            )
+
+                    }
+                );
+
+
+            const json =
+                await resposta.json();
+
+
+            console.log(
+                "[MOZ TECH] Resposta adicionar pedido:",
+                json
+            );
+
+
+            if (!resposta.ok) {
+
+                throw new Error(
+                    json?.error ||
+                    "Erro ao adicionar pedido."
+                );
+
+            }
+
+
+            await carregarPedidos();
+
+
+            return json;
+
+        }
+        catch (erro) {
+
+            console.error(
+                "[MOZ TECH] Erro ao adicionar pedido:",
+                erro
+            );
+
+
+            alert(
+                "Não foi possível adicionar o pedido."
+            );
+
+
+            return {
+
+                success: false,
+
+                error:
+                    erro.message
+
+            };
+
+        }
+
+    }
+
+
+    // =====================================================
+    // EDITAR PEDIDO
+    // PUT /pedidos/:id
+    // =====================================================
+
+    async function editarPedido(id) {
+
+        const estado =
+            prompt(
+                "Novo estado do pedido:"
+            );
+
+
+        if (
+            estado === null
+        ) {
+
+            return;
 
         }
 
 
-        await carregarPedidos();
+        const estadoFinal =
+            estado.trim();
 
 
-        return json;
+        if (!estadoFinal) {
 
-    }
-
-    catch (erro) {
-
-        console.error(
-            "Erro ao adicionar pedido:",
-            erro
-        );
-
-
-        alert(
-            "Não foi possível adicionar o pedido."
-        );
-
-
-        return {
-            success: false,
-            error: erro.message
-        };
-
-    }
-
-}
-
-
-// =====================================
-// EDITAR PEDIDO
-// =====================================
-
-async function editarPedido(id) {
-
-    const estado =
-        prompt(
-            "Novo estado do pedido:"
-        );
-
-
-    if (estado === null) {
-        return;
-    }
-
-
-    const estadoFinal =
-        estado.trim();
-
-
-    if (!estadoFinal) {
-
-        alert(
-            "O estado não pode ficar vazio."
-        );
-
-        return;
-
-    }
-
-
-    try {
-
-        const resposta =
-            await fetch(
-                API +
-                "/pedidos/" +
-                encodeURIComponent(id),
-                {
-
-                    method: "PUT",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify({
-                            estado: estadoFinal
-                        })
-
-                }
+            alert(
+                "O estado não pode ficar vazio."
             );
 
-
-        const json =
-            await resposta.json();
-
-
-        if (!resposta.ok) {
-
-            throw new Error(
-                json.error ||
-                "Erro ao editar pedido."
-            );
+            return;
 
         }
 
 
-        await carregarPedidos();
-
-
-        alert(
-            "Pedido atualizado com sucesso!"
+        console.log(
+            "[MOZ TECH] Editando pedido:",
+            id
         );
+
+
+        try {
+
+            const resposta =
+                await fetch(
+                    API +
+                    "/pedidos/" +
+                    encodeURIComponent(
+                        id
+                    ),
+                    {
+
+                        method: "PUT",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json",
+
+                            "Accept":
+                                "application/json"
+
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                estado:
+                                    estadoFinal
+
+                            })
+
+                    }
+                );
+
+
+            const json =
+                await resposta.json();
+
+
+            console.log(
+                "[MOZ TECH] Resposta editar:",
+                json
+            );
+
+
+            if (!resposta.ok) {
+
+                throw new Error(
+                    json?.error ||
+                    "Erro ao editar pedido."
+                );
+
+            }
+
+
+            await carregarPedidos();
+
+
+            alert(
+                "Pedido atualizado com sucesso!"
+            );
+
+        }
+        catch (erro) {
+
+            console.error(
+                "[MOZ TECH] Erro ao editar pedido:",
+                erro
+            );
+
+
+            alert(
+                "Não foi possível editar o pedido."
+            );
+
+        }
 
     }
 
-    catch (erro) {
 
-        console.error(
-            "Erro ao editar pedido:",
-            erro
+    // =====================================================
+    // REMOVER PEDIDO
+    // DELETE /pedidos/:id
+    // =====================================================
+
+    async function removerPedido(id) {
+
+        const confirmar =
+            confirm(
+                "Deseja remover este pedido?"
+            );
+
+
+        if (!confirmar) {
+
+            return;
+
+        }
+
+
+        console.log(
+            "[MOZ TECH] Removendo pedido:",
+            id
         );
 
 
-        alert(
-            "Não foi possível editar o pedido."
-        );
+        try {
+
+            const resposta =
+                await fetch(
+                    API +
+                    "/pedidos/" +
+                    encodeURIComponent(
+                        id
+                    ),
+                    {
+
+                        method: "DELETE",
+
+                        headers: {
+
+                            "Accept":
+                                "application/json"
+
+                        }
+
+                    }
+                );
+
+
+            const json =
+                await resposta.json();
+
+
+            console.log(
+                "[MOZ TECH] Resposta remover:",
+                json
+            );
+
+
+            if (!resposta.ok) {
+
+                throw new Error(
+                    json?.error ||
+                    "Erro ao remover pedido."
+                );
+
+            }
+
+
+            await carregarPedidos();
+
+
+            alert(
+                "Pedido removido com sucesso!"
+            );
+
+        }
+        catch (erro) {
+
+            console.error(
+                "[MOZ TECH] Erro ao remover pedido:",
+                erro
+            );
+
+
+            alert(
+                "Não foi possível remover o pedido."
+            );
+
+        }
 
     }
 
-}
+
+    // =====================================================
+    // DISPONIBILIZAR FUNÇÕES GLOBALMENTE
+    // =====================================================
+
+    window.carregarPedidos =
+        carregarPedidos;
 
 
-// =====================================
-// REMOVER PEDIDO
-// =====================================
+    window.adicionarPedido =
+        adicionarPedido;
 
-async function removerPedido(id) {
+
+    window.editarPedido =
+        editarPedido;
+
+
+    window.removerPedido =
+        removerPedido;
+
+
+    // =====================================================
+    // INICIALIZAÇÃO
+    // =====================================================
+
+    function iniciarPedidos() {
+
+        console.log(
+            "[MOZ TECH] pedidos.js iniciado."
+        );
+
+
+        carregarPedidos();
+
+    }
+
+
+    // =====================================================
+    // DOM READY
+    // =====================================================
 
     if (
-        !confirm(
-            "Deseja remover este pedido?"
-        )
+        document.readyState ===
+        "loading"
     ) {
 
-        return;
+        document.addEventListener(
+            "DOMContentLoaded",
+            iniciarPedidos,
+            {
+                once: true
+            }
+        );
+
+    }
+    else {
+
+        iniciarPedidos();
 
     }
 
 
-    try {
+    // =====================================================
+    // ATUALIZAÇÃO AUTOMÁTICA
+    // =====================================================
 
-        const resposta =
-            await fetch(
-                API +
-                "/pedidos/" +
-                encodeURIComponent(id),
-                {
-                    method: "DELETE"
-                }
-            );
+    setInterval(
+        function () {
 
+            carregarPedidos();
 
-        const json =
-            await resposta.json();
+        },
+        5000
+    );
 
 
-        if (!resposta.ok) {
-
-            throw new Error(
-                json.error ||
-                "Erro ao remover pedido."
-            );
-
-        }
-
-
-        await carregarPedidos();
-
-
-        alert(
-            "Pedido removido com sucesso!"
-        );
-
-    }
-
-    catch (erro) {
-
-        console.error(
-            "Erro ao remover pedido:",
-            erro
-        );
-
-
-        alert(
-            "Não foi possível remover o pedido."
-        );
-
-    }
-
-}
-
-
-// =====================================
-// DISPONIBILIZAR FUNÇÕES
-// =====================================
-
-window.carregarPedidos =
-    carregarPedidos;
-
-window.adicionarPedido =
-    adicionarPedido;
-
-window.editarPedido =
-    editarPedido;
-
-window.removerPedido =
-    removerPedido;
-
-
-// =====================================
-// INICIALIZAÇÃO
-// =====================================
-
-carregarPedidos();
-
-
-// Atualizar a cada 5 segundos
-setInterval(
-    carregarPedidos,
-    5000
-);
+})();
