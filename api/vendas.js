@@ -1,4 +1,10 @@
+// =====================================================
+// MOZ TECH
+// API DE VENDAS
+// =====================================================
+
 const express = require("express");
+
 const router = express.Router();
 
 const db = require("../database/database");
@@ -6,7 +12,7 @@ const db = require("../database/database");
 
 // =====================================================
 // LISTAR VENDAS
-// GET /vendas
+// GET /api/vendas
 // =====================================================
 
 router.get("/", (req, res) => {
@@ -17,7 +23,13 @@ router.get("/", (req, res) => {
             db.ler("vendas") || [];
 
 
-        res.json(vendas);
+        res.json({
+
+            success: true,
+
+            vendas
+
+        });
 
     }
     catch (err) {
@@ -33,7 +45,8 @@ router.get("/", (req, res) => {
             success: false,
 
             error:
-                err.message
+                err.message ||
+                "Erro ao listar vendas."
 
         });
 
@@ -44,7 +57,7 @@ router.get("/", (req, res) => {
 
 // =====================================================
 // BUSCAR VENDA
-// GET /vendas/:id
+// GET /api/vendas/:id
 // =====================================================
 
 router.get("/:id", (req, res) => {
@@ -99,7 +112,8 @@ router.get("/:id", (req, res) => {
             success: false,
 
             error:
-                err.message
+                err.message ||
+                "Erro ao buscar venda."
 
         });
 
@@ -110,7 +124,7 @@ router.get("/:id", (req, res) => {
 
 // =====================================================
 // ADICIONAR VENDA
-// POST /vendas
+// POST /api/vendas
 // =====================================================
 
 router.post("/", (req, res) => {
@@ -121,6 +135,10 @@ router.post("/", (req, res) => {
             db.ler("vendas") || [];
 
 
+        // =================================================
+        // DADOS RECEBIDOS
+        // =================================================
+
         const numero =
             req.body.numero ||
             "";
@@ -128,20 +146,19 @@ router.post("/", (req, res) => {
 
         const mb =
             Number(
-                req.body.mb ||
-                0
+                req.body.mb || 0
             );
 
 
         const gbPacote =
             Number(
-                req.body.gbPacote ||
-                0
+                req.body.gbPacote || 0
             );
 
 
-        // Se vier GB, usa GB.
-        // Caso contrário, calcula através dos MB.
+        // =================================================
+        // CALCULAR GB
+        // =================================================
 
         const gb =
             gbPacote > 0
@@ -149,13 +166,21 @@ router.post("/", (req, res) => {
                 : mb / 1024;
 
 
+        // =================================================
+        // VALOR
+        // =================================================
+
         const valorPacote =
             Number(
-                req.body.valorPacote ||
-                req.body.valor ||
+                req.body.valorPacote ??
+                req.body.valor ??
                 0
             );
 
+
+        // =================================================
+        // CRIAR VENDA
+        // =================================================
 
         const venda = {
 
@@ -210,6 +235,10 @@ router.post("/", (req, res) => {
         };
 
 
+        // =================================================
+        // GUARDAR
+        // =================================================
+
         vendas.unshift(
             venda
         );
@@ -220,6 +249,10 @@ router.post("/", (req, res) => {
             vendas
         );
 
+
+        // =================================================
+        // RESPOSTA
+        // =================================================
 
         res.json({
 
@@ -243,7 +276,8 @@ router.post("/", (req, res) => {
             success: false,
 
             error:
-                err.message
+                err.message ||
+                "Erro ao adicionar venda."
 
         });
 
@@ -254,7 +288,7 @@ router.post("/", (req, res) => {
 
 // =====================================================
 // APAGAR VENDA
-// DELETE /vendas/:id
+// DELETE /api/vendas/:id
 // =====================================================
 
 router.delete("/:id", (req, res) => {
@@ -270,6 +304,10 @@ router.delete("/:id", (req, res) => {
                 req.params.id
             );
 
+
+        // =================================================
+        // VERIFICAR
+        // =================================================
 
         const existe =
             vendas.some(
@@ -293,6 +331,10 @@ router.delete("/:id", (req, res) => {
         }
 
 
+        // =================================================
+        // REMOVER
+        // =================================================
+
         const novasVendas =
             vendas.filter(
                 venda =>
@@ -306,6 +348,10 @@ router.delete("/:id", (req, res) => {
             novasVendas
         );
 
+
+        // =================================================
+        // RESPOSTA
+        // =================================================
 
         res.json({
 
@@ -332,7 +378,8 @@ router.delete("/:id", (req, res) => {
             success: false,
 
             error:
-                err.message
+                err.message ||
+                "Erro ao apagar venda."
 
         });
 
@@ -340,5 +387,9 @@ router.delete("/:id", (req, res) => {
 
 });
 
+
+// =====================================================
+// EXPORTAR
+// =====================================================
 
 module.exports = router;
