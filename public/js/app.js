@@ -2,7 +2,8 @@
 // MOZ TECH
 // APP.JS
 // SISTEMA DE PAINÉIS + MENU MOBILE
-// CREDENCIAIS FIREBASE
+// + TEMA
+// + CREDENCIAIS FIREBASE
 // =====================================================
 
 (function () {
@@ -17,17 +18,11 @@
     const paineis = {
 
         dashboard: "panelDashboard",
-
         crm: "panelCRM",
-
         pacotes: "panelPacotes",
-
         pedidos: "panelPedidos",
-
         dispositivos: "panelDispositivos",
-
         tutorial: "panelTutorial",
-
         config: "panelConfig"
 
     };
@@ -45,22 +40,91 @@
 
 
     // =====================================================
+    // TEMA
+    // =====================================================
+
+    function aplicarTema(tema) {
+
+        tema =
+            String(tema || "dark")
+                .toLowerCase()
+                .trim();
+
+
+        if (
+            tema !== "light" &&
+            tema !== "dark"
+        ) {
+
+            tema = "dark";
+
+        }
+
+
+        document.documentElement.setAttribute(
+            "data-theme",
+            tema
+        );
+
+
+        document.body.classList.remove(
+            "theme-dark",
+            "theme-light"
+        );
+
+
+        document.body.classList.add(
+            "theme-" + tema
+        );
+
+
+        localStorage.setItem(
+            "tema",
+            tema
+        );
+
+
+        console.log(
+            "[MOZ TECH] Tema aplicado:",
+            tema
+        );
+
+    }
+
+
+    function carregarTemaLocal() {
+
+        const tema =
+            localStorage.getItem("tema") ||
+            "dark";
+
+
+        aplicarTema(tema);
+
+    }
+
+
+    window.aplicarTema =
+        aplicarTema;
+
+
+    window.carregarTemaLocal =
+        carregarTemaLocal;
+
+
+    // =====================================================
     // MENU MOBILE
     // =====================================================
 
     function abrirMenuMobile() {
 
         const sidebar = el("sidebar");
-
         const overlay = el("menuOverlay");
-
         const botao = el("menuToggle");
 
 
         if (!sidebar) {
-
             return;
-
         }
 
 
@@ -86,6 +150,16 @@
                 "Fechar menu"
             );
 
+            const icon =
+                botao.querySelector("i");
+
+            if (icon) {
+
+                icon.className =
+                    "fas fa-xmark";
+
+            }
+
         }
 
 
@@ -99,9 +173,7 @@
     function fecharMenuMobile() {
 
         const sidebar = el("sidebar");
-
         const overlay = el("menuOverlay");
-
         const botao = el("menuToggle");
 
 
@@ -131,6 +203,17 @@
                 "Abrir menu"
             );
 
+
+            const icon =
+                botao.querySelector("i");
+
+            if (icon) {
+
+                icon.className =
+                    "fas fa-bars";
+
+            }
+
         }
 
 
@@ -143,13 +226,12 @@
 
     function alternarMenuMobile() {
 
-        const sidebar = el("sidebar");
+        const sidebar =
+            el("sidebar");
 
 
         if (!sidebar) {
-
             return;
-
         }
 
 
@@ -170,7 +252,7 @@
 
 
     // =====================================================
-    // MOSTRAR ERRO NO PAINEL
+    // MOSTRAR ERRO
     // =====================================================
 
     function mostrarErroPainel(
@@ -178,13 +260,12 @@
         mensagem
     ) {
 
-        const elemento = el(id);
+        const elemento =
+            el(id);
 
 
         if (!elemento) {
-
             return;
-
         }
 
 
@@ -204,181 +285,6 @@
             </div>
 
         `;
-
-    }
-
-
-    // =====================================================
-    // CARREGAR CREDENCIAIS DO USUÁRIO
-    // FIREBASE
-    // =====================================================
-
-    async function carregarCredenciaisTutorial() {
-
-        const uidElemento =
-            el("tutorialUid");
-
-
-        const apiKeyElemento =
-            el("tutorialApiKey");
-
-
-        if (
-            !uidElemento &&
-            !apiKeyElemento
-        ) {
-
-            return;
-
-        }
-
-
-        // =================================================
-        // ESTADO INICIAL
-        // =================================================
-
-        if (uidElemento) {
-
-            uidElemento.textContent =
-                "Carregando...";
-
-        }
-
-
-        if (apiKeyElemento) {
-
-            apiKeyElemento.textContent =
-                "Carregando...";
-
-        }
-
-
-        try {
-
-            console.log(
-                "[MOZ TECH] Carregando dados do usuário..."
-            );
-
-
-            // =================================================
-            // VERIFICAR FUNÇÃO FIREBASE
-            // =================================================
-
-            if (
-                typeof window.obterDadosUsuario !==
-                "function"
-            ) {
-
-                throw new Error(
-                    "obterDadosUsuario() ainda não está disponível."
-                );
-
-            }
-
-
-            // =================================================
-            // OBTER USUÁRIO DO FIREBASE
-            // =================================================
-
-            const dados =
-                await window.obterDadosUsuario();
-
-
-            console.log(
-                "[MOZ TECH] Dados do usuário:",
-                dados
-            );
-
-
-            if (!dados) {
-
-                throw new Error(
-                    "Usuário não autenticado."
-                );
-
-            }
-
-
-            // =================================================
-            // UID
-            // =================================================
-
-            const uid =
-                dados.uid || "";
-
-
-            // =================================================
-            // API KEY
-            // =================================================
-
-            const apiKey =
-                dados.apiKey || "";
-
-
-            // =================================================
-            // MOSTRAR UID
-            // =================================================
-
-            if (uidElemento) {
-
-                uidElemento.textContent =
-                    uid ||
-                    "UID não encontrado";
-
-            }
-
-
-            // =================================================
-            // MOSTRAR API KEY
-            // =================================================
-
-            if (apiKeyElemento) {
-
-                apiKeyElemento.textContent =
-                    apiKey ||
-                    "API Key não encontrada";
-
-            }
-
-
-            console.log(
-                "[MOZ TECH] UID carregado:",
-                uid
-            );
-
-
-            console.log(
-                "[MOZ TECH] API Key carregada:",
-                apiKey
-                    ? "OK"
-                    : "NÃO ENCONTRADA"
-            );
-
-        }
-        catch (erro) {
-
-            console.error(
-                "[MOZ TECH] Erro ao carregar credenciais:",
-                erro
-            );
-
-
-            if (uidElemento) {
-
-                uidElemento.textContent =
-                    "Erro ao carregar";
-
-            }
-
-
-            if (apiKeyElemento) {
-
-                apiKeyElemento.textContent =
-                    "Erro ao carregar";
-
-            }
-
-        }
 
     }
 
@@ -414,7 +320,7 @@
                 catch (erro) {
 
                     console.error(
-                        "[MOZ TECH] Erro ao carregar dashboard:",
+                        "[MOZ TECH] Erro dashboard:",
                         erro
                     );
 
@@ -441,14 +347,6 @@
                 }
 
             }
-            else {
-
-                console.warn(
-                    "[MOZ TECH] carregarDashboard() não disponível."
-                );
-
-            }
-
 
             return;
 
@@ -490,7 +388,6 @@
 
             }
 
-
             return;
 
         }
@@ -519,19 +416,10 @@
                         erro
                     );
 
-                    mostrarErroPainel(
-                        "pacotesConteudo",
-                        "Não foi possível carregar os pacotes."
-                    );
-
                 }
 
             }
             else {
-
-                console.error(
-                    "[MOZ TECH] carregarPacotes() não existe."
-                );
 
                 mostrarErroPainel(
                     "pacotesConteudo",
@@ -539,7 +427,6 @@
                 );
 
             }
-
 
             return;
 
@@ -581,7 +468,6 @@
 
             }
 
-
             return;
 
         }
@@ -622,7 +508,6 @@
 
             }
 
-
             return;
 
         }
@@ -654,15 +539,6 @@
                 }
 
             }
-            else {
-
-                mostrarErroPainel(
-                    "configConteudo",
-                    "Não foi possível carregar as configurações."
-                );
-
-            }
-
 
             return;
 
@@ -678,6 +554,143 @@
             await carregarCredenciaisTutorial();
 
             return;
+
+        }
+
+    }
+
+
+    // =====================================================
+    // CREDENCIAIS DO FIREBASE
+    // =====================================================
+
+    async function carregarCredenciaisTutorial() {
+
+        const uidElemento =
+            el("tutorialUid");
+
+
+        const apiKeyElemento =
+            el("tutorialApiKey");
+
+
+        if (
+            !uidElemento &&
+            !apiKeyElemento
+        ) {
+
+            return;
+
+        }
+
+
+        if (uidElemento) {
+
+            uidElemento.textContent =
+                "Carregando...";
+
+        }
+
+
+        if (apiKeyElemento) {
+
+            apiKeyElemento.textContent =
+                "Carregando...";
+
+        }
+
+
+        try {
+
+            console.log(
+                "[MOZ TECH] Buscando usuário Firebase..."
+            );
+
+
+            // =================================================
+            // VERIFICAR FIREBASE
+            // =================================================
+
+            if (
+                typeof window.obterDadosUsuario !==
+                "function"
+            ) {
+
+                throw new Error(
+                    "obterDadosUsuario() não está disponível."
+                );
+
+            }
+
+
+            const dados =
+                await window.obterDadosUsuario();
+
+
+            console.log(
+                "[MOZ TECH] Dados do usuário:",
+                dados
+            );
+
+
+            if (!dados) {
+
+                throw new Error(
+                    "Usuário não autenticado."
+                );
+
+            }
+
+
+            // =================================================
+            // UID
+            // =================================================
+
+            if (uidElemento) {
+
+                uidElemento.textContent =
+                    dados.uid ||
+                    "UID não encontrado";
+
+            }
+
+
+            // =================================================
+            // API KEY
+            // =================================================
+
+            if (apiKeyElemento) {
+
+                apiKeyElemento.textContent =
+                    dados.apiKey ||
+                    "API Key não encontrada";
+
+            }
+
+
+        }
+        catch (erro) {
+
+            console.error(
+                "[MOZ TECH] Erro ao carregar credenciais:",
+                erro
+            );
+
+
+            if (uidElemento) {
+
+                uidElemento.textContent =
+                    "Erro ao carregar";
+
+            }
+
+
+            if (apiKeyElemento) {
+
+                apiKeyElemento.textContent =
+                    "Erro ao carregar";
+
+            }
 
         }
 
@@ -735,7 +748,7 @@
 
 
             // =============================================
-            // MOSTRAR PAINEL
+            // MOSTRAR ESCOLHIDO
             // =============================================
 
             const painel =
@@ -793,7 +806,7 @@
 
 
             // =============================================
-            // CARREGAR CONTEÚDO
+            // CARREGAR
             // =============================================
 
             await carregarPainel(
@@ -802,7 +815,7 @@
 
 
             // =============================================
-            // FECHAR MENU MOBILE
+            // MOBILE
             // =============================================
 
             if (
@@ -817,7 +830,7 @@
 
 
     // =====================================================
-    // INICIALIZAR MENU
+    // MENU
     // =====================================================
 
     function inicializarMenu() {
@@ -826,12 +839,6 @@
             document.querySelectorAll(
                 ".menu-item[data-panel]"
             );
-
-
-        console.log(
-            "[MOZ TECH] Menus encontrados:",
-            botoes.length
-        );
 
 
         botoes.forEach(function (botao) {
@@ -852,10 +859,9 @@
 
             botao.addEventListener(
                 "click",
-                function (event) {
+                async function (event) {
 
                     event.preventDefault();
-
                     event.stopPropagation();
 
 
@@ -866,13 +872,11 @@
 
 
                     if (!panel) {
-
                         return;
-
                     }
 
 
-                    window.showPanel(
+                    await window.showPanel(
                         panel
                     );
 
@@ -895,9 +899,7 @@
 
 
         if (!botao) {
-
             return;
-
         }
 
 
@@ -920,7 +922,6 @@
             function (event) {
 
                 event.preventDefault();
-
                 event.stopPropagation();
 
                 alternarMenuMobile();
@@ -942,9 +943,7 @@
 
 
         if (!overlay) {
-
             return;
-
         }
 
 
@@ -964,11 +963,7 @@
 
         overlay.addEventListener(
             "click",
-            function (event) {
-
-                event.preventDefault();
-
-                event.stopPropagation();
+            function () {
 
                 fecharMenuMobile();
 
@@ -985,9 +980,7 @@
     function inicializarESC() {
 
         if (window.__mozAppESC) {
-
             return;
-
         }
 
 
@@ -1057,11 +1050,6 @@
                 "false"
             );
 
-            botao.setAttribute(
-                "aria-label",
-                "Abrir menu"
-            );
-
         }
 
 
@@ -1073,7 +1061,7 @@
 
 
     // =====================================================
-    // INICIAR SISTEMA
+    // INICIAR
     // =====================================================
 
     async function iniciarSistema() {
@@ -1091,24 +1079,31 @@
         );
 
 
-        estadoInicial();
+        // =============================================
+        // TEMA PRIMEIRO
+        // =============================================
 
+        carregarTemaLocal();
+
+
+        // =============================================
+        // MENU
+        // =============================================
+
+        estadoInicial();
 
         inicializarMenu();
 
-
         inicializarBotaoMobile();
 
-
         inicializarOverlay();
-
 
         inicializarESC();
 
 
-        // =================================================
-        // ABRIR DASHBOARD
-        // =================================================
+        // =============================================
+        // DASHBOARD
+        // =============================================
 
         await window.showPanel(
             "dashboard"
@@ -1123,7 +1118,7 @@
 
 
     // =====================================================
-    // EXPORTAR FUNÇÕES
+    // EXPORTAR
     // =====================================================
 
     window.abrirMenuMobile =
@@ -1165,6 +1160,5 @@
         iniciarSistema();
 
     }
-
 
 })();
