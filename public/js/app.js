@@ -3,413 +3,494 @@
 // SISTEMA DE PAINÉIS + MENU MOBILE
 // =====================================================
 
+(function () {
 
-// =====================================================
-// MAPA DOS PAINÉIS
-// =====================================================
-
-const paineis = {
-
-    dashboard: "panelDashboard",
-    crm: "panelCRM",
-    pacotes: "panelPacotes",
-    pedidos: "panelPedidos",
-    dispositivos: "panelDispositivos",
-    tutorial: "panelTutorial",
-    config: "panelConfig"
-
-};
-
-
-// =====================================================
-// ABRIR PAINEL
-// =====================================================
-
-window.showPanel = function (panelId) {
-
-    console.log("Abrindo painel:", panelId);
+    "use strict";
 
 
     // =================================================
-    // ESCONDER TODOS OS PAINÉIS
+    // MAPA DOS PAINÉIS
     // =================================================
 
-    Object.values(paineis).forEach(function (id) {
+    const paineis = {
 
-        const painel =
-            document.getElementById(id);
+        dashboard: "panelDashboard",
+        crm: "panelCRM",
+        pacotes: "panelPacotes",
+        pedidos: "panelPedidos",
+        dispositivos: "panelDispositivos",
+        tutorial: "panelTutorial",
+        config: "panelConfig"
 
-        if (painel) {
+    };
 
-            painel.style.display = "none";
+
+    // =================================================
+    // ELEMENTOS
+    // =================================================
+
+    function getElemento(id) {
+
+        return document.getElementById(id);
+
+    }
+
+
+    // =================================================
+    // ABRIR MENU MOBILE
+    // =================================================
+
+    function abrirMenuMobile() {
+
+        const sidebar =
+            getElemento("sidebar");
+
+        const overlay =
+            getElemento("menuOverlay");
+
+        const botao =
+            getElemento("menuToggle");
+
+
+        if (!sidebar) {
+
+            console.error(
+                "[MOZ TECH] #sidebar não encontrado."
+            );
+
+            return;
 
         }
 
-    });
+
+        // Abrir sidebar
+
+        sidebar.classList.add("open");
 
 
-    // =================================================
-    // VERIFICAR PAINEL
-    // =================================================
+        // Mostrar overlay
 
-    const painelId =
-        paineis[panelId];
+        if (overlay) {
 
-    if (!painelId) {
+            overlay.classList.add("active");
 
-        console.error(
-            "Painel não encontrado:",
-            panelId
+        }
+
+
+        // Atualizar botão
+
+        if (botao) {
+
+            botao.setAttribute(
+                "aria-expanded",
+                "true"
+            );
+
+            botao.setAttribute(
+                "aria-label",
+                "Fechar menu"
+            );
+
+
+            const icon =
+                botao.querySelector("i");
+
+
+            if (icon) {
+
+                icon.classList.remove(
+                    "fa-bars"
+                );
+
+                icon.classList.add(
+                    "fa-xmark"
+                );
+
+            }
+
+        }
+
+
+        console.log(
+            "[MOZ TECH] Menu aberto."
         );
-
-        return;
 
     }
 
 
     // =================================================
-    // ENCONTRAR ELEMENTO
+    // FECHAR MENU MOBILE
     // =================================================
 
-    const painel =
-        document.getElementById(
-            painelId
-        );
+    function fecharMenuMobile() {
 
-    if (!painel) {
+        const sidebar =
+            getElemento("sidebar");
 
-        console.error(
-            "Elemento do painel não encontrado:",
-            painelId
-        );
+        const overlay =
+            getElemento("menuOverlay");
 
-        return;
-
-    }
+        const botao =
+            getElemento("menuToggle");
 
 
-    // =================================================
-    // MOSTRAR PAINEL
-    // =================================================
+        if (sidebar) {
 
-    painel.style.display = "block";
+            sidebar.classList.remove(
+                "open"
+            );
+
+        }
 
 
-    // =================================================
-    // MARCAR MENU ATIVO
-    // =================================================
+        if (overlay) {
 
-    document
-        .querySelectorAll(
-            ".menu-item[data-panel]"
-        )
-        .forEach(function (item) {
-
-            item.classList.remove(
+            overlay.classList.remove(
                 "active"
             );
 
-        });
+        }
 
 
-    const botao =
-        document.querySelector(
-            '.menu-item[data-panel="' +
-            panelId +
-            '"]'
-        );
+        if (botao) {
 
-    if (botao) {
+            botao.setAttribute(
+                "aria-expanded",
+                "false"
+            );
 
-        botao.classList.add(
-            "active"
+            botao.setAttribute(
+                "aria-label",
+                "Abrir menu"
+            );
+
+
+            const icon =
+                botao.querySelector("i");
+
+
+            if (icon) {
+
+                icon.classList.remove(
+                    "fa-xmark"
+                );
+
+                icon.classList.add(
+                    "fa-bars"
+                );
+
+            }
+
+        }
+
+
+        console.log(
+            "[MOZ TECH] Menu fechado."
         );
 
     }
 
 
     // =================================================
-    // CARREGAR DADOS DO PAINEL
+    // TOGGLE MENU
     // =================================================
 
-    try {
+    function alternarMenuMobile() {
+
+        const sidebar =
+            getElemento("sidebar");
 
 
-        // ---------------------------------------------
-        // DASHBOARD
-        // ---------------------------------------------
+        if (!sidebar) {
 
-        if (
-            panelId === "dashboard" &&
-            typeof window.carregarDashboard ===
-            "function"
-        ) {
+            console.error(
+                "[MOZ TECH] Sidebar não encontrada."
+            );
 
-            window.carregarDashboard();
-
-        }
-
-
-        // ---------------------------------------------
-        // CRM
-        // ---------------------------------------------
-
-        if (
-            panelId === "crm" &&
-            typeof window.carregarClientes ===
-            "function"
-        ) {
-
-            window.carregarClientes();
+            return;
 
         }
 
 
-        // ---------------------------------------------
-        // PACOTES
-        // ---------------------------------------------
-
         if (
-            panelId === "pacotes" &&
-            typeof window.carregarPacotes ===
-            "function"
+            sidebar.classList.contains("open")
         ) {
 
-            window.carregarPacotes();
+            fecharMenuMobile();
 
         }
+        else {
 
-
-        // ---------------------------------------------
-        // PEDIDOS
-        // ---------------------------------------------
-
-        if (
-            panelId === "pedidos" &&
-            typeof window.carregarPedidos ===
-            "function"
-        ) {
-
-            window.carregarPedidos();
+            abrirMenuMobile();
 
         }
-
-
-        // ---------------------------------------------
-        // DISPOSITIVOS
-        // ---------------------------------------------
-
-        if (
-            panelId === "dispositivos" &&
-            typeof window.carregarDispositivos ===
-            "function"
-        ) {
-
-            window.carregarDispositivos();
-
-        }
-
-
-        // ---------------------------------------------
-        // CONFIGURAÇÕES
-        // ---------------------------------------------
-
-        if (
-            panelId === "config" &&
-            typeof window.carregarConfiguracoes ===
-            "function"
-        ) {
-
-            window.carregarConfiguracoes();
-
-        }
-
-    }
-    catch (erro) {
-
-        console.error(
-            "Erro ao carregar painel:",
-            erro
-        );
 
     }
 
 
     // =================================================
-    // FECHAR MENU NO MOBILE
+    // ABRIR PAINEL
     // =================================================
 
-    if (window.innerWidth <= 768) {
+    window.showPanel = function (panelId) {
 
-        fecharMenuMobile();
-
-    }
-
-};
-
-
-// =====================================================
-// ABRIR MENU MOBILE
-// =====================================================
-
-function abrirMenuMobile() {
-
-    console.log(
-        "Abrindo menu mobile..."
-    );
-
-
-    const sidebar =
-        document.getElementById(
-            "sidebar"
-        );
-
-    const overlay =
-        document.getElementById(
-            "menuOverlay"
-        );
-
-    const botao =
-        document.getElementById(
-            "menuToggle"
+        console.log(
+            "[MOZ TECH] Abrindo painel:",
+            panelId
         );
 
 
-    // Sidebar
+        // =================================================
+        // VERIFICAR PAINEL
+        // =================================================
 
-    if (sidebar) {
-
-        sidebar.classList.add(
-            "open"
-        );
-
-    }
-    else {
-
-        console.error(
-            "Elemento #sidebar não encontrado."
-        );
-
-    }
+        const painelId =
+            paineis[panelId];
 
 
-    // Overlay
+        if (!painelId) {
 
-    if (overlay) {
+            console.error(
+                "[MOZ TECH] Painel não encontrado:",
+                panelId
+            );
 
-        overlay.classList.add(
-            "active"
-        );
+            return;
 
-    }
-
-
-    // Botão
-
-    if (botao) {
-
-        botao.setAttribute(
-            "aria-expanded",
-            "true"
-        );
-
-    }
-
-}
+        }
 
 
-// =====================================================
-// FECHAR MENU MOBILE
-// =====================================================
+        // =================================================
+        // ESCONDER TODOS OS PAINÉIS
+        // =================================================
 
-function fecharMenuMobile() {
+        Object.values(paineis).forEach(
+            function (id) {
 
-    console.log(
-        "Fechando menu mobile..."
-    );
+                const painel =
+                    getElemento(id);
 
 
-    const sidebar =
-        document.getElementById(
-            "sidebar"
-        );
+                if (painel) {
 
-    const overlay =
-        document.getElementById(
-            "menuOverlay"
-        );
+                    painel.style.display =
+                        "none";
 
-    const botao =
-        document.getElementById(
-            "menuToggle"
+                }
+
+            }
         );
 
 
-    // Sidebar
+        // =================================================
+        // ENCONTRAR PAINEL
+        // =================================================
 
-    if (sidebar) {
-
-        sidebar.classList.remove(
-            "open"
-        );
-
-    }
+        const painel =
+            getElemento(painelId);
 
 
-    // Overlay
+        if (!painel) {
 
-    if (overlay) {
+            console.error(
+                "[MOZ TECH] Elemento não encontrado:",
+                painelId
+            );
 
-        overlay.classList.remove(
-            "active"
-        );
+            return;
 
-    }
-
-
-    // Botão
-
-    if (botao) {
-
-        botao.setAttribute(
-            "aria-expanded",
-            "false"
-        );
-
-    }
-
-}
+        }
 
 
-// =====================================================
-// INICIALIZAR MENUS
-// =====================================================
+        // =================================================
+        // MOSTRAR PAINEL
+        // =================================================
 
-function inicializarMenu() {
-
-    console.log(
-        "Inicializando menus..."
-    );
+        painel.style.display =
+            "block";
 
 
-    const botoes =
-        document.querySelectorAll(
-            ".menu-item[data-panel]"
-        );
+        // =================================================
+        // MENU ATIVO
+        // =================================================
+
+        document
+            .querySelectorAll(
+                ".menu-item[data-panel]"
+            )
+            .forEach(
+                function (item) {
+
+                    item.classList.remove(
+                        "active"
+                    );
+
+                }
+            );
 
 
-    console.log(
-        "Menus encontrados:",
-        botoes.length
-    );
+        const botao =
+            document.querySelector(
+                '.menu-item[data-panel="' +
+                panelId +
+                '"]'
+            );
 
 
-    botoes.forEach(function (item) {
+        if (botao) {
 
-        // Evitar adicionar o evento duas vezes
+            botao.classList.add(
+                "active"
+            );
+
+        }
+
+
+        // =================================================
+        // CARREGAR DADOS
+        // =================================================
+
+        try {
+
+
+            // DASHBOARD
+
+            if (
+                panelId === "dashboard" &&
+                typeof window.carregarDashboard ===
+                "function"
+            ) {
+
+                window.carregarDashboard()
+                    .catch(
+                        function (erro) {
+
+                            console.error(
+                                "[MOZ TECH] Erro dashboard:",
+                                erro
+                            );
+
+                        }
+                    );
+
+            }
+
+
+            // CRM
+
+            else if (
+                panelId === "crm" &&
+                typeof window.carregarClientes ===
+                "function"
+            ) {
+
+                window.carregarClientes();
+
+            }
+
+
+            // PACOTES
+
+            else if (
+                panelId === "pacotes" &&
+                typeof window.carregarPacotes ===
+                "function"
+            ) {
+
+                window.carregarPacotes();
+
+            }
+
+
+            // PEDIDOS
+
+            else if (
+                panelId === "pedidos" &&
+                typeof window.carregarPedidos ===
+                "function"
+            ) {
+
+                window.carregarPedidos();
+
+            }
+
+
+            // DISPOSITIVOS
+
+            else if (
+                panelId === "dispositivos" &&
+                typeof window.carregarDispositivos ===
+                "function"
+            ) {
+
+                window.carregarDispositivos();
+
+            }
+
+
+            // CONFIGURAÇÕES
+
+            else if (
+                panelId === "config" &&
+                typeof window.carregarConfiguracoes ===
+                "function"
+            ) {
+
+                window.carregarConfiguracoes();
+
+            }
+
+        }
+        catch (erro) {
+
+            console.error(
+                "[MOZ TECH] Erro ao carregar painel:",
+                erro
+            );
+
+        }
+
+
+        // =================================================
+        // FECHAR MENU NO MOBILE
+        // =================================================
 
         if (
-            item.dataset.menuInicializado ===
+            window.innerWidth <= 768
+        ) {
+
+            fecharMenuMobile();
+
+        }
+
+    };
+
+
+    // =================================================
+    // INICIALIZAR BOTÃO 3 BARRAS
+    // =================================================
+
+    function inicializarBotaoMenu() {
+
+        const botao =
+            getElemento("menuToggle");
+
+
+        if (!botao) {
+
+            console.error(
+                "[MOZ TECH] #menuToggle não encontrado."
+            );
+
+            return;
+
+        }
+
+
+        // Evitar duplicação
+
+        if (
+            botao.dataset.moztMenu ===
             "true"
         ) {
 
@@ -418,443 +499,609 @@ function inicializarMenu() {
         }
 
 
-        item.dataset.menuInicializado =
+        botao.dataset.moztMenu =
             "true";
 
 
-        item.addEventListener(
+        // Estado inicial
+
+        botao.setAttribute(
+            "aria-expanded",
+            "false"
+        );
+
+        botao.setAttribute(
+            "aria-label",
+            "Abrir menu"
+        );
+
+
+        const icon =
+            botao.querySelector("i");
+
+
+        if (icon) {
+
+            icon.classList.remove(
+                "fa-xmark"
+            );
+
+            icon.classList.add(
+                "fa-bars"
+            );
+
+        }
+
+
+        // =================================================
+        // CLICK
+        // =================================================
+
+        botao.addEventListener(
             "click",
-            function (e) {
+            function (event) {
 
-                e.preventDefault();
+                event.preventDefault();
 
-                e.stopPropagation();
-
-
-                const panel =
-                    this.getAttribute(
-                        "data-panel"
-                    );
+                event.stopPropagation();
 
 
-                console.log(
-                    "Menu clicado:",
-                    panel
-                );
+                alternarMenuMobile();
+
+            },
+            false
+        );
 
 
-                if (!panel) {
+        console.log(
+            "[MOZ TECH] Botão 3 barras configurado."
+        );
+
+    }
+
+
+    // =================================================
+    // INICIALIZAR MENUS
+    // =================================================
+
+    function inicializarMenus() {
+
+        const botoes =
+            document.querySelectorAll(
+                ".menu-item[data-panel]"
+            );
+
+
+        console.log(
+            "[MOZ TECH] Menus encontrados:",
+            botoes.length
+        );
+
+
+        botoes.forEach(
+            function (item) {
+
+
+                if (
+                    item.dataset.moztMenuItem ===
+                    "true"
+                ) {
 
                     return;
 
                 }
 
 
-                window.showPanel(
-                    panel
+                item.dataset.moztMenuItem =
+                    "true";
+
+
+                item.addEventListener(
+                    "click",
+                    function (event) {
+
+                        event.preventDefault();
+
+                        event.stopPropagation();
+
+
+                        const panel =
+                            this.getAttribute(
+                                "data-panel"
+                            );
+
+
+                        if (!panel) {
+
+                            return;
+
+                        }
+
+
+                        console.log(
+                            "[MOZ TECH] Menu clicado:",
+                            panel
+                        );
+
+
+                        window.showPanel(
+                            panel
+                        );
+
+                    },
+                    false
                 );
 
             }
         );
 
-    });
-
-}
-
-
-// =====================================================
-// BOTÃO DAS 3 BARRAS
-// =====================================================
-
-function inicializarBotaoMenu() {
-
-    const botao =
-        document.getElementById(
-            "menuToggle"
-        );
-
-
-    if (!botao) {
-
-        console.error(
-            "Botão #menuToggle não encontrado."
-        );
-
-        return;
-
     }
 
 
-    // Evitar evento duplicado
+    // =================================================
+    // INICIALIZAR OVERLAY
+    // =================================================
 
-    if (
-        botao.dataset.menuInicializado ===
-        "true"
-    ) {
+    function inicializarOverlay() {
 
-        return;
-
-    }
+        const overlay =
+            getElemento("menuOverlay");
 
 
-    botao.dataset.menuInicializado =
-        "true";
+        if (!overlay) {
+
+            console.warn(
+                "[MOZ TECH] #menuOverlay não encontrado."
+            );
+
+            return;
+
+        }
 
 
-    console.log(
-        "Botão das 3 barras encontrado."
-    );
+        if (
+            overlay.dataset.moztOverlay ===
+            "true"
+        ) {
+
+            return;
+
+        }
 
 
-    botao.addEventListener(
-        "click",
-        function (e) {
-
-            e.preventDefault();
-
-            e.stopPropagation();
+        overlay.dataset.moztOverlay =
+            "true";
 
 
-            const sidebar =
-                document.getElementById(
-                    "sidebar"
-                );
+        overlay.addEventListener(
+            "click",
+            function (event) {
 
+                event.preventDefault();
 
-            if (!sidebar) {
+                event.stopPropagation();
 
-                console.error(
-                    "Sidebar não encontrada."
-                );
-
-                return;
-
-            }
-
-
-            if (
-                sidebar.classList.contains(
-                    "open"
-                )
-            ) {
 
                 fecharMenuMobile();
 
-            }
-            else {
-
-                abrirMenuMobile();
-
-            }
-
-        }
-    );
-
-}
-
-
-// =====================================================
-// OVERLAY
-// =====================================================
-
-function inicializarOverlay() {
-
-    const overlay =
-        document.getElementById(
-            "menuOverlay"
+            },
+            false
         );
 
-
-    if (!overlay) {
-
-        console.warn(
-            "Overlay #menuOverlay não encontrado."
-        );
-
-        return;
-
     }
 
 
-    if (
-        overlay.dataset.menuInicializado ===
-        "true"
-    ) {
+    // =================================================
+    // FECHAR AO CLICAR EM ITEM
+    // =================================================
 
-        return;
+    function inicializarFecharMenuItens() {
 
-    }
-
-
-    overlay.dataset.menuInicializado =
-        "true";
+        const sidebar =
+            getElemento("sidebar");
 
 
-    overlay.addEventListener(
-        "click",
-        function (e) {
+        if (!sidebar) {
 
-            e.preventDefault();
-
-            fecharMenuMobile();
+            return;
 
         }
-    );
-
-}
 
 
-// =====================================================
-// TECLA ESC
-// =====================================================
+        sidebar
+            .querySelectorAll(".menu-item")
+            .forEach(
+                function (item) {
 
-function inicializarTeclaESC() {
+                    if (
+                        item.dataset.moztFechar ===
+                        "true"
+                    ) {
 
-    if (
-        document.documentElement.dataset
-            .escInicializado === "true"
-    ) {
+                        return;
 
-        return;
-
-    }
-
-
-    document.documentElement.dataset
-        .escInicializado = "true";
+                    }
 
 
-    document.addEventListener(
-        "keydown",
-        function (e) {
-
-            if (
-                e.key === "Escape"
-            ) {
-
-                fecharMenuMobile();
-
-            }
-
-        }
-    );
-
-}
+                    item.dataset.moztFechar =
+                        "true";
 
 
-// =====================================================
-// CLIQUE FORA NO MOBILE
-// =====================================================
+                    item.addEventListener(
+                        "click",
+                        function () {
 
-function inicializarCliqueFora() {
+                            if (
+                                window.innerWidth <=
+                                768
+                            ) {
 
-    if (
-        document.documentElement.dataset
-            .cliqueForaInicializado === "true"
-    ) {
+                                fecharMenuMobile();
 
-        return;
+                            }
+
+                        },
+                        false
+                    );
+
+                }
+            );
 
     }
 
 
-    document.documentElement.dataset
-        .cliqueForaInicializado = "true";
-
-
-    document.addEventListener(
-        "click",
-        function (e) {
-
-            if (
-                window.innerWidth > 768
-            ) {
-
-                return;
-
-            }
-
-
-            const sidebar =
-                document.getElementById(
-                    "sidebar"
-                );
-
-            const botao =
-                document.getElementById(
-                    "menuToggle"
-                );
-
-
-            if (!sidebar) {
-
-                return;
-
-            }
-
-
-            if (
-                !sidebar.classList.contains(
-                    "open"
-                )
-            ) {
-
-                return;
-
-            }
-
-
-            if (
-                sidebar.contains(
-                    e.target
-                )
-            ) {
-
-                return;
-
-            }
-
-
-            if (
-                botao &&
-                botao.contains(
-                    e.target
-                )
-            ) {
-
-                return;
-
-            }
-
-
-            fecharMenuMobile();
-
-        }
-    );
-
-}
-
-
-// =====================================================
-// REDIMENSIONAMENTO
-// =====================================================
-
-function inicializarResize() {
-
-    if (
-        window.__resizeMenuInicializado
-    ) {
-
-        return;
-
-    }
-
-
-    window.__resizeMenuInicializado =
-        true;
-
-
-    window.addEventListener(
-        "resize",
-        function () {
-
-            if (
-                window.innerWidth > 768
-            ) {
-
-                fecharMenuMobile();
-
-            }
-
-        }
-    );
-
-}
-
-
-// =====================================================
-// INICIALIZAÇÃO
-// =====================================================
-
-function iniciarSistema() {
-
-    console.log(
-        "================================"
-    );
-
-    console.log(
-        "MOZ TECH - SISTEMA INICIADO"
-    );
-
-    console.log(
-        "================================"
-    );
-
-
-    // Menu
-
-    inicializarMenu();
-
-
-    // 3 barras
-
-    inicializarBotaoMenu();
-
-
-    // Overlay
-
-    inicializarOverlay();
-
-
+    // =================================================
     // ESC
+    // =================================================
 
-    inicializarTeclaESC();
+    function inicializarESC() {
 
+        if (
+            window.__moztEsc === true
+        ) {
 
-    // Clique fora
+            return;
 
-    inicializarCliqueFora();
-
-
-    // Resize
-
-    inicializarResize();
-
-
-    // Dashboard inicial
-
-    window.showPanel(
-        "dashboard"
-    );
-
-
-    console.log(
-        "Sistema pronto."
-    );
-
-}
-
-
-// =====================================================
-// DOM READY
-// =====================================================
-
-if (
-    document.readyState ===
-    "loading"
-) {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        iniciarSistema,
-        {
-            once: true
         }
-    );
 
-}
-else {
 
-    iniciarSistema();
+        window.__moztEsc =
+            true;
 
-}
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.key === "Escape"
+                ) {
+
+                    fecharMenuMobile();
+
+                }
+
+            },
+            false
+        );
+
+    }
+
+
+    // =================================================
+    // CLIQUE FORA
+    // =================================================
+
+    function inicializarCliqueFora() {
+
+        if (
+            window.__moztCliqueFora ===
+            true
+        ) {
+
+            return;
+
+        }
+
+
+        window.__moztCliqueFora =
+            true;
+
+
+        document.addEventListener(
+            "click",
+            function (event) {
+
+                if (
+                    window.innerWidth > 768
+                ) {
+
+                    return;
+
+                }
+
+
+                const sidebar =
+                    getElemento("sidebar");
+
+                const botao =
+                    getElemento("menuToggle");
+
+
+                if (!sidebar) {
+
+                    return;
+
+                }
+
+
+                if (
+                    !sidebar.classList.contains(
+                        "open"
+                    )
+                ) {
+
+                    return;
+
+                }
+
+
+                // Clique dentro da sidebar
+
+                if (
+                    sidebar.contains(
+                        event.target
+                    )
+                ) {
+
+                    return;
+
+                }
+
+
+                // Clique no botão
+
+                if (
+                    botao &&
+                    botao.contains(
+                        event.target
+                    )
+                ) {
+
+                    return;
+
+                }
+
+
+                fecharMenuMobile();
+
+            },
+            false
+        );
+
+    }
+
+
+    // =================================================
+    // RESIZE
+    // =================================================
+
+    function inicializarResize() {
+
+        if (
+            window.__moztResize === true
+        ) {
+
+            return;
+
+        }
+
+
+        window.__moztResize =
+            true;
+
+
+        window.addEventListener(
+            "resize",
+            function () {
+
+                if (
+                    window.innerWidth > 768
+                ) {
+
+                    fecharMenuMobile();
+
+                }
+
+            },
+            false
+        );
+
+    }
+
+
+    // =================================================
+    // ESTADO INICIAL
+    // =================================================
+
+    function estadoInicialMenu() {
+
+        const sidebar =
+            getElemento("sidebar");
+
+        const overlay =
+            getElemento("menuOverlay");
+
+        const botao =
+            getElemento("menuToggle");
+
+
+        if (sidebar) {
+
+            sidebar.classList.remove(
+                "open"
+            );
+
+        }
+
+
+        if (overlay) {
+
+            overlay.classList.remove(
+                "active"
+            );
+
+        }
+
+
+        if (botao) {
+
+            botao.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+
+            botao.setAttribute(
+                "aria-label",
+                "Abrir menu"
+            );
+
+
+            const icon =
+                botao.querySelector("i");
+
+
+            if (icon) {
+
+                icon.classList.remove(
+                    "fa-xmark"
+                );
+
+                icon.classList.add(
+                    "fa-bars"
+                );
+
+            }
+
+        }
+
+    }
+
+
+    // =================================================
+    // INICIAR SISTEMA
+    // =================================================
+
+    function iniciarSistema() {
+
+        console.log(
+            "======================================"
+        );
+
+        console.log(
+            "MOZ TECH - SISTEMA INICIADO"
+        );
+
+        console.log(
+            "======================================"
+        );
+
+
+        // Estado inicial
+
+        estadoInicialMenu();
+
+
+        // Menu
+
+        inicializarMenus();
+
+
+        // Botão 3 barras
+
+        inicializarBotaoMenu();
+
+
+        // Overlay
+
+        inicializarOverlay();
+
+
+        // Fechar itens
+
+        inicializarFecharMenuItens();
+
+
+        // ESC
+
+        inicializarESC();
+
+
+        // Clique fora
+
+        inicializarCliqueFora();
+
+
+        // Resize
+
+        inicializarResize();
+
+
+        // =================================================
+        // DASHBOARD INICIAL
+        // =================================================
+
+        window.showPanel(
+            "dashboard"
+        );
+
+
+        console.log(
+            "[MOZ TECH] Sistema pronto."
+        );
+
+    }
+
+
+    // =================================================
+    // EXPORTAR FUNÇÕES
+    // =================================================
+
+    window.abrirMenuMobile =
+        abrirMenuMobile;
+
+
+    window.fecharMenuMobile =
+        fecharMenuMobile;
+
+
+    window.configurarMenuMobile =
+        iniciarSistema;
+
+
+    // =================================================
+    // DOM READY
+    // =================================================
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            iniciarSistema,
+            {
+                once: true
+            }
+        );
+
+    }
+    else {
+
+        iniciarSistema();
+
+    }
+
+
+})();
