@@ -152,7 +152,9 @@ async function criarDadosUsuario(
             snapshot.val();
 
 
-        // Já possui API Key
+        // =============================================
+        // JÁ POSSUI API KEY
+        // =============================================
 
         if (dados.apiKey) {
 
@@ -161,7 +163,9 @@ async function criarDadosUsuario(
         }
 
 
-        // Criar API Key para usuário antigo
+        // =============================================
+        // USUÁRIO ANTIGO SEM API KEY
+        // =============================================
 
         const apiKey =
             gerarApiKey();
@@ -233,10 +237,6 @@ async function registerUser(
 
     try {
 
-        // ==============================================
-        // CRIAR USUÁRIO NO AUTH
-        // ==============================================
-
         const credential =
             await createUserWithEmailAndPassword(
                 auth,
@@ -249,50 +249,25 @@ async function registerUser(
             credential.user;
 
 
-        // ==============================================
-        // ENVIAR EMAIL DE VERIFICAÇÃO
-        // ==============================================
+        // =============================================
+        // EMAIL DE VERIFICAÇÃO
+        // =============================================
 
         await sendEmailVerification(
             user
         );
 
 
-        // ==============================================
-        // CRIAR DADOS/API KEY
-        //
-        // NÃO BLOQUEIA A CRIAÇÃO DA CONTA
-        // ==============================================
+        // =============================================
+        // CRIAR DADOS DO USUÁRIO
+        // =============================================
 
-        criarDadosUsuario(
-            user,
-            name
-        )
-        .then(
-            apiKey => {
+        const apiKey =
+            await criarDadosUsuario(
+                user,
+                name
+            );
 
-                console.log(
-                    "API Key criada:",
-                    apiKey
-                );
-
-            }
-        )
-        .catch(
-            erro => {
-
-                console.error(
-                    "Erro ao criar API Key:",
-                    erro
-                );
-
-            }
-        );
-
-
-        // ==============================================
-        // RETORNAR IMEDIATAMENTE
-        // ==============================================
 
         return {
 
@@ -314,7 +289,7 @@ async function registerUser(
                     name,
 
                 apiKey:
-                    ""
+                    apiKey
 
             }
 
@@ -362,10 +337,6 @@ async function loginUser(
         );
 
 
-        // ==============================================
-        // AUTENTICAÇÃO
-        // ==============================================
-
         const credential =
             await signInWithEmailAndPassword(
                 auth,
@@ -384,13 +355,15 @@ async function loginUser(
         );
 
 
-        // ==============================================
+        // =============================================
         // VERIFICAR EMAIL
-        // ==============================================
+        // =============================================
 
         if (!user.emailVerified) {
 
-            await signOut(auth);
+            await signOut(
+                auth
+            );
 
 
             return {
@@ -406,11 +379,20 @@ async function loginUser(
         }
 
 
-        // ==============================================
+        // =============================================
+        // GARANTIR DADOS E API KEY
+        // =============================================
+
+        const apiKey =
+            await criarDadosUsuario(
+                user,
+                user.displayName || ""
+            );
+
+
+        // =============================================
         // LOGIN CONCLUÍDO
-        //
-        // NÃO ESPERAR O REALTIME DATABASE
-        // ==============================================
+        // =============================================
 
         return {
 
@@ -432,7 +414,7 @@ async function loginUser(
                     user.displayName || "",
 
                 apiKey:
-                    ""
+                    apiKey
 
             }
 
@@ -460,142 +442,6 @@ async function loginUser(
         };
 
     }
-
-}
-
-
-// =====================================================
-// RECUPERAR PALAVRA-PASSE
-// =====================================================
-
-async function recuperarSenha(
-    email
-) {
-
-    try {
-
-        await sendPasswordResetEmail(
-            auth,
-            email
-        );
-
-
-        return {
-
-            success:
-                true,
-
-            message:
-                "Enviamos um link para redefinir sua palavra-passe no email."
-
-        };
-
-    }
-    catch (error) {
-
-        console.error(
-            "Erro ao recuperar palavra-passe:",
-            error
-        );
-
-
-        return {
-
-            success:
-                false,
-
-            message:
-                traduzirErroFirebase(
-                    error
-                )
-
-        };
-
-    }
-
-}
-
-
-// =====================================================
-// REENVIAR EMAIL DE VERIFICAÇÃO
-// =====================================================
-
-async function resendVerification() {
-
-    try {
-
-        const user =
-            auth.currentUser;
-
-
-        if (!user) {
-
-            return {
-
-                success:
-                    false,
-
-                message:
-                    "Nenhum usuário está conectado."
-
-            };
-
-        }
-
-
-        await sendEmailVerification(
-            user
-        );
-
-
-        return {
-
-            success:
-                true,
-
-            message:
-                "Email de verificação reenviado."
-
-        };
-
-    }
-    catch (error) {
-
-        console.error(
-            "Erro ao reenviar verificação:",
-            error
-        );
-
-
-        return {
-
-            success:
-                false,
-
-            message:
-                traduzirErroFirebase(
-                    error
-                )
-
-        };
-
-    }
-
-}
-
-
-// =====================================================
-// ESTADO DE AUTENTICAÇÃO
-// =====================================================
-
-function onAuthState(
-    callback
-) {
-
-    return onAuthStateChanged(
-        auth,
-        callback
-    );
 
 }
 
@@ -629,34 +475,15 @@ async function googleLogin() {
         );
 
 
-        // ==============================================
-        // CRIAR API KEY EM SEGUNDO PLANO
-        // ==============================================
+        // =============================================
+        // GARANTIR DADOS E API KEY
+        // =============================================
 
-        criarDadosUsuario(
-            user,
-            user.displayName || ""
-        )
-        .then(
-            apiKey => {
-
-                console.log(
-                    "API Key Google:",
-                    apiKey
-                );
-
-            }
-        )
-        .catch(
-            erro => {
-
-                console.error(
-                    "Erro API Key Google:",
-                    erro
-                );
-
-            }
-        );
+        const apiKey =
+            await criarDadosUsuario(
+                user,
+                user.displayName || ""
+            );
 
 
         return {
@@ -679,7 +506,7 @@ async function googleLogin() {
                     user.displayName || "",
 
                 apiKey:
-                    ""
+                    apiKey
 
             }
 
@@ -705,40 +532,6 @@ async function googleLogin() {
                 )
 
         };
-
-    }
-
-}
-
-
-// =====================================================
-// SAIR
-// =====================================================
-
-async function sair() {
-
-    try {
-
-        await signOut(
-            auth
-        );
-
-
-        localStorage.removeItem(
-            "userData"
-        );
-
-
-        window.location.href =
-            "/";
-
-    }
-    catch (error) {
-
-        console.error(
-            "Erro ao sair:",
-            error
-        );
 
     }
 
@@ -775,9 +568,9 @@ async function obterDadosUsuario() {
             await get(usuarioRef);
 
 
-        // ==============================================
-        // USUÁRIO AINDA NÃO TEM REGISTRO
-        // ==============================================
+        // =============================================
+        // NÃO EXISTE NO DATABASE
+        // =============================================
 
         if (!snapshot.exists()) {
 
@@ -807,13 +600,17 @@ async function obterDadosUsuario() {
         }
 
 
+        // =============================================
+        // DADOS EXISTENTES
+        // =============================================
+
         const dados =
             snapshot.val();
 
 
-        // ==============================================
+        // =============================================
         // GARANTIR API KEY
-        // ==============================================
+        // =============================================
 
         if (!dados.apiKey) {
 
@@ -833,6 +630,10 @@ async function obterDadosUsuario() {
 
         }
 
+
+        // =============================================
+        // RETORNAR DADOS COMPLETOS
+        // =============================================
 
         return {
 
@@ -936,5 +737,7 @@ export {
     sair,
 
     obterDadosUsuario
+
+};
 
 };
