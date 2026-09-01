@@ -1,5 +1,6 @@
 // ==========================================
 // GRÁFICOS DO SISTEMA
+// Arquivo: charts.js
 // ==========================================
 
 let graficoHoje = null;
@@ -21,7 +22,8 @@ function destruirGrafico(grafico) {
 
             grafico.destroy();
 
-        } catch (erro) {
+        }
+        catch (erro) {
 
             console.warn(
                 "Erro ao destruir gráfico:",
@@ -43,9 +45,11 @@ async function carregarGraficos() {
 
     try {
 
-        if (
-            typeof Chart === "undefined"
-        ) {
+        // --------------------------------------
+        // VERIFICAR CHART.JS
+        // --------------------------------------
+
+        if (typeof Chart === "undefined") {
 
             console.error(
                 "Chart.js não foi carregado."
@@ -55,6 +59,10 @@ async function carregarGraficos() {
 
         }
 
+
+        // --------------------------------------
+        // BUSCAR RELATÓRIOS
+        // --------------------------------------
 
         const resposta =
             await fetch(
@@ -409,9 +417,7 @@ async function carregarGraficos() {
 
         }
 
-
     }
-
     catch (erro) {
 
         console.error(
@@ -425,7 +431,7 @@ async function carregarGraficos() {
 
 
 // ==========================================
-// DISPONIBILIZAR FUNÇÃO
+// DISPONIBILIZAR FUNÇÃO GLOBAL
 // ==========================================
 
 window.carregarGraficos =
@@ -438,7 +444,7 @@ window.carregarGraficos =
 
 document.addEventListener(
     "DOMContentLoaded",
-    () => {
+    function () {
 
         carregarGraficos();
 
