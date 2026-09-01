@@ -35,15 +35,10 @@ router.get("/", (req, res) => {
         // =================================================
 
         let faturamento = 0;
-
         let custo = 0;
-
         let lucro = 0;
-
         let totalGB = 0;
-
         let totalMB = 0;
-
         let vendasHoje = 0;
 
 
