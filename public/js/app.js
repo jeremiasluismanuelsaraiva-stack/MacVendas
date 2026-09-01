@@ -1,7 +1,8 @@
 // =====================================================
 // MOZ TECH
+// APP.JS
 // SISTEMA DE PAINÉIS + MENU MOBILE
-// VERSÃO UNIFICADA
+// VERSÃO CORRIGIDA
 // =====================================================
 
 (function () {
@@ -9,9 +10,9 @@
     "use strict";
 
 
-    // =================================================
+    // =====================================================
     // MAPA DOS PAINÉIS
-    // =================================================
+    // =====================================================
 
     const paineis = {
 
@@ -26,102 +27,36 @@
     };
 
 
-    // =================================================
+    // =====================================================
     // ELEMENTOS
-    // =================================================
+    // =====================================================
 
-    function getElementosMenu() {
+    function el(id) {
 
-        return {
-
-            botao:
-                document.getElementById("menuToggle"),
-
-            sidebar:
-                document.getElementById("sidebar"),
-
-            overlay:
-                document.getElementById("menuOverlay")
-
-        };
+        return document.getElementById(id);
 
     }
 
 
-    // =================================================
-    // ATUALIZAR ÍCONE
-    // =================================================
-
-    function atualizarIconeMenu(aberto) {
-
-        const botao =
-            document.getElementById("menuToggle");
-
-        if (!botao) {
-            return;
-        }
-
-
-        const icon =
-            botao.querySelector("i");
-
-
-        if (!icon) {
-            return;
-        }
-
-
-        /*
-         * O ícone permanece SEMPRE como 3 barras.
-         *
-         * Não colocamos fa-xmark.
-         */
-
-        icon.classList.remove("fa-xmark");
-
-        icon.classList.add("fa-bars");
-
-    }
-
-
-    // =================================================
-    // ABRIR MENU MOBILE
-    // =================================================
+    // =====================================================
+    // MENU MOBILE
+    // =====================================================
 
     function abrirMenuMobile() {
 
-        const {
-            botao,
-            sidebar,
-            overlay
-        } = getElementosMenu();
-
+        const sidebar = el("sidebar");
+        const overlay = el("menuOverlay");
+        const botao = el("menuToggle");
 
         if (!sidebar) {
-
-            console.error(
-                "[MOZ TECH] #sidebar não encontrado."
-            );
-
             return;
-
         }
-
-
-        console.log(
-            "[MOZ TECH] Abrindo menu..."
-        );
-
 
         sidebar.classList.add("open");
 
-
         if (overlay) {
-
             overlay.classList.add("active");
-
         }
-
 
         if (botao) {
 
@@ -137,49 +72,26 @@
 
         }
 
-
         document.body.classList.add(
             "menu-open"
         );
 
-
-        atualizarIconeMenu(true);
-
     }
 
 
-    // =================================================
-    // FECHAR MENU MOBILE
-    // =================================================
-
     function fecharMenuMobile() {
 
-        const {
-            botao,
-            sidebar,
-            overlay
-        } = getElementosMenu();
+        const sidebar = el("sidebar");
+        const overlay = el("menuOverlay");
+        const botao = el("menuToggle");
 
-
-        if (!sidebar) {
-            return;
+        if (sidebar) {
+            sidebar.classList.remove("open");
         }
-
-
-        console.log(
-            "[MOZ TECH] Fechando menu..."
-        );
-
-
-        sidebar.classList.remove("open");
-
 
         if (overlay) {
-
             overlay.classList.remove("active");
-
         }
-
 
         if (botao) {
 
@@ -195,39 +107,20 @@
 
         }
 
-
         document.body.classList.remove(
             "menu-open"
         );
 
-
-        atualizarIconeMenu(false);
-
     }
 
 
-    // =================================================
-    // ALTERNAR MENU
-    // =================================================
-
     function alternarMenuMobile() {
 
-        const sidebar =
-            document.getElementById(
-                "sidebar"
-            );
-
+        const sidebar = el("sidebar");
 
         if (!sidebar) {
-
-            console.error(
-                "[MOZ TECH] Sidebar não encontrada."
-            );
-
             return;
-
         }
-
 
         if (
             sidebar.classList.contains("open")
@@ -245,28 +138,526 @@
     }
 
 
-    // =================================================
-    // ABRIR PAINEL
-    // =================================================
+    // =====================================================
+    // CARREGAR PAINEL
+    // =====================================================
 
-    window.showPanel = function (panelId) {
+    async function carregarPainel(panelId) {
 
         console.log(
-            "[MOZ TECH] Abrindo painel:",
+            "[MOZ TECH] Carregando painel:",
             panelId
         );
 
 
-        // =============================================
-        // ESCONDER TODOS
-        // =============================================
+        // =================================================
+        // DASHBOARD
+        // =================================================
+
+        if (panelId === "dashboard") {
+
+            if (
+                typeof window.carregarTudo ===
+                "function"
+            ) {
+
+                try {
+
+                    await window.carregarTudo();
+
+                }
+                catch (erro) {
+
+                    console.error(
+                        "[MOZ TECH] Erro ao carregar dashboard:",
+                        erro
+                    );
+
+                }
+
+            }
+
+            else if (
+                typeof window.carregarDashboard ===
+                "function"
+            ) {
+
+                try {
+
+                    await window.carregarDashboard();
+
+                }
+                catch (erro) {
+
+                    console.error(
+                        "[MOZ TECH] Erro dashboard:",
+                        erro
+                    );
+
+                }
+
+            }
+            else {
+
+                console.warn(
+                    "[MOZ TECH] carregarDashboard ainda não disponível."
+                );
+
+            }
+
+            return;
+
+        }
+
+
+        // =================================================
+        // CRM
+        // =================================================
+
+        if (panelId === "crm") {
+
+            if (
+                typeof window.carregarClientes ===
+                "function"
+            ) {
+
+                try {
+
+                    await window.carregarClientes();
+
+                }
+                catch (erro) {
+
+                    console.error(
+                        "[MOZ TECH] Erro CRM:",
+                        erro
+                    );
+
+                }
+
+            }
+            else {
+
+                console.error(
+                    "[MOZ TECH] carregarClientes() não existe."
+                );
+
+                mostrarErroPainel(
+                    "crmConteudo",
+                    "Não foi possível carregar os clientes."
+                );
+
+            }
+
+            return;
+
+        }
+
+
+        // =================================================
+        // PACOTES
+        // =================================================
+
+        if (panelId === "pacotes") {
+
+            if (
+                typeof window.carregarPacotes ===
+                "function"
+            ) {
+
+                try {
+
+                    await window.carregarPacotes();
+
+                }
+                catch (erro) {
+
+                    console.error(
+                        "[MOZ TECH] Erro Pacotes:",
+                        erro
+                    );
+
+                }
+
+            }
+            else {
+
+                console.error(
+                    "[MOZ TECH] carregarPacotes() não existe."
+                );
+
+                mostrarErroPainel(
+                    "pacotesConteudo",
+                    "Não foi possível carregar os pacotes."
+                );
+
+            }
+
+            return;
+
+        }
+
+
+        // =================================================
+        // PEDIDOS
+        // =================================================
+
+        if (panelId === "pedidos") {
+
+            if (
+                typeof window.carregarPedidos ===
+                "function"
+            ) {
+
+                try {
+
+                    await window.carregarPedidos();
+
+                }
+                catch (erro) {
+
+                    console.error(
+                        "[MOZ TECH] Erro Pedidos:",
+                        erro
+                    );
+
+                }
+
+            }
+            else {
+
+                console.error(
+                    "[MOZ TECH] carregarPedidos() não existe."
+                );
+
+                mostrarErroPainel(
+                    "pedidosConteudo",
+                    "Não foi possível carregar os pedidos."
+                );
+
+            }
+
+            return;
+
+        }
+
+
+        // =================================================
+        // DISPOSITIVOS
+        // =================================================
+
+        if (panelId === "dispositivos") {
+
+            if (
+                typeof window.carregarDispositivos ===
+                "function"
+            ) {
+
+                try {
+
+                    await window.carregarDispositivos();
+
+                }
+                catch (erro) {
+
+                    console.error(
+                        "[MOZ TECH] Erro Dispositivos:",
+                        erro
+                    );
+
+                }
+
+            }
+            else {
+
+                console.error(
+                    "[MOZ TECH] carregarDispositivos() não existe."
+                );
+
+                mostrarErroPainel(
+                    "dispositivosConteudo",
+                    "Não foi possível carregar os dispositivos."
+                );
+
+            }
+
+            return;
+
+        }
+
+
+        // =================================================
+        // CONFIGURAÇÕES
+        // =================================================
+
+        if (panelId === "config") {
+
+            if (
+                typeof window.carregarConfiguracoes ===
+                "function"
+            ) {
+
+                try {
+
+                    await window.carregarConfiguracoes();
+
+                }
+                catch (erro) {
+
+                    console.error(
+                        "[MOZ TECH] Erro Configurações:",
+                        erro
+                    );
+
+                }
+
+            }
+            else {
+
+                console.error(
+                    "[MOZ TECH] carregarConfiguracoes() não existe."
+                );
+
+                mostrarErroPainel(
+                    "configConteudo",
+                    "Não foi possível carregar as configurações."
+                );
+
+            }
+
+            return;
+
+        }
+
+
+        // =================================================
+        // TUTORIAL
+        // =================================================
+
+        if (panelId === "tutorial") {
+
+            carregarCredenciaisTutorial();
+
+            return;
+
+        }
+
+    }
+
+
+    // =====================================================
+    // MOSTRAR ERRO
+    // =====================================================
+
+    function mostrarErroPainel(id, mensagem) {
+
+        const elemento = el(id);
+
+        if (!elemento) {
+            return;
+        }
+
+        elemento.innerHTML = `
+
+            <div style="
+                padding:20px;
+                border:1px solid var(--border-color);
+                border-radius:10px;
+                color:var(--text-secondary);
+            ">
+
+                <i class="fas fa-triangle-exclamation"></i>
+
+                ${mensagem}
+
+            </div>
+
+        `;
+
+    }
+
+
+    // =====================================================
+    // CREDENCIAIS DA API
+    // =====================================================
+
+    async function carregarCredenciaisTutorial() {
+
+        const uid = el("tutorialUid");
+        const apiKey = el("tutorialApiKey");
+
+        if (!uid && !apiKey) {
+            return;
+        }
+
+
+        if (uid) {
+            uid.textContent = "Carregando...";
+        }
+
+        if (apiKey) {
+            apiKey.textContent = "Carregando...";
+        }
+
+
+        try {
+
+            console.log(
+                "[MOZ TECH] Buscando credenciais da API..."
+            );
+
+
+            const resposta = await fetch(
+                "/api/configuracoes",
+                {
+
+                    method: "GET",
+
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    },
+
+                    cache: "no-store"
+
+                }
+            );
+
+
+            console.log(
+                "[MOZ TECH] Credenciais HTTP:",
+                resposta.status
+            );
+
+
+            if (!resposta.ok) {
+
+                throw new Error(
+                    "HTTP " +
+                    resposta.status
+                );
+
+            }
+
+
+            const json =
+                await resposta.json();
+
+
+            console.log(
+                "[MOZ TECH] Configurações:",
+                json
+            );
+
+
+            const dados =
+                json.configuracoes ||
+                json.config ||
+                json.data ||
+                json;
+
+
+            const valorUID =
+
+                dados?.uid ||
+                dados?.UID ||
+                dados?.userId ||
+                dados?.user_id ||
+                "";
+
+
+            const valorApiKey =
+
+                dados?.apiKey ||
+                dados?.apikey ||
+                dados?.api_key ||
+                dados?.API_KEY ||
+                "";
+
+
+            if (uid) {
+
+                uid.textContent =
+                    valorUID ||
+                    "UID não encontrado";
+
+            }
+
+
+            if (apiKey) {
+
+                apiKey.textContent =
+                    valorApiKey ||
+                    "API Key não encontrada";
+
+            }
+
+
+        }
+        catch (erro) {
+
+            console.error(
+                "[MOZ TECH] Erro ao carregar credenciais:",
+                erro
+            );
+
+
+            if (uid) {
+
+                uid.textContent =
+                    "Erro ao carregar";
+
+            }
+
+
+            if (apiKey) {
+
+                apiKey.textContent =
+                    "Erro ao carregar";
+
+            }
+
+        }
+
+    }
+
+
+    // =====================================================
+    // MOSTRAR PAINEL
+    // =====================================================
+
+    window.showPanel = async function (panelId) {
+
+        console.log(
+            "[MOZ TECH] Abrindo:",
+            panelId
+        );
+
+
+        const painelId =
+            paineis[panelId];
+
+
+        if (!painelId) {
+
+            console.error(
+                "[MOZ TECH] Painel inválido:",
+                panelId
+            );
+
+            return;
+
+        }
+
+
+        // =================================================
+        // ESCONDER TODOS OS PAINÉIS
+        // =================================================
 
         Object.values(paineis)
             .forEach(function (id) {
 
-                const painel =
-                    document.getElementById(id);
-
+                const painel = el(id);
 
                 if (painel) {
 
@@ -278,34 +669,12 @@
             });
 
 
-        // =============================================
-        // VERIFICAR PAINEL
-        // =============================================
-
-        const painelId =
-            paineis[panelId];
-
-
-        if (!painelId) {
-
-            console.error(
-                "[MOZ TECH] Painel não encontrado:",
-                panelId
-            );
-
-            return;
-
-        }
-
-
-        // =============================================
-        // ENCONTRAR PAINEL
-        // =============================================
+        // =================================================
+        // MOSTRAR PAINEL ESCOLHIDO
+        // =================================================
 
         const painel =
-            document.getElementById(
-                painelId
-            );
+            el(painelId);
 
 
         if (!painel) {
@@ -320,17 +689,13 @@
         }
 
 
-        // =============================================
-        // MOSTRAR
-        // =============================================
-
         painel.style.display =
             "block";
 
 
-        // =============================================
+        // =================================================
         // MENU ATIVO
-        // =============================================
+        // =================================================
 
         document
             .querySelectorAll(
@@ -345,7 +710,7 @@
             });
 
 
-        const botaoMenu =
+        const itemAtivo =
             document.querySelector(
                 '.menu-item[data-panel="' +
                 panelId +
@@ -353,133 +718,27 @@
             );
 
 
-        if (botaoMenu) {
+        if (itemAtivo) {
 
-            botaoMenu.classList.add(
+            itemAtivo.classList.add(
                 "active"
             );
 
         }
 
 
-        // =============================================
-        // CARREGAR DADOS
-        // =============================================
+        // =================================================
+        // CARREGAR CONTEÚDO
+        // =================================================
 
-        try {
-
-
-            // -----------------------------------------
-            // DASHBOARD
-            // -----------------------------------------
-
-            if (
-                panelId === "dashboard" &&
-                typeof window.carregarDashboard ===
-                "function"
-            ) {
-
-                window.carregarDashboard()
-                    .catch(function (erro) {
-
-                        console.error(
-                            "[MOZ TECH] Erro dashboard:",
-                            erro
-                        );
-
-                    });
-
-            }
+        await carregarPainel(
+            panelId
+        );
 
 
-            // -----------------------------------------
-            // CRM
-            // -----------------------------------------
-
-            if (
-                panelId === "crm" &&
-                typeof window.carregarClientes ===
-                "function"
-            ) {
-
-                window.carregarClientes();
-
-            }
-
-
-            // -----------------------------------------
-            // PACOTES
-            // -----------------------------------------
-
-            if (
-                panelId === "pacotes" &&
-                typeof window.carregarPacotes ===
-                "function"
-            ) {
-
-                window.carregarPacotes();
-
-            }
-
-
-            // -----------------------------------------
-            // PEDIDOS
-            // -----------------------------------------
-
-            if (
-                panelId === "pedidos" &&
-                typeof window.carregarPedidos ===
-                "function"
-            ) {
-
-                window.carregarPedidos();
-
-            }
-
-
-            // -----------------------------------------
-            // DISPOSITIVOS
-            // -----------------------------------------
-
-            if (
-                panelId === "dispositivos" &&
-                typeof window.carregarDispositivos ===
-                "function"
-            ) {
-
-                window.carregarDispositivos();
-
-            }
-
-
-            // -----------------------------------------
-            // CONFIGURAÇÕES
-            // -----------------------------------------
-
-            if (
-                panelId === "config" &&
-                typeof window.carregarConfiguracoes ===
-                "function"
-            ) {
-
-                window.carregarConfiguracoes();
-
-            }
-
-        }
-        catch (erro) {
-
-            console.error(
-                "[MOZ TECH] Erro ao carregar painel:",
-                erro
-            );
-
-        }
-
-
-        // =============================================
-        // FECHAR MENU NO CELULAR
-        // =============================================
+        // =================================================
+        // FECHAR MENU NO MOBILE
+        // =================================================
 
         if (
             window.innerWidth <= 768
@@ -492,9 +751,9 @@
     };
 
 
-    // =================================================
-    // INICIALIZAR CLIQUES DOS PAINÉIS
-    // =================================================
+    // =====================================================
+    // INICIALIZAR MENU
+    // =====================================================
 
     function inicializarMenu() {
 
@@ -510,18 +769,10 @@
         );
 
 
-        botoes.forEach(function (item) {
-
-
-            /*
-             * Não usar dataset.menuInicializado
-             * antigo.
-             *
-             * Este sistema controla tudo sozinho.
-             */
+        botoes.forEach(function (botao) {
 
             if (
-                item.dataset.mozMenuAtivo ===
+                botao.dataset.mozAppMenu ===
                 "true"
             ) {
 
@@ -530,36 +781,27 @@
             }
 
 
-            item.dataset.mozMenuAtivo =
+            botao.dataset.mozAppMenu =
                 "true";
 
 
-            item.addEventListener(
+            botao.addEventListener(
                 "click",
                 function (event) {
 
                     event.preventDefault();
-
                     event.stopPropagation();
 
 
                     const panel =
-                        item.getAttribute(
+                        botao.getAttribute(
                             "data-panel"
                         );
 
 
                     if (!panel) {
-
                         return;
-
                     }
-
-
-                    console.log(
-                        "[MOZ TECH] Menu:",
-                        panel
-                    );
 
 
                     window.showPanel(
@@ -574,21 +816,19 @@
     }
 
 
-    // =================================================
-    // BOTÃO 3 BARRAS
-    // =================================================
+    // =====================================================
+    // BOTÃO MOBILE
+    // =====================================================
 
-    function inicializarBotaoMenu() {
+    function inicializarBotaoMobile() {
 
         const botao =
-            document.getElementById(
-                "menuToggle"
-            );
+            el("menuToggle");
 
 
         if (!botao) {
 
-            console.error(
+            console.warn(
                 "[MOZ TECH] #menuToggle não encontrado."
             );
 
@@ -597,13 +837,8 @@
         }
 
 
-        /*
-         * Se outro script já colocou evento,
-         * este sistema usa uma marca própria.
-         */
-
         if (
-            botao.dataset.mozMenuBotao ===
+            botao.dataset.mozAppBotao ===
             "true"
         ) {
 
@@ -612,13 +847,8 @@
         }
 
 
-        botao.dataset.mozMenuBotao =
+        botao.dataset.mozAppBotao =
             "true";
-
-
-        console.log(
-            "[MOZ TECH] Botão 3 barras encontrado."
-        );
 
 
         botao.addEventListener(
@@ -626,65 +856,33 @@
             function (event) {
 
                 event.preventDefault();
-
                 event.stopPropagation();
-
-
-                console.log(
-                    "[MOZ TECH] 3 barras clicado."
-                );
-
 
                 alternarMenuMobile();
 
             }
         );
 
-
-        // Estado inicial
-
-        atualizarIconeMenu(false);
-
-
-        botao.setAttribute(
-            "aria-expanded",
-            "false"
-        );
-
-
-        botao.setAttribute(
-            "aria-label",
-            "Abrir menu"
-        );
-
     }
 
 
-    // =================================================
+    // =====================================================
     // OVERLAY
-    // =================================================
+    // =====================================================
 
     function inicializarOverlay() {
 
         const overlay =
-            document.getElementById(
-                "menuOverlay"
-            );
+            el("menuOverlay");
 
 
         if (!overlay) {
-
-            console.warn(
-                "[MOZ TECH] #menuOverlay não encontrado."
-            );
-
             return;
-
         }
 
 
         if (
-            overlay.dataset.mozOverlay ===
+            overlay.dataset.mozAppOverlay ===
             "true"
         ) {
 
@@ -693,7 +891,7 @@
         }
 
 
-        overlay.dataset.mozOverlay =
+        overlay.dataset.mozAppOverlay =
             "true";
 
 
@@ -702,9 +900,7 @@
             function (event) {
 
                 event.preventDefault();
-
                 event.stopPropagation();
-
 
                 fecharMenuMobile();
 
@@ -714,14 +910,14 @@
     }
 
 
-    // =================================================
+    // =====================================================
     // ESC
-    // =================================================
+    // =====================================================
 
     function inicializarESC() {
 
         if (
-            window.__mozEscInicializado
+            window.__mozAppESC
         ) {
 
             return;
@@ -729,7 +925,7 @@
         }
 
 
-        window.__mozEscInicializado =
+        window.__mozAppESC =
             true;
 
 
@@ -738,7 +934,8 @@
             function (event) {
 
                 if (
-                    event.key === "Escape"
+                    event.key ===
+                    "Escape"
                 ) {
 
                     fecharMenuMobile();
@@ -751,204 +948,20 @@
     }
 
 
-    // =================================================
-    // CLICAR NO MENU
-    // =================================================
-
-    function inicializarFecharMenuItem() {
-
-        const sidebar =
-            document.getElementById(
-                "sidebar"
-            );
-
-
-        if (!sidebar) {
-            return;
-        }
-
-
-        const itens =
-            sidebar.querySelectorAll(
-                ".menu-item"
-            );
-
-
-        itens.forEach(function (item) {
-
-            if (
-                item.dataset.mozFecharMenu ===
-                "true"
-            ) {
-
-                return;
-
-            }
-
-
-            item.dataset.mozFecharMenu =
-                "true";
-
-
-            item.addEventListener(
-                "click",
-                function () {
-
-                    if (
-                        window.innerWidth <= 768
-                    ) {
-
-                        fecharMenuMobile();
-
-                    }
-
-                }
-            );
-
-        });
-
-    }
-
-
-    // =================================================
-    // CLIQUE FORA
-    // =================================================
-
-    function inicializarCliqueFora() {
-
-        if (
-            window.__mozCliqueForaInicializado
-        ) {
-
-            return;
-
-        }
-
-
-        window.__mozCliqueForaInicializado =
-            true;
-
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                if (
-                    window.innerWidth > 768
-                ) {
-
-                    return;
-
-                }
-
-
-                const sidebar =
-                    document.getElementById(
-                        "sidebar"
-                    );
-
-
-                const botao =
-                    document.getElementById(
-                        "menuToggle"
-                    );
-
-
-                if (!sidebar) {
-                    return;
-                }
-
-
-                if (
-                    !sidebar.classList.contains(
-                        "open"
-                    )
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
-                    sidebar.contains(
-                        event.target
-                    )
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
-                    botao &&
-                    botao.contains(
-                        event.target
-                    )
-                ) {
-
-                    return;
-
-                }
-
-
-                fecharMenuMobile();
-
-            }
-        );
-
-    }
-
-
-    // =================================================
-    // RESIZE
-    // =================================================
-
-    function inicializarResize() {
-
-        if (
-            window.__mozResizeInicializado
-        ) {
-
-            return;
-
-        }
-
-
-        window.__mozResizeInicializado =
-            true;
-
-
-        window.addEventListener(
-            "resize",
-            function () {
-
-                if (
-                    window.innerWidth > 768
-                ) {
-
-                    fecharMenuMobile();
-
-                }
-
-            }
-        );
-
-    }
-
-
-    // =================================================
+    // =====================================================
     // ESTADO INICIAL
-    // =================================================
+    // =====================================================
 
     function estadoInicial() {
 
-        const {
-            sidebar,
-            overlay,
-            botao
-        } = getElementosMenu();
+        const sidebar =
+            el("sidebar");
+
+        const overlay =
+            el("menuOverlay");
+
+        const botao =
+            el("menuToggle");
 
 
         if (sidebar) {
@@ -988,17 +1001,14 @@
             "menu-open"
         );
 
-
-        atualizarIconeMenu(false);
-
     }
 
 
-    // =================================================
-    // INICIAR SISTEMA
-    // =================================================
+    // =====================================================
+    // INICIAR
+    // =====================================================
 
-    function iniciarSistema() {
+    async function iniciarSistema() {
 
         console.log(
             "======================================"
@@ -1019,7 +1029,7 @@
         inicializarMenu();
 
 
-        inicializarBotaoMenu();
+        inicializarBotaoMobile();
 
 
         inicializarOverlay();
@@ -1028,20 +1038,11 @@
         inicializarESC();
 
 
-        inicializarFecharMenuItem();
+        // =================================================
+        // ABRIR DASHBOARD
+        // =================================================
 
-
-        inicializarCliqueFora();
-
-
-        inicializarResize();
-
-
-        // =============================================
-        // DASHBOARD INICIAL
-        // =============================================
-
-        window.showPanel(
+        await window.showPanel(
             "dashboard"
         );
 
@@ -1053,9 +1054,9 @@
     }
 
 
-    // =================================================
-    // EXPOR FUNÇÕES
-    // =================================================
+    // =====================================================
+    // EXPORTAR
+    // =====================================================
 
     window.abrirMenuMobile =
         abrirMenuMobile;
@@ -1069,9 +1070,13 @@
         alternarMenuMobile;
 
 
-    // =================================================
+    window.carregarCredenciaisTutorial =
+        carregarCredenciaisTutorial;
+
+
+    // =====================================================
     // DOM READY
-    // =================================================
+    // =====================================================
 
     if (
         document.readyState ===
