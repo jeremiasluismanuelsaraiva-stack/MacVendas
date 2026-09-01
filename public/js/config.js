@@ -2,6 +2,69 @@ const API = window.location.origin;
 
 
 // =====================================================
+// CONFIGURAÇÃO DE TEMA
+// =====================================================
+
+function aplicarTema(tema) {
+
+    const temaFinal =
+        tema === "light"
+            ? "light"
+            : "dark";
+
+
+    document.documentElement.setAttribute(
+        "data-theme",
+        temaFinal
+    );
+
+
+    localStorage.setItem(
+        "tema",
+        temaFinal
+    );
+
+}
+
+
+// =====================================================
+// CARREGAR TEMA LOCAL
+// =====================================================
+
+function carregarTema() {
+
+    const temaSalvo =
+        localStorage.getItem("tema");
+
+
+    if (temaSalvo === "light") {
+
+        aplicarTema("light");
+
+    }
+    else {
+
+        aplicarTema("dark");
+
+    }
+
+}
+
+
+// =====================================================
+// ALTERAR TEMA
+// =====================================================
+
+function alterarTema(tema) {
+
+    aplicarTema(
+        tema
+    );
+
+}
+
+
+// =====================================================
 // CARREGAR CONFIGURAÇÕES
 // =====================================================
 
@@ -9,21 +72,24 @@ async function carregarConfiguracoes() {
 
     try {
 
-        const resposta = await fetch(
-            API + "/configuracoes"
-        );
+        const resposta =
+            await fetch(
+                API + "/configuracoes"
+            );
 
 
         if (!resposta.ok) {
 
             throw new Error(
-                "Erro HTTP: " + resposta.status
+                "Erro HTTP: " +
+                resposta.status
             );
 
         }
 
 
-        const json = await resposta.json();
+        const json =
+            await resposta.json();
 
 
         if (!json.success) {
@@ -42,7 +108,10 @@ async function carregarConfiguracoes() {
             json.configuracoes || [];
 
 
-        if (configuracoes.length === 0) {
+        if (
+            !Array.isArray(configuracoes) ||
+            configuracoes.length === 0
+        ) {
 
             console.warn(
                 "[CONFIG] Nenhuma configuração encontrada."
@@ -66,6 +135,7 @@ async function carregarConfiguracoes() {
                 "nomeEmpresa"
             );
 
+
         if (nomeEmpresa) {
 
             nomeEmpresa.value =
@@ -82,6 +152,7 @@ async function carregarConfiguracoes() {
             document.getElementById(
                 "telefone"
             );
+
 
         if (telefone) {
 
@@ -100,6 +171,7 @@ async function carregarConfiguracoes() {
                 "email"
             );
 
+
         if (email) {
 
             email.value =
@@ -116,6 +188,7 @@ async function carregarConfiguracoes() {
             document.getElementById(
                 "moeda"
             );
+
 
         if (moeda) {
 
@@ -134,6 +207,7 @@ async function carregarConfiguracoes() {
                 "vendaGB"
             );
 
+
         if (vendaGB) {
 
             vendaGB.value =
@@ -150,6 +224,7 @@ async function carregarConfiguracoes() {
             document.getElementById(
                 "custoGB"
             );
+
 
         if (custoGB) {
 
@@ -168,6 +243,7 @@ async function carregarConfiguracoes() {
                 "ussd"
             );
 
+
         if (ussd) {
 
             ussd.value =
@@ -185,12 +261,26 @@ async function carregarConfiguracoes() {
                 "tema"
             );
 
+
+        const temaConfigurado =
+            cfg.tema === "light"
+                ? "light"
+                : "dark";
+
+
         if (tema) {
 
             tema.value =
-                cfg.tema || "dark";
+                temaConfigurado;
 
         }
+
+
+        // Aplicar o tema vindo da API
+
+        aplicarTema(
+            temaConfigurado
+        );
 
 
         // =================================================
@@ -201,6 +291,7 @@ async function carregarConfiguracoes() {
             document.getElementById(
                 "idioma"
             );
+
 
         if (idioma) {
 
@@ -319,7 +410,8 @@ async function salvarConfiguracoes() {
         if (!resposta.ok) {
 
             throw new Error(
-                "Erro HTTP: " + resposta.status
+                "Erro HTTP: " +
+                resposta.status
             );
 
         }
@@ -352,6 +444,15 @@ async function salvarConfiguracoes() {
 
         const dados =
             obterDadosConfiguracoes();
+
+
+        // =================================================
+        // APLICAR TEMA IMEDIATAMENTE
+        // =================================================
+
+        aplicarTema(
+            dados.tema
+        );
 
 
         let salvarResposta;
@@ -397,7 +498,8 @@ async function salvarConfiguracoes() {
 
             salvarResposta =
                 await fetch(
-                    API + "/configuracoes",
+                    API +
+                    "/configuracoes",
                     {
 
                         method: "POST",
@@ -461,7 +563,7 @@ async function salvarConfiguracoes() {
 
 
         // =================================================
-        // RECARREGAR CONFIGURAÇÕES
+        // RECARREGAR
         // =================================================
 
         await carregarConfiguracoes();
@@ -497,6 +599,18 @@ window.salvarConfiguracoes =
     salvarConfiguracoes;
 
 
+window.aplicarTema =
+    aplicarTema;
+
+
+window.alterarTema =
+    alterarTema;
+
+
+window.carregarTema =
+    carregarTema;
+
+
 // =====================================================
 // INICIALIZAÇÃO
 // =====================================================
@@ -509,10 +623,43 @@ function inicializarConfiguracoes() {
 
 
     // =================================================
-    // CARREGAR CONFIGURAÇÕES
+    // PRIMEIRO: TEMA LOCAL
+    // =================================================
+
+    carregarTema();
+
+
+    // =================================================
+    // CARREGAR CONFIGURAÇÕES DA API
     // =================================================
 
     carregarConfiguracoes();
+
+
+    // =================================================
+    // SELETOR DE TEMA
+    // =================================================
+
+    const seletorTema =
+        document.getElementById(
+            "tema"
+        );
+
+
+    if (seletorTema) {
+
+        seletorTema.addEventListener(
+            "change",
+            function () {
+
+                alterarTema(
+                    this.value
+                );
+
+            }
+        );
+
+    }
 
 
     // =================================================
