@@ -1,6 +1,7 @@
 // =====================================================
 // MOZ TECH
 // CRM - CLIENTES
+// Local: public/js/clientes.js
 // =====================================================
 
 (function () {
@@ -26,10 +27,6 @@
             document.getElementById("tabelaClientes");
 
 
-        // ---------------------------------------------
-        // Verificar tabela
-        // ---------------------------------------------
-
         if (!tabela) {
 
             console.warn(
@@ -54,10 +51,6 @@
                 </tr>
             `;
 
-
-            // -----------------------------------------
-            // PEDIDO À API
-            // -----------------------------------------
 
             const resposta =
                 await fetch(
@@ -89,10 +82,6 @@
             );
 
 
-            // -----------------------------------------
-            // VERIFICAR RESPOSTA
-            // -----------------------------------------
-
             if (!json.success) {
 
                 throw new Error(
@@ -111,10 +100,6 @@
 
             tabela.innerHTML = "";
 
-
-            // -----------------------------------------
-            // NENHUM CLIENTE
-            // -----------------------------------------
 
             if (clientes.length === 0) {
 
@@ -149,10 +134,6 @@
 
             }
 
-
-            // -----------------------------------------
-            // MOSTRAR CLIENTES
-            // -----------------------------------------
 
             clientes.forEach(cliente => {
 
@@ -245,9 +226,9 @@
             });
 
 
-            // -----------------------------------------
-            // EVENTO EDITAR
-            // -----------------------------------------
+            // =================================================
+            // EDITAR
+            // =================================================
 
             tabela
                 .querySelectorAll(
@@ -273,9 +254,9 @@
                 });
 
 
-            // -----------------------------------------
-            // EVENTO REMOVER
-            // -----------------------------------------
+            // =================================================
+            // REMOVER
+            // =================================================
 
             tabela
                 .querySelectorAll(
@@ -395,6 +376,7 @@
 
     // =================================================
     // ADICIONAR CLIENTE
+    // POST /clientes
     // =================================================
 
     async function adicionarCliente(dados) {
@@ -660,17 +642,11 @@
     // =================================================
 
     /*
-     * NÃO chamamos carregarClientes()
-     * imediatamente aqui.
+     * NÃO chamar carregarClientes()
+     * automaticamente.
      *
-     * O app.js já chama:
-     *
-     * window.carregarClientes()
-     *
-     * quando o painel CRM é aberto.
-     *
-     * Isso evita duas chamadas simultâneas.
+     * O app.js chama a função quando
+     * o painel CRM é aberto.
      */
-
 
 })();
