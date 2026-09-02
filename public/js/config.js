@@ -276,8 +276,6 @@ async function carregarConfiguracoes() {
         }
 
 
-        // Aplicar o tema vindo da API
-
         aplicarTema(
             temaConfigurado
         );
@@ -397,10 +395,6 @@ async function salvarConfiguracoes() {
 
     try {
 
-        // =================================================
-        // BUSCAR CONFIGURAÇÃO EXISTENTE
-        // =================================================
-
         const resposta =
             await fetch(
                 API + "/configuracoes"
@@ -438,10 +432,6 @@ async function salvarConfiguracoes() {
         }
 
 
-        // =================================================
-        // OBTER DADOS
-        // =================================================
-
         const dados =
             obterDadosConfiguracoes();
 
@@ -476,6 +466,9 @@ async function salvarConfiguracoes() {
                         headers: {
 
                             "Content-Type":
+                                "application/json",
+
+                            "Accept":
                                 "application/json"
 
                         },
@@ -507,6 +500,9 @@ async function salvarConfiguracoes() {
                         headers: {
 
                             "Content-Type":
+                                "application/json",
+
+                            "Accept":
                                 "application/json"
 
                         },
