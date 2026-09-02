@@ -10,8 +10,7 @@ const express = require("express");
 
 const router = express.Router();
 
-const { db } = require("../database/firebase-admin");
-
+const { db } = require("../firebase-admin");
 
 // =====================================================
 // FUNÇÃO AUXILIAR
