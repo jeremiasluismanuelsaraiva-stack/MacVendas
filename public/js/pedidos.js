@@ -1,5 +1,5 @@
 // =====================================================
-// MOZ TECH
+// MACVENDAS
 // PEDIDOS.JS
 // =====================================================
 
@@ -51,7 +51,7 @@
     async function carregarPedidos() {
 
         console.log(
-            "[MOZ TECH] Carregando pedidos..."
+            "[MACVENDAS] Carregando pedidos..."
         );
 
 
@@ -74,7 +74,7 @@
 
 
             console.log(
-                "[MOZ TECH] Pedidos HTTP:",
+                "[MACVENDAS] Pedidos HTTP:",
                 resposta.status
             );
 
@@ -94,7 +94,7 @@
 
 
             console.log(
-                "[MOZ TECH] Resposta pedidos:",
+                "[MACVENDAS] Resposta pedidos:",
                 json
             );
 
@@ -129,7 +129,7 @@
             if (!tabela) {
 
                 console.warn(
-                    "[MOZ TECH] #tabelaPedidos não encontrado."
+                    "[MACVENDAS] #tabelaPedidos não encontrado."
                 );
 
                 return [];
@@ -378,7 +378,7 @@
 
 
             console.log(
-                "[MOZ TECH] Pedidos carregados:",
+                "[MACVENDAS] Pedidos carregados:",
                 pedidos.length
             );
 
@@ -389,7 +389,7 @@
         catch (erro) {
 
             console.error(
-                "[MOZ TECH] Erro ao carregar pedidos:",
+                "[MACVENDAS] Erro ao carregar pedidos:",
                 erro
             );
 
@@ -441,7 +441,7 @@
     async function adicionarPedido(dados) {
 
         console.log(
-            "[MOZ TECH] Adicionando pedido:",
+            "[MACVENDAS] Adicionando pedido:",
             dados
         );
 
@@ -479,7 +479,7 @@
 
 
             console.log(
-                "[MOZ TECH] Resposta adicionar pedido:",
+                "[MACVENDAS] Resposta adicionar pedido:",
                 json
             );
 
@@ -503,7 +503,7 @@
         catch (erro) {
 
             console.error(
-                "[MOZ TECH] Erro ao adicionar pedido:",
+                "[MACVENDAS] Erro ao adicionar pedido:",
                 erro
             );
 
@@ -565,7 +565,7 @@
 
 
         console.log(
-            "[MOZ TECH] Editando pedido:",
+            "[MACVENDAS] Editando pedido:",
             id
         );
 
@@ -610,7 +610,7 @@
 
 
             console.log(
-                "[MOZ TECH] Resposta editar:",
+                "[MACVENDAS] Resposta editar:",
                 json
             );
 
@@ -636,7 +636,7 @@
         catch (erro) {
 
             console.error(
-                "[MOZ TECH] Erro ao editar pedido:",
+                "[MACVENDAS] Erro ao editar pedido:",
                 erro
             );
 
@@ -671,7 +671,7 @@
 
 
         console.log(
-            "[MOZ TECH] Removendo pedido:",
+            "[MACVENDAS] Removendo pedido:",
             id
         );
 
@@ -705,7 +705,7 @@
 
 
             console.log(
-                "[MOZ TECH] Resposta remover:",
+                "[MACVENDAS] Resposta remover:",
                 json
             );
 
@@ -731,7 +731,7 @@
         catch (erro) {
 
             console.error(
-                "[MOZ TECH] Erro ao remover pedido:",
+                "[MACVENDAS] Erro ao remover pedido:",
                 erro
             );
 
@@ -772,7 +772,7 @@
     function iniciarPedidos() {
 
         console.log(
-            "[MOZ TECH] pedidos.js iniciado."
+            "[MACVENDAS] pedidos.js iniciado."
         );
 
 
