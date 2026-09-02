@@ -1,412 +1,687 @@
+// =====================================================
+// MACVENDAS
+// API DE CLIENTES
+// FIREBASE REALTIME DATABASE
+// =====================================================
+
+"use strict";
+
 const express = require("express");
+
 const router = express.Router();
 
-const db = require("../database/database");
+const { db } =
+    require("./firebase-admin");
+
+const autenticarAPI =
+    require("./auth");
+
+
+// =====================================================
+// FUNÇÃO PARA LIMPAR NÚMERO
+// =====================================================
+
+function limparNumero(numero) {
+
+    return String(numero || "")
+        .replace(/\D/g, "");
+
+}
 
 
 // =====================================================
 // LISTAR CLIENTES
-// GET /clientes
+// GET /api/clientes
 // =====================================================
 
-router.get("/", (req, res) => {
+router.get(
+    "/",
+    autenticarAPI,
+    async (req, res) => {
 
-    try {
+        try {
 
-        const clientes =
-            db.ler("clientes") || [];
+            const uid =
+                req.usuario.uid;
 
 
-        res.json({
+            // =================================================
+            // BUSCAR CLIENTES DO USUÁRIO
+            // =================================================
 
-            success: true,
+            const snapshot =
+                await db
+                    .ref(
+                        "clientes/" + uid
+                    )
+                    .once("value");
 
-            total:
-                clientes.length,
 
-            clientes
+            const dados =
+                snapshot.val() || {};
 
-        });
+
+            // =================================================
+            // TRANSFORMAR OBJETO EM ARRAY
+            // =================================================
+
+            const clientes =
+                Object.entries(dados)
+                    .map(
+                        ([id, cliente]) => ({
+
+                            id,
+
+                            ...cliente
+
+                        })
+                    )
+                    .reverse();
+
+
+            // =================================================
+            // RESPOSTA
+            // =================================================
+
+            return res.json({
+
+                success: true,
+
+                total:
+                    clientes.length,
+
+                clientes
+
+            });
+
+        }
+        catch (err) {
+
+            console.error(
+                "[API CLIENTES]",
+                err
+            );
+
+
+            return res.status(500).json({
+
+                success: false,
+
+                error:
+                    "Erro ao listar clientes."
+
+            });
+
+        }
 
     }
-    catch (err) {
-
-        console.error(
-            "Erro ao listar clientes:",
-            err
-        );
-
-
-        res.status(500).json({
-
-            success: false,
-
-            error:
-                err.message
-
-        });
-
-    }
-
-});
+);
 
 
 // =====================================================
 // BUSCAR CLIENTE
-// GET /clientes/:id
+// GET /api/clientes/:id
 // =====================================================
 
-router.get("/:id", (req, res) => {
+router.get(
+    "/:id",
+    autenticarAPI,
+    async (req, res) => {
 
-    try {
+        try {
 
-        const clientes =
-            db.ler("clientes") || [];
+            const uid =
+                req.usuario.uid;
 
 
-        const cliente =
-            clientes.find(
-                c =>
-                    String(c.id) ===
-                    String(req.params.id)
+            const id =
+                String(
+                    req.params.id
+                );
+
+
+            // =================================================
+            // BUSCAR
+            // =================================================
+
+            const snapshot =
+                await db
+                    .ref(
+                        "clientes/" +
+                        uid +
+                        "/" +
+                        id
+                    )
+                    .once("value");
+
+
+            // =================================================
+            // NÃO ENCONTRADO
+            // =================================================
+
+            if (!snapshot.exists()) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    error:
+                        "Cliente não encontrado."
+
+                });
+
+            }
+
+
+            const cliente =
+                snapshot.val();
+
+
+            // =================================================
+            // RESPOSTA
+            // =================================================
+
+            return res.json({
+
+                success: true,
+
+                cliente: {
+
+                    id,
+
+                    ...cliente
+
+                }
+
+            });
+
+        }
+        catch (err) {
+
+            console.error(
+                "[API CLIENTE]",
+                err
             );
 
 
-        if (!cliente) {
-
-            return res.status(404).json({
+            return res.status(500).json({
 
                 success: false,
 
                 error:
-                    "Cliente não encontrado."
+                    "Erro ao buscar cliente."
 
             });
 
         }
 
-
-        res.json({
-
-            success: true,
-
-            cliente
-
-        });
-
     }
-    catch (err) {
-
-        console.error(
-            "Erro ao buscar cliente:",
-            err
-        );
-
-
-        res.status(500).json({
-
-            success: false,
-
-            error:
-                err.message
-
-        });
-
-    }
-
-});
+);
 
 
 // =====================================================
 // ADICIONAR CLIENTE
-// POST /clientes
+// POST /api/clientes
 // =====================================================
 
-router.post("/", (req, res) => {
+router.post(
+    "/",
+    autenticarAPI,
+    async (req, res) => {
 
-    try {
+        try {
 
-        const clientes =
-            db.ler("clientes") || [];
-
-
-        const cliente = {
-
-            id:
-                Date.now().toString(),
+            const uid =
+                req.usuario.uid;
 
 
-            nome:
-                req.body.nome ||
-                "",
+            // =================================================
+            // DADOS
+            // =================================================
+
+            const nome =
+                req.body.nome || "";
 
 
-            telefone:
+            const telefone =
                 req.body.telefone ||
                 req.body.numero ||
-                "",
+                "";
 
 
-            email:
+            const email =
                 req.body.email ||
-                "",
+                "";
 
 
-            grupo:
+            const grupo =
                 req.body.grupo ||
-                "GERAL",
+                "GERAL";
 
 
-            saldo:
+            const saldo =
                 Number(
-                    req.body.saldo ||
-                    0
-                ),
+                    req.body.saldo || 0
+                );
 
 
-            observacao:
+            const observacao =
                 req.body.observacao ||
-                "",
+                "";
 
 
-            createdAt:
-                new Date().toISOString()
+            // =================================================
+            // VALIDAR TELEFONE
+            // =================================================
 
-        };
+            if (!telefone) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Número do cliente é obrigatório."
+
+                });
+
+            }
 
 
-        clientes.unshift(
-            cliente
-        );
+            // =================================================
+            // ID BASEADO NO NÚMERO
+            // =================================================
+
+            const id =
+                limparNumero(
+                    telefone
+                );
 
 
-        db.salvar(
-            "clientes",
-            clientes
-        );
+            // =================================================
+            // REFERÊNCIA
+            // =================================================
+
+            const clienteRef =
+                db
+                    .ref(
+                        "clientes/" +
+                        uid +
+                        "/" +
+                        id
+                    );
 
 
-        res.json({
+            // =================================================
+            // VERIFICAR SE JÁ EXISTE
+            // =================================================
 
-            success: true,
+            const existente =
+                await clienteRef
+                    .once("value");
 
-            cliente
 
-        });
+            if (
+                existente.exists()
+            ) {
+
+                return res.status(409).json({
+
+                    success: false,
+
+                    error:
+                        "Cliente já está cadastrado.",
+
+                    cliente: {
+
+                        id,
+
+                        ...existente.val()
+
+                    }
+
+                });
+
+            }
+
+
+            // =================================================
+            // CRIAR CLIENTE
+            // =================================================
+
+            const cliente = {
+
+                id,
+
+                uid,
+
+                nome,
+
+                telefone:
+                    String(telefone),
+
+                email,
+
+                grupo,
+
+                saldo,
+
+                observacao,
+
+                createdAt:
+                    new Date().toISOString()
+
+            };
+
+
+            // =================================================
+            // GUARDAR FIREBASE
+            // =================================================
+
+            await clienteRef.set(
+                cliente
+            );
+
+
+            // =================================================
+            // RESPOSTA
+            // =================================================
+
+            return res.status(201).json({
+
+                success: true,
+
+                message:
+                    "Cliente adicionado com sucesso.",
+
+                cliente
+
+            });
+
+        }
+        catch (err) {
+
+            console.error(
+                "[API POST CLIENTE]",
+                err
+            );
+
+
+            return res.status(500).json({
+
+                success: false,
+
+                error:
+                    "Erro ao adicionar cliente."
+
+            });
+
+        }
 
     }
-    catch (err) {
-
-        console.error(
-            "Erro ao adicionar cliente:",
-            err
-        );
-
-
-        res.status(500).json({
-
-            success: false,
-
-            error:
-                err.message
-
-        });
-
-    }
-
-});
+);
 
 
 // =====================================================
 // EDITAR CLIENTE
-// PUT /clientes/:id
+// PUT /api/clientes/:id
 // =====================================================
 
-router.put("/:id", (req, res) => {
+router.put(
+    "/:id",
+    autenticarAPI,
+    async (req, res) => {
 
-    try {
+        try {
 
-        const clientes =
-            db.ler("clientes") || [];
+            const uid =
+                req.usuario.uid;
 
 
-        const indice =
-            clientes.findIndex(
-                c =>
-                    String(c.id) ===
-                    String(req.params.id)
+            const id =
+                String(
+                    req.params.id
+                );
+
+
+            const clienteRef =
+                db
+                    .ref(
+                        "clientes/" +
+                        uid +
+                        "/" +
+                        id
+                    );
+
+
+            // =================================================
+            // BUSCAR CLIENTE
+            // =================================================
+
+            const snapshot =
+                await clienteRef
+                    .once("value");
+
+
+            if (
+                !snapshot.exists()
+            ) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    error:
+                        "Cliente não encontrado."
+
+                });
+
+            }
+
+
+            const clienteAtual =
+                snapshot.val();
+
+
+            // =================================================
+            // ATUALIZAR
+            // =================================================
+
+            const clienteAtualizado = {
+
+                ...clienteAtual,
+
+                ...req.body,
+
+                id,
+
+                uid,
+
+                saldo:
+                    req.body.saldo !== undefined
+                        ? Number(
+                            req.body.saldo
+                        )
+                        : Number(
+                            clienteAtual.saldo || 0
+                        ),
+
+                atualizado:
+                    new Date().toISOString()
+
+            };
+
+
+            // =================================================
+            // NÃO PERMITIR ALTERAR ID
+            // =================================================
+
+            clienteAtualizado.id =
+                id;
+
+
+            // =================================================
+            // NÃO PERMITIR ALTERAR UID
+            // =================================================
+
+            clienteAtualizado.uid =
+                uid;
+
+
+            // =================================================
+            // GUARDAR
+            // =================================================
+
+            await clienteRef.set(
+                clienteAtualizado
             );
 
 
-        if (indice === -1) {
+            // =================================================
+            // RESPOSTA
+            // =================================================
 
-            return res.status(404).json({
+            return res.json({
+
+                success: true,
+
+                message:
+                    "Cliente atualizado com sucesso.",
+
+                cliente:
+                    clienteAtualizado
+
+            });
+
+        }
+        catch (err) {
+
+            console.error(
+                "[API PUT CLIENTE]",
+                err
+            );
+
+
+            return res.status(500).json({
 
                 success: false,
 
                 error:
-                    "Cliente não encontrado."
+                    "Erro ao editar cliente."
 
             });
 
         }
 
-
-        const clienteAtual =
-            clientes[indice];
-
-
-        const clienteAtualizado = {
-
-            ...clienteAtual,
-
-            ...req.body,
-
-
-            // Garantir número
-            saldo:
-                req.body.saldo !== undefined
-                    ? Number(
-                        req.body.saldo
-                    )
-                    : clienteAtual.saldo,
-
-
-            atualizado:
-                new Date().toISOString()
-
-        };
-
-
-        clientes[indice] =
-            clienteAtualizado;
-
-
-        db.salvar(
-            "clientes",
-            clientes
-        );
-
-
-        res.json({
-
-            success: true,
-
-            cliente:
-                clienteAtualizado
-
-        });
-
     }
-    catch (err) {
-
-        console.error(
-            "Erro ao editar cliente:",
-            err
-        );
-
-
-        res.status(500).json({
-
-            success: false,
-
-            error:
-                err.message
-
-        });
-
-    }
-
-});
+);
 
 
 // =====================================================
 // REMOVER CLIENTE
-// DELETE /clientes/:id
+// DELETE /api/clientes/:id
 // =====================================================
 
-router.delete("/:id", (req, res) => {
+router.delete(
+    "/:id",
+    autenticarAPI,
+    async (req, res) => {
 
-    try {
+        try {
 
-        const clientes =
-            db.ler("clientes") || [];
+            const uid =
+                req.usuario.uid;
 
 
-        const id =
-            String(
-                req.params.id
+            const id =
+                String(
+                    req.params.id
+                );
+
+
+            const clienteRef =
+                db
+                    .ref(
+                        "clientes/" +
+                        uid +
+                        "/" +
+                        id
+                    );
+
+
+            // =================================================
+            // VERIFICAR
+            // =================================================
+
+            const snapshot =
+                await clienteRef
+                    .once("value");
+
+
+            if (
+                !snapshot.exists()
+            ) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    error:
+                        "Cliente não encontrado."
+
+                });
+
+            }
+
+
+            // =================================================
+            // REMOVER
+            // =================================================
+
+            await clienteRef.remove();
+
+
+            // =================================================
+            // RESPOSTA
+            // =================================================
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    "Cliente removido com sucesso.",
+
+                id
+
+            });
+
+        }
+        catch (err) {
+
+            console.error(
+                "[API DELETE CLIENTE]",
+                err
             );
 
 
-        const existe =
-            clientes.some(
-                cliente =>
-                    String(cliente.id) ===
-                    id
-            );
-
-
-        if (!existe) {
-
-            return res.status(404).json({
+            return res.status(500).json({
 
                 success: false,
 
                 error:
-                    "Cliente não encontrado."
+                    "Erro ao remover cliente."
 
             });
 
         }
 
-
-        const novosClientes =
-            clientes.filter(
-                cliente =>
-                    String(cliente.id) !==
-                    id
-            );
-
-
-        db.salvar(
-            "clientes",
-            novosClientes
-        );
-
-
-        res.json({
-
-            success: true,
-
-            message:
-                "Cliente removido.",
-
-            id
-
-        });
-
     }
-    catch (err) {
-
-        console.error(
-            "Erro ao remover cliente:",
-            err
-        );
+);
 
 
-        res.status(500).json({
-
-            success: false,
-
-            error:
-                err.message
-
-        });
-
-    }
-
-});
-
+// =====================================================
+// EXPORTAR
+// =====================================================
 
 module.exports = router;
