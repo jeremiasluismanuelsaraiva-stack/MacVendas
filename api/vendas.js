@@ -1,13 +1,61 @@
 // =====================================================
-// MOZ TECH
-// API DE VENDAS
+// MACVENDAS
+// API DE VENDAS - FIREBASE
 // =====================================================
+
+"use strict";
 
 const express = require("express");
 
 const router = express.Router();
 
-const db = require("../database/database");
+const { db } =
+    require("./firebase-admin");
+
+const autenticarAPI =
+    require("./auth");
+
+
+// =====================================================
+// FUNÇÕES AUXILIARES
+// =====================================================
+
+function numeroValor(valor) {
+
+    if (
+        valor === undefined ||
+        valor === null ||
+        valor === ""
+    ) {
+
+        return 0;
+
+    }
+
+    const n =
+        Number(valor);
+
+    return Number.isFinite(n)
+        ? n
+        : 0;
+
+}
+
+
+function limparNumero(numero) {
+
+    return String(numero)
+        .replace(/\D/g, "");
+
+}
+
+
+function agora() {
+
+    return new Date()
+        .toISOString();
+
+}
 
 
 // =====================================================
@@ -15,44 +63,86 @@ const db = require("../database/database");
 // GET /api/vendas
 // =====================================================
 
-router.get("/", (req, res) => {
+router.get(
+    "/",
+    autenticarAPI,
+    async (req, res) => {
 
-    try {
+        try {
 
-        const vendas =
-            db.ler("vendas") || [];
+            const uid =
+                req.usuario.uid;
 
 
-        res.json({
+            // =============================================
+            // BUSCAR VENDAS DO USUÁRIO
+            // =============================================
 
-            success: true,
+            const snapshot =
+                await db
+                    .ref(
+                        "vendas/" + uid
+                    )
+                    .once("value");
 
-            vendas
 
-        });
+            const dados =
+                snapshot.val() || {};
+
+
+            // =============================================
+            // TRANSFORMAR EM ARRAY
+            // =============================================
+
+            const vendas =
+                Object.entries(dados)
+                    .map(
+                        ([id, venda]) => ({
+
+                            id,
+
+                            ...venda
+
+                        })
+                    )
+                    .reverse();
+
+
+            // =============================================
+            // RESPOSTA
+            // =============================================
+
+            return res.json({
+
+                success: true,
+
+                vendas
+
+            });
+
+        }
+        catch (err) {
+
+            console.error(
+                "[API VENDAS] Erro ao listar:",
+                err
+            );
+
+
+            return res.status(500).json({
+
+                success: false,
+
+                error:
+                    err.message ||
+                    "Erro ao listar vendas."
+
+            });
+
+        }
 
     }
-    catch (err) {
-
-        console.error(
-            "Erro ao listar vendas:",
-            err
-        );
-
-
-        res.status(500).json({
-
-            success: false,
-
-            error:
-                err.message ||
-                "Erro ao listar vendas."
-
-        });
-
-    }
-
-});
+);
 
 
 // =====================================================
@@ -60,66 +150,107 @@ router.get("/", (req, res) => {
 // GET /api/vendas/:id
 // =====================================================
 
-router.get("/:id", (req, res) => {
+router.get(
+    "/:id",
+    autenticarAPI,
+    async (req, res) => {
 
-    try {
+        try {
 
-        const vendas =
-            db.ler("vendas") || [];
+            const uid =
+                req.usuario.uid;
 
 
-        const venda =
-            vendas.find(
-                v =>
-                    String(v.id) ===
-                    String(req.params.id)
+            const id =
+                String(
+                    req.params.id
+                );
+
+
+            // =============================================
+            // REFERÊNCIA
+            // =============================================
+
+            const vendaRef =
+                db
+                    .ref(
+                        "vendas/" +
+                        uid +
+                        "/" +
+                        id
+                    );
+
+
+            const snapshot =
+                await vendaRef
+                    .once("value");
+
+
+            // =============================================
+            // NÃO ENCONTRADA
+            // =============================================
+
+            if (
+                !snapshot.exists()
+            ) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    error:
+                        "Venda não encontrada."
+
+                });
+
+            }
+
+
+            // =============================================
+            // VENDA
+            // =============================================
+
+            const venda =
+                snapshot.val();
+
+
+            return res.json({
+
+                success: true,
+
+                venda: {
+
+                    id,
+
+                    ...venda
+
+                }
+
+            });
+
+        }
+        catch (err) {
+
+            console.error(
+                "[API VENDAS] Erro ao buscar:",
+                err
             );
 
 
-        if (!venda) {
-
-            return res.status(404).json({
+            return res.status(500).json({
 
                 success: false,
 
                 error:
-                    "Venda não encontrada."
+                    err.message ||
+                    "Erro ao buscar venda."
 
             });
 
         }
 
-
-        res.json({
-
-            success: true,
-
-            venda
-
-        });
-
     }
-    catch (err) {
-
-        console.error(
-            "Erro ao buscar venda:",
-            err
-        );
-
-
-        res.status(500).json({
-
-            success: false,
-
-            error:
-                err.message ||
-                "Erro ao buscar venda."
-
-        });
-
-    }
-
-});
+);
 
 
 // =====================================================
@@ -127,163 +258,270 @@ router.get("/:id", (req, res) => {
 // POST /api/vendas
 // =====================================================
 
-router.post("/", (req, res) => {
+router.post(
+    "/",
+    autenticarAPI,
+    async (req, res) => {
 
-    try {
+        try {
 
-        const vendas =
-            db.ler("vendas") || [];
-
-
-        // =================================================
-        // DADOS RECEBIDOS
-        // =================================================
-
-        const numero =
-            req.body.numero ||
-            "";
+            const uid =
+                req.usuario.uid;
 
 
-        const mb =
-            Number(
-                req.body.mb || 0
-            );
+            // =============================================
+            // DADOS RECEBIDOS
+            // =============================================
+
+            const numero =
+                req.body.numero ||
+                "";
 
 
-        const gbPacote =
-            Number(
-                req.body.gbPacote || 0
-            );
+            const mb =
+                numeroValor(
+                    req.body.mb
+                );
 
 
-        // =================================================
-        // CALCULAR GB
-        // =================================================
-
-        const gb =
-            gbPacote > 0
-                ? gbPacote
-                : mb / 1024;
+            const gbPacote =
+                numeroValor(
+                    req.body.gbPacote ??
+                    req.body.gb_pacote
+                );
 
 
-        // =================================================
-        // VALOR
-        // =================================================
-
-        const valorPacote =
-            Number(
-                req.body.valorPacote ??
-                req.body.valor ??
-                0
-            );
+            const valorPacote =
+                numeroValor(
+                    req.body.valorPacote ??
+                    req.body.valor_pacote ??
+                    req.body.valor
+                );
 
 
-        // =================================================
-        // CRIAR VENDA
-        // =================================================
-
-        const venda = {
-
-            id:
-                Date.now().toString(),
+            const custo =
+                numeroValor(
+                    req.body.custo
+                );
 
 
-            numero,
-
-
-            mb,
-
-
-            gb,
-
-
-            grupo:
+            const grupo =
                 req.body.grupo ||
-                "GRUPO_PADRAO",
+                "GRUPO_PADRAO";
 
 
-            tipo:
+            const tipo =
                 req.body.tipo ||
-                "normal",
+                "normal";
 
 
-            valor_venda:
-                valorPacote,
+            const vantagem =
+                req.body.vantagem ||
+                "";
 
 
-            valor_pacote:
-                valorPacote,
+            const status =
+                req.body.status ||
+                "Concluído";
 
 
-            gb_pacote:
+            // =============================================
+            // VALIDAR NÚMERO
+            // =============================================
+
+            if (
+                !numero
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Número do cliente é obrigatório."
+
+                });
+
+            }
+
+
+            // =============================================
+            // CALCULAR GB
+            // =============================================
+
+            const gb =
+                gbPacote > 0
+                    ? gbPacote
+                    : mb / 1024;
+
+
+            // =============================================
+            // CALCULAR LUCRO
+            // =============================================
+
+            const lucro =
+                valorPacote -
+                custo;
+
+
+            // =============================================
+            // CRIAR REFERÊNCIA FIREBASE
+            // =============================================
+
+            const vendaRef =
+                db
+                    .ref(
+                        "vendas/" +
+                        uid
+                    )
+                    .push();
+
+
+            const id =
+                vendaRef.key;
+
+
+            // =============================================
+            // CRIAR VENDA
+            // =============================================
+
+            const venda = {
+
+                id,
+
+                uid,
+
+                numero:
+                    String(numero),
+
+                mb,
+
+                gb,
+
                 gbPacote,
 
+                gb_pacote:
+                    gbPacote,
 
-            vantagem:
-                req.body.vantagem ||
-                "",
+                grupo,
+
+                tipo,
+
+                valorPacote,
+
+                valor_pacote:
+                    valorPacote,
+
+                valorVenda:
+                    valorPacote,
+
+                valor_venda:
+                    valorPacote,
+
+                custo,
+
+                lucro,
+
+                vantagem,
+
+                status,
+
+                createdAt:
+                    agora(),
+
+                criadoEm:
+                    agora()
+
+            };
 
 
-            status:
-                req.body.status ||
-                "Concluído",
+            // =============================================
+            // GUARDAR VENDA
+            // =============================================
+
+            await vendaRef.set(
+                venda
+            );
 
 
-            createdAt:
-                new Date().toISOString()
+            // =============================================
+            // ATUALIZAR CLIENTE
+            // =============================================
 
-        };
-
-
-        // =================================================
-        // GUARDAR
-        // =================================================
-
-        vendas.unshift(
-            venda
-        );
+            const numeroLimpo =
+                limparNumero(
+                    numero
+                );
 
 
-        db.salvar(
-            "vendas",
-            vendas
-        );
+            if (
+                numeroLimpo
+            ) {
+
+                const clienteRef =
+                    db
+                        .ref(
+                            "clientes/" +
+                            uid +
+                            "/" +
+                            numeroLimpo
+                        );
 
 
-        // =================================================
-        // RESPOSTA
-        // =================================================
+                await clienteRef.update({
 
-        res.json({
+                    numero:
+                        String(numero),
 
-            success: true,
+                    ultimaCompra:
+                        agora(),
 
-            venda
+                    ultimaVenda:
+                        id
 
-        });
+                });
+
+            }
+
+
+            // =============================================
+            // RESPOSTA
+            // =============================================
+
+            return res.status(201).json({
+
+                success: true,
+
+                message:
+                    "Venda adicionada com sucesso.",
+
+                venda
+
+            });
+
+        }
+        catch (err) {
+
+            console.error(
+                "[API VENDAS] Erro ao adicionar:",
+                err
+            );
+
+
+            return res.status(500).json({
+
+                success: false,
+
+                error:
+                    err.message ||
+                    "Erro ao adicionar venda."
+
+            });
+
+        }
 
     }
-    catch (err) {
-
-        console.error(
-            "Erro ao adicionar venda:",
-            err
-        );
-
-
-        res.status(500).json({
-
-            success: false,
-
-            error:
-                err.message ||
-                "Erro ao adicionar venda."
-
-        });
-
-    }
-
-});
+);
 
 
 // =====================================================
@@ -291,105 +529,112 @@ router.post("/", (req, res) => {
 // DELETE /api/vendas/:id
 // =====================================================
 
-router.delete("/:id", (req, res) => {
+router.delete(
+    "/:id",
+    autenticarAPI,
+    async (req, res) => {
 
-    try {
+        try {
 
-        const vendas =
-            db.ler("vendas") || [];
+            const uid =
+                req.usuario.uid;
 
 
-        const id =
-            String(
-                req.params.id
+            const id =
+                String(
+                    req.params.id
+                );
+
+
+            // =============================================
+            // REFERÊNCIA
+            // =============================================
+
+            const vendaRef =
+                db
+                    .ref(
+                        "vendas/" +
+                        uid +
+                        "/" +
+                        id
+                    );
+
+
+            const snapshot =
+                await vendaRef
+                    .once("value");
+
+
+            // =============================================
+            // VERIFICAR
+            // =============================================
+
+            if (
+                !snapshot.exists()
+            ) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    error:
+                        "Venda não encontrada."
+
+                });
+
+            }
+
+
+            // =============================================
+            // APAGAR
+            // =============================================
+
+            await vendaRef.remove();
+
+
+            // =============================================
+            // RESPOSTA
+            // =============================================
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    "Venda removida.",
+
+                id
+
+            });
+
+        }
+        catch (err) {
+
+            console.error(
+                "[API VENDAS] Erro ao apagar:",
+                err
             );
 
 
-        // =================================================
-        // VERIFICAR
-        // =================================================
-
-        const existe =
-            vendas.some(
-                venda =>
-                    String(venda.id) ===
-                    id
-            );
-
-
-        if (!existe) {
-
-            return res.status(404).json({
+            return res.status(500).json({
 
                 success: false,
 
                 error:
-                    "Venda não encontrada."
+                    err.message ||
+                    "Erro ao apagar venda."
 
             });
 
         }
 
-
-        // =================================================
-        // REMOVER
-        // =================================================
-
-        const novasVendas =
-            vendas.filter(
-                venda =>
-                    String(venda.id) !==
-                    id
-            );
-
-
-        db.salvar(
-            "vendas",
-            novasVendas
-        );
-
-
-        // =================================================
-        // RESPOSTA
-        // =================================================
-
-        res.json({
-
-            success: true,
-
-            message:
-                "Venda removida.",
-
-            id
-
-        });
-
     }
-    catch (err) {
-
-        console.error(
-            "Erro ao apagar venda:",
-            err
-        );
-
-
-        res.status(500).json({
-
-            success: false,
-
-            error:
-                err.message ||
-                "Erro ao apagar venda."
-
-        });
-
-    }
-
-});
+);
 
 
 // =====================================================
 // EXPORTAR
 // =====================================================
 
-module.exports = router;
+module.exports =
+    router;
