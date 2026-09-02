@@ -1,20 +1,71 @@
+// =====================================================
+// MACVENDAS
+// API DE GRUPOS
+// FIREBASE REALTIME DATABASE
+// =====================================================
+
+"use strict";
+
 const express = require("express");
+
 const router = express.Router();
 
-const db = require("../database/database");
+const { db } = require("../database/firebase-admin");
+
+
+// =====================================================
+// FUNÇÃO AUXILIAR
+// LER GRUPOS
+// =====================================================
+
+async function lerGrupos() {
+
+    const snapshot =
+        await db
+            .ref("grupos")
+            .once("value");
+
+    const dados =
+        snapshot.val();
+
+    if (!dados) {
+        return [];
+    }
+
+    // Firebase pode retornar objeto ou array
+    if (Array.isArray(dados)) {
+        return dados;
+    }
+
+    return Object.values(dados);
+
+}
+
+
+// =====================================================
+// SALVAR GRUPOS
+// =====================================================
+
+async function salvarGrupos(grupos) {
+
+    await db
+        .ref("grupos")
+        .set(grupos);
+
+}
 
 
 // =====================================================
 // LISTAR GRUPOS
-// GET /grupos
+// GET /api/grupos
 // =====================================================
 
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
 
     try {
 
         const grupos =
-            db.ler("grupos") || [];
+            await lerGrupos();
 
 
         res.json({
@@ -42,7 +93,8 @@ router.get("/", (req, res) => {
             success: false,
 
             error:
-                err.message
+                err.message ||
+                "Erro ao listar grupos."
 
         });
 
@@ -53,15 +105,15 @@ router.get("/", (req, res) => {
 
 // =====================================================
 // BUSCAR GRUPO
-// GET /grupos/:id
+// GET /api/grupos/:id
 // =====================================================
 
-router.get("/:id", (req, res) => {
+router.get("/:id", async (req, res) => {
 
     try {
 
         const grupos =
-            db.ler("grupos") || [];
+            await lerGrupos();
 
 
         const grupo =
@@ -108,7 +160,8 @@ router.get("/:id", (req, res) => {
             success: false,
 
             error:
-                err.message
+                err.message ||
+                "Erro ao buscar grupo."
 
         });
 
@@ -119,15 +172,15 @@ router.get("/:id", (req, res) => {
 
 // =====================================================
 // NOVO GRUPO
-// POST /grupos
+// POST /api/grupos
 // =====================================================
 
-router.post("/", (req, res) => {
+router.post("/", async (req, res) => {
 
     try {
 
         const grupos =
-            db.ler("grupos") || [];
+            await lerGrupos();
 
 
         const grupo = {
@@ -148,14 +201,14 @@ router.post("/", (req, res) => {
 
             venda:
                 Number(
-                    req.body.venda ||
+                    req.body.venda ??
                     0
                 ),
 
 
             custo:
                 Number(
-                    req.body.custo ||
+                    req.body.custo ??
                     0
                 ),
 
@@ -179,8 +232,7 @@ router.post("/", (req, res) => {
         );
 
 
-        db.salvar(
-            "grupos",
+        await salvarGrupos(
             grupos
         );
 
@@ -207,7 +259,8 @@ router.post("/", (req, res) => {
             success: false,
 
             error:
-                err.message
+                err.message ||
+                "Erro ao criar grupo."
 
         });
 
@@ -218,15 +271,15 @@ router.post("/", (req, res) => {
 
 // =====================================================
 // EDITAR GRUPO
-// PUT /grupos/:id
+// PUT /api/grupos/:id
 // =====================================================
 
-router.put("/:id", (req, res) => {
+router.put("/:id", async (req, res) => {
 
     try {
 
         const grupos =
-            db.ler("grupos") || [];
+            await lerGrupos();
 
 
         const index =
@@ -262,6 +315,10 @@ router.put("/:id", (req, res) => {
             ...req.body,
 
 
+            id:
+                atual.id,
+
+
             venda:
                 req.body.venda !== undefined
                     ? Number(
@@ -288,8 +345,7 @@ router.put("/:id", (req, res) => {
             atualizado;
 
 
-        db.salvar(
-            "grupos",
+        await salvarGrupos(
             grupos
         );
 
@@ -317,7 +373,8 @@ router.put("/:id", (req, res) => {
             success: false,
 
             error:
-                err.message
+                err.message ||
+                "Erro ao editar grupo."
 
         });
 
@@ -328,15 +385,15 @@ router.put("/:id", (req, res) => {
 
 // =====================================================
 // REMOVER GRUPO
-// DELETE /grupos/:id
+// DELETE /api/grupos/:id
 // =====================================================
 
-router.delete("/:id", (req, res) => {
+router.delete("/:id", async (req, res) => {
 
     try {
 
         const grupos =
-            db.ler("grupos") || [];
+            await lerGrupos();
 
 
         const id =
@@ -375,8 +432,7 @@ router.delete("/:id", (req, res) => {
             );
 
 
-        db.salvar(
-            "grupos",
+        await salvarGrupos(
             novosGrupos
         );
 
@@ -406,7 +462,8 @@ router.delete("/:id", (req, res) => {
             success: false,
 
             error:
-                err.message
+                err.message ||
+                "Erro ao remover grupo."
 
         });
 
@@ -414,5 +471,9 @@ router.delete("/:id", (req, res) => {
 
 });
 
+
+// =====================================================
+// EXPORTAR
+// =====================================================
 
 module.exports = router;
