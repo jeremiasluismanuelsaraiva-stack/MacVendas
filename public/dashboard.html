@@ -13,14 +13,20 @@
     <title>MOZ TECH - Dashboard</title>
 
 
-    <!-- FONT AWESOME -->
+    <!-- =====================================================
+         FONT AWESOME
+    ====================================================== -->
+
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     >
 
 
-    <!-- CSS -->
+    <!-- =====================================================
+         CSS PRINCIPAL
+    ====================================================== -->
+
     <link
         rel="stylesheet"
         href="/css/style.css"
@@ -30,14 +36,90 @@
     <style>
 
         /* =====================================================
+           VARIÁVEIS DO TEMA
+        ====================================================== */
+
+        :root {
+
+            --bg-primary: #f5f7fb;
+            --bg-secondary: #ffffff;
+
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+
+            --border-color: #e5e7eb;
+
+            --accent-color: #0066cc;
+            --accent-hover: #0052a3;
+
+            --success: #00a65a;
+
+            --card-shadow:
+                0 4px 18px rgba(0, 0, 0, 0.06);
+
+        }
+
+
+        /* =====================================================
+           TEMA DARK
+        ====================================================== */
+
+        html[data-theme="dark"] {
+
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+
+            --border-color: #334155;
+
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+
+            --success: #22c55e;
+
+            --card-shadow:
+                0 4px 18px rgba(0, 0, 0, 0.25);
+
+        }
+
+
+        /* =====================================================
+           TEMA LIGHT
+        ====================================================== */
+
+        html[data-theme="light"] {
+
+            --bg-primary: #f5f7fb;
+            --bg-secondary: #ffffff;
+
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+
+            --border-color: #e5e7eb;
+
+            --accent-color: #0066cc;
+            --accent-hover: #0052a3;
+
+            --success: #00a65a;
+
+            --card-shadow:
+                0 4px 18px rgba(0, 0, 0, 0.06);
+
+        }
+
+
+        /* =====================================================
            ESTRUTURA
-        ===================================================== */
+        ====================================================== */
 
         html,
         body {
 
             width: 100%;
             min-height: 100%;
+
             margin: 0;
             padding: 0;
 
@@ -46,7 +128,26 @@
 
         body {
 
+            background:
+                var(--bg-primary);
+
+            color:
+                var(--text-primary);
+
             overflow-x: hidden;
+
+            transition:
+                background 0.25s ease,
+                color 0.25s ease;
+
+        }
+
+
+        *,
+        *::before,
+        *::after {
+
+            box-sizing: border-box;
 
         }
 
@@ -62,18 +163,19 @@
         }
 
 
-
         /* =====================================================
            SIDEBAR
-        ===================================================== */
+        ====================================================== */
 
         .sidebar {
 
             width: 260px;
             min-width: 260px;
+
             min-height: 100vh;
 
-            background: var(--bg-secondary);
+            background:
+                var(--bg-secondary);
 
             border-right:
                 1px solid
@@ -90,15 +192,16 @@
             overflow-y: auto;
 
             transition:
-                transform 0.3s ease;
+                transform 0.3s ease,
+                background 0.25s ease,
+                border-color 0.25s ease;
 
         }
 
 
-
         /* =====================================================
            CONTEÚDO
-        ===================================================== */
+        ====================================================== */
 
         .main-content {
 
@@ -116,10 +219,9 @@
         }
 
 
-
         /* =====================================================
            LOGO
-        ===================================================== */
+        ====================================================== */
 
         .sidebar-header {
 
@@ -136,9 +238,18 @@
 
             margin: 0;
 
-            color: var(--text-primary);
+            color:
+                var(--text-primary);
 
             font-size: 22px;
+
+        }
+
+
+        .sidebar-header h2 i {
+
+            color:
+                var(--accent-color);
 
         }
 
@@ -147,17 +258,17 @@
 
             margin: 5px 0 0;
 
-            color: var(--text-secondary);
+            color:
+                var(--text-secondary);
 
             font-size: 13px;
 
         }
 
 
-
         /* =====================================================
            MENU
-        ===================================================== */
+        ====================================================== */
 
         .sidebar-menu {
 
@@ -186,7 +297,8 @@
 
             background: transparent;
 
-            color: var(--text-primary);
+            color:
+                var(--text-primary);
 
             text-decoration: none;
 
@@ -207,14 +319,15 @@
         .menu-item:hover {
 
             background:
-                rgba(0, 102, 204, 0.08);
+                rgba(59, 130, 246, 0.10);
 
         }
 
 
         .menu-item:active {
 
-            transform: scale(0.98);
+            transform:
+                scale(0.98);
 
         }
 
@@ -238,10 +351,123 @@
         }
 
 
+        /* =====================================================
+           TEMA
+        ====================================================== */
+
+        .theme-box {
+
+            margin:
+                15px 10px 20px;
+
+            padding: 15px;
+
+            border:
+                1px solid
+                var(--border-color);
+
+            border-radius: 12px;
+
+            background:
+                var(--bg-primary);
+
+        }
+
+
+        .theme-title {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            margin-bottom: 10px;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            color:
+                var(--text-secondary);
+
+        }
+
+
+        .theme-options {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 6px;
+
+        }
+
+
+        .theme-btn {
+
+            border:
+                1px solid
+                var(--border-color);
+
+            background:
+                var(--bg-secondary);
+
+            color:
+                var(--text-primary);
+
+            border-radius: 8px;
+
+            padding: 8px 4px;
+
+            cursor: pointer;
+
+            font-size: 11px;
+
+            transition:
+                0.2s;
+
+        }
+
+
+        .theme-btn:hover {
+
+            border-color:
+                var(--accent-color);
+
+            color:
+                var(--accent-color);
+
+        }
+
+
+        .theme-btn.active {
+
+            background:
+                var(--accent-color);
+
+            border-color:
+                var(--accent-color);
+
+            color: #fff;
+
+        }
+
+
+        .theme-btn i {
+
+            display: block;
+
+            margin-bottom: 4px;
+
+        }
+
 
         /* =====================================================
            BOTÃO MOBILE
-        ===================================================== */
+        ====================================================== */
 
         .menu-toggle {
 
@@ -275,7 +501,8 @@
             justify-content: center;
 
             box-shadow:
-                0 4px 15px rgba(0,0,0,0.15);
+                0 4px 15px
+                rgba(0, 0, 0, 0.15);
 
         }
 
@@ -288,10 +515,9 @@
         }
 
 
-
         /* =====================================================
            OVERLAY
-        ===================================================== */
+        ====================================================== */
 
         .menu-overlay {
 
@@ -316,10 +542,9 @@
         }
 
 
-
         /* =====================================================
            TOPO
-        ===================================================== */
+        ====================================================== */
 
         .dashboard-header {
 
@@ -342,12 +567,27 @@
 
             font-size: 28px;
 
+            color:
+                var(--text-primary);
+
         }
 
 
         .dashboard-title p {
 
             margin: 5px 0 0;
+
+            color:
+                var(--text-secondary);
+
+        }
+
+
+        .dashboard-title small {
+
+            display: block;
+
+            margin-top: 5px;
 
             color:
                 var(--text-secondary);
@@ -364,10 +604,9 @@
         }
 
 
-
         /* =====================================================
            BOTÃO ATUALIZAR
-        ===================================================== */
+        ====================================================== */
 
         .refresh-btn {
 
@@ -414,10 +653,9 @@
         }
 
 
-
         /* =====================================================
            CARDS
-        ===================================================== */
+        ====================================================== */
 
         .stats-grid {
 
@@ -452,6 +690,19 @@
             box-shadow:
                 var(--card-shadow);
 
+            transition:
+                background 0.25s ease,
+                border-color 0.25s ease,
+                transform 0.2s ease;
+
+        }
+
+
+        .stat-card:hover {
+
+            transform:
+                translateY(-2px);
+
         }
 
 
@@ -469,7 +720,7 @@
             justify-content: center;
 
             background:
-                rgba(0, 102, 204, 0.1);
+                rgba(59, 130, 246, 0.10);
 
             color:
                 var(--accent-color);
@@ -507,10 +758,9 @@
         }
 
 
-
         /* =====================================================
            SEÇÕES
-        ===================================================== */
+        ====================================================== */
 
         .section {
 
@@ -529,6 +779,14 @@
 
             box-shadow:
                 var(--card-shadow);
+
+        }
+
+
+        .section h2 {
+
+            color:
+                var(--text-primary);
 
         }
 
@@ -555,10 +813,9 @@
         }
 
 
-
         /* =====================================================
            TABELA
-        ===================================================== */
+        ====================================================== */
 
         .table-container {
 
@@ -591,6 +848,9 @@
 
             font-size: 14px;
 
+            color:
+                var(--text-primary);
+
         }
 
 
@@ -604,10 +864,9 @@
         }
 
 
-
         /* =====================================================
            STATUS
-        ===================================================== */
+        ====================================================== */
 
         .status {
 
@@ -633,10 +892,9 @@
         }
 
 
-
         /* =====================================================
            PAINÉIS
-        ===================================================== */
+        ====================================================== */
 
         .panel {
 
@@ -645,16 +903,17 @@
         }
 
 
-
         /* =====================================================
            TUTORIAL
-        ===================================================== */
+        ====================================================== */
 
         .tutorial-content pre {
 
-            background: #111;
+            background:
+                #111827;
 
-            color: #eee;
+            color:
+                #e5e7eb;
 
             padding: 18px;
 
@@ -694,6 +953,9 @@
 
             border-radius: 10px;
 
+            background:
+                var(--bg-primary);
+
         }
 
 
@@ -714,6 +976,9 @@
             word-break: break-all;
 
             font-weight: 600;
+
+            color:
+                var(--text-primary);
 
         }
 
@@ -736,10 +1001,17 @@
         }
 
 
+        .copy-btn:hover {
+
+            background:
+                var(--accent-hover);
+
+        }
+
 
         /* =====================================================
            MOBILE
-        ===================================================== */
+        ====================================================== */
 
         @media (max-width: 768px) {
 
@@ -824,7 +1096,6 @@
 </head>
 
 
-
 <body>
 
 <div class="app-container">
@@ -847,7 +1118,6 @@
     </button>
 
 
-
     <!-- =====================================================
          OVERLAY
     ====================================================== -->
@@ -856,7 +1126,6 @@
         id="menuOverlay"
         class="menu-overlay"
     ></div>
-
 
 
     <!-- =====================================================
@@ -883,7 +1152,6 @@
             </p>
 
         </div>
-
 
 
         <nav class="sidebar-menu">
@@ -996,8 +1264,74 @@
 
         </nav>
 
-    </aside>
 
+        <!-- =================================================
+             SELETOR DE TEMA
+        ================================================== -->
+
+        <div class="theme-box">
+
+            <div class="theme-title">
+
+                <i class="fas fa-palette"></i>
+
+                <span>
+                    Tema
+                </span>
+
+            </div>
+
+
+            <div class="theme-options">
+
+
+                <button
+                    type="button"
+                    class="theme-btn"
+                    data-theme-choice="light"
+                    title="Tema claro"
+                >
+
+                    <i class="fas fa-sun"></i>
+
+                    Claro
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="theme-btn"
+                    data-theme-choice="dark"
+                    title="Tema escuro"
+                >
+
+                    <i class="fas fa-moon"></i>
+
+                    Escuro
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="theme-btn"
+                    data-theme-choice="system"
+                    title="Tema automático"
+                >
+
+                    <i class="fas fa-desktop"></i>
+
+                    Auto
+
+                </button>
+
+
+            </div>
+
+        </div>
+
+    </aside>
 
 
     <!-- =====================================================
@@ -1056,7 +1390,6 @@
             </div>
 
 
-
             <!-- =================================================
                  ESTATÍSTICAS
             ================================================== -->
@@ -1086,7 +1419,6 @@
                 </div>
 
 
-
                 <div class="stat-card">
 
                     <div class="stat-icon">
@@ -1107,7 +1439,6 @@
                     </div>
 
                 </div>
-
 
 
                 <div class="stat-card">
@@ -1132,7 +1463,6 @@
                 </div>
 
 
-
                 <div class="stat-card">
 
                     <div class="stat-icon">
@@ -1153,7 +1483,6 @@
                     </div>
 
                 </div>
-
 
 
                 <div class="stat-card">
@@ -1178,7 +1507,6 @@
                 </div>
 
 
-
                 <div class="stat-card">
 
                     <div class="stat-icon">
@@ -1201,7 +1529,6 @@
                 </div>
 
 
-
                 <div class="stat-card">
 
                     <div class="stat-icon">
@@ -1222,7 +1549,6 @@
                     </div>
 
                 </div>
-
 
 
                 <div class="stat-card">
@@ -1248,7 +1574,6 @@
 
 
             </div>
-
 
 
             <!-- =================================================
@@ -1301,7 +1626,10 @@
 
                                 <td
                                     colspan="4"
-                                    style="text-align:center;padding:20px"
+                                    style="
+                                        text-align:center;
+                                        padding:20px;
+                                    "
                                 >
                                     Carregando...
                                 </td>
@@ -1316,8 +1644,8 @@
 
             </div>
 
-        </div>
 
+        </div>
 
 
         <!-- =================================================
@@ -1349,7 +1677,6 @@
         </div>
 
 
-
         <!-- =================================================
              PACOTES
         ================================================== -->
@@ -1377,7 +1704,6 @@
             </div>
 
         </div>
-
 
 
         <!-- =================================================
@@ -1409,7 +1735,6 @@
         </div>
 
 
-
         <!-- =================================================
              DISPOSITIVOS
         ================================================== -->
@@ -1437,7 +1762,6 @@
             </div>
 
         </div>
-
 
 
         <!-- =================================================
@@ -1574,7 +1898,6 @@
         </div>
 
 
-
         <!-- =================================================
              CONFIGURAÇÕES
         ================================================== -->
@@ -1609,20 +1932,228 @@
 </div>
 
 
-
 <!-- =========================================================
      JAVASCRIPT
 ========================================================== -->
 
 <script src="/js/api.js"></script>
+
 <script src="/js/app.js"></script>
+
 <script src="/js/dashboard.js"></script>
+
 <script src="/js/charts.js"></script>
+
 <script src="/js/crm.js"></script>
+
 <script src="/js/pacotes.js"></script>
+
 <script src="/js/pedidos.js"></script>
+
 <script src="/js/dispositivos.js"></script>
+
 <script src="/js/config.js"></script>
+
+
+<!-- =========================================================
+     CONTROLE DO TEMA
+========================================================== -->
+
+<script>
+
+(function () {
+
+    "use strict";
+
+
+    function aplicarTemaVisual(tema) {
+
+        let temaFinal = tema;
+
+
+        /* -----------------------------------------------
+           TEMA AUTOMÁTICO
+        ------------------------------------------------ */
+
+        if (tema === "system") {
+
+            const prefereDark =
+                window.matchMedia(
+                    "(prefers-color-scheme: dark)"
+                ).matches;
+
+
+            temaFinal =
+                prefereDark
+                    ? "dark"
+                    : "light";
+
+        }
+
+
+        /* -----------------------------------------------
+           APLICAR
+        ------------------------------------------------ */
+
+        document.documentElement.setAttribute(
+            "data-theme",
+            temaFinal
+        );
+
+
+        document.body.classList.remove(
+            "theme-dark",
+            "theme-light"
+        );
+
+
+        document.body.classList.add(
+            "theme-" + temaFinal
+        );
+
+
+        /* -----------------------------------------------
+           GUARDAR ESCOLHA
+        ------------------------------------------------ */
+
+        localStorage.setItem(
+            "tema",
+            tema
+        );
+
+
+        /* -----------------------------------------------
+           ATUALIZAR BOTÕES
+        ------------------------------------------------ */
+
+        document
+            .querySelectorAll(
+                "[data-theme-choice]"
+            )
+            .forEach(function (botao) {
+
+                botao.classList.remove(
+                    "active"
+                );
+
+
+                if (
+                    botao.dataset.themeChoice ===
+                    tema
+                ) {
+
+                    botao.classList.add(
+                        "active"
+                    );
+
+                }
+
+            });
+
+    }
+
+
+    function carregarTema() {
+
+        const temaSalvo =
+            localStorage.getItem("tema") ||
+            "dark";
+
+
+        aplicarTemaVisual(
+            temaSalvo
+        );
+
+    }
+
+
+    function iniciarTema() {
+
+        document
+            .querySelectorAll(
+                "[data-theme-choice]"
+            )
+            .forEach(function (botao) {
+
+                botao.addEventListener(
+                    "click",
+                    function () {
+
+                        const tema =
+                            botao.dataset.themeChoice;
+
+
+                        aplicarTemaVisual(
+                            tema
+                        );
+
+                    }
+                );
+
+            });
+
+
+        carregarTema();
+
+
+        /* -----------------------------------------------
+           ATUALIZAR AUTOMÁTICO
+           CASO ESTEJA EM "AUTO"
+        ------------------------------------------------ */
+
+        const media =
+            window.matchMedia(
+                "(prefers-color-scheme: dark)"
+            );
+
+
+        media.addEventListener(
+            "change",
+            function () {
+
+                const temaSalvo =
+                    localStorage.getItem("tema");
+
+
+                if (
+                    temaSalvo === "system"
+                ) {
+
+                    aplicarTemaVisual(
+                        "system"
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            iniciarTema,
+            {
+                once: true
+            }
+        );
+
+    }
+    else {
+
+        iniciarTema();
+
+    }
+
+})();
+
+</script>
 
 
 </body>
