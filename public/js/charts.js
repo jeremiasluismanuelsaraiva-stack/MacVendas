@@ -26,13 +26,48 @@ function destruirGrafico(grafico) {
         catch (erro) {
 
             console.warn(
-                "Erro ao destruir gráfico:",
+                "[MOZ TECH] Erro ao destruir gráfico:",
                 erro
             );
 
         }
 
     }
+
+}
+
+
+// ==========================================
+// OBTER VALOR NUMÉRICO
+// ==========================================
+
+function obterNumero(valor) {
+
+    const numero =
+        Number(valor);
+
+
+    if (!Number.isFinite(numero)) {
+
+        return 0;
+
+    }
+
+
+    return numero;
+
+}
+
+
+// ==========================================
+// ORDENAR DATAS
+// ==========================================
+
+function ordenarDatas(objeto) {
+
+    return Object.keys(
+        objeto || {}
+    ).sort();
 
 }
 
@@ -52,12 +87,17 @@ async function carregarGraficos() {
         if (typeof Chart === "undefined") {
 
             console.error(
-                "Chart.js não foi carregado."
+                "[MOZ TECH] Chart.js não foi carregado."
             );
 
             return;
 
         }
+
+
+        console.log(
+            "[MOZ TECH] Carregando dados dos gráficos..."
+        );
 
 
         // --------------------------------------
@@ -66,8 +106,28 @@ async function carregarGraficos() {
 
         const resposta =
             await fetch(
-                API_CHARTS + "/relatorios"
+                API_CHARTS + "/relatorios",
+                {
+
+                    method: "GET",
+
+                    headers: {
+
+                        "Accept":
+                            "application/json"
+
+                    },
+
+                    cache: "no-store"
+
+                }
             );
+
+
+        console.log(
+            "[MOZ TECH] Relatórios HTTP:",
+            resposta.status
+        );
 
 
         if (!resposta.ok) {
@@ -84,24 +144,57 @@ async function carregarGraficos() {
             await resposta.json();
 
 
-        if (!json.success) {
+        console.log(
+            "[MOZ TECH] Resposta relatórios:",
+            json
+        );
 
-            console.error(
-                "API de relatórios retornou erro:",
-                json
+
+        // --------------------------------------
+        // VALIDAR RESPOSTA
+        // --------------------------------------
+
+        if (
+            !json ||
+            json.success !== true
+        ) {
+
+            throw new Error(
+                json?.error ||
+                "Resposta inválida da API de relatórios."
             );
-
-            return;
 
         }
 
 
         const vendasPorDia =
-            json.vendasPorDia || {};
+            json.vendasPorDia &&
+            typeof json.vendasPorDia === "object"
+                ? json.vendasPorDia
+                : {};
 
 
         const vendasPorMes =
-            json.vendasPorMes || {};
+            json.vendasPorMes &&
+            typeof json.vendasPorMes === "object"
+                ? json.vendasPorMes
+                : {};
+
+
+        // ==========================================
+        // DATAS
+        // ==========================================
+
+        const datas =
+            ordenarDatas(
+                vendasPorDia
+            );
+
+
+        const meses =
+            ordenarDatas(
+                vendasPorMes
+            );
 
 
         // ==========================================
@@ -121,8 +214,12 @@ async function carregarGraficos() {
             );
 
 
+            const agora =
+                new Date();
+
+
             const hoje =
-                new Date()
+                agora
                     .toISOString()
                     .substring(
                         0,
@@ -131,7 +228,9 @@ async function carregarGraficos() {
 
 
             const quantidadeHoje =
-                vendasPorDia[hoje] || 0;
+                obterNumero(
+                    vendasPorDia[hoje]
+                );
 
 
             graficoHoje =
@@ -139,12 +238,15 @@ async function carregarGraficos() {
                     canvasHoje,
                     {
 
-                        type: "bar",
+                        type:
+                            "bar",
 
                         data: {
 
                             labels: [
+
                                 "Hoje"
+
                             ],
 
                             datasets: [
@@ -155,7 +257,9 @@ async function carregarGraficos() {
                                         "Vendas",
 
                                     data: [
+
                                         quantidadeHoje
+
                                     ],
 
                                     borderWidth:
@@ -177,6 +281,13 @@ async function carregarGraficos() {
 
                             maintainAspectRatio:
                                 false,
+
+                            animation: {
+
+                                duration:
+                                    500
+
+                            },
 
                             plugins: {
 
@@ -232,19 +343,34 @@ async function carregarGraficos() {
             );
 
 
+            const labelsDias =
+                datas;
+
+
+            const valoresDias =
+                labelsDias.map(
+                    function (data) {
+
+                        return obterNumero(
+                            vendasPorDia[data]
+                        );
+
+                    }
+                );
+
+
             graficoDias =
                 new Chart(
                     canvasDias,
                     {
 
-                        type: "line",
+                        type:
+                            "line",
 
                         data: {
 
                             labels:
-                                Object.keys(
-                                    vendasPorDia
-                                ),
+                                labelsDias,
 
                             datasets: [
 
@@ -254,9 +380,7 @@ async function carregarGraficos() {
                                         "Vendas",
 
                                     data:
-                                        Object.values(
-                                            vendasPorDia
-                                        ),
+                                        valoresDias,
 
                                     borderWidth:
                                         3,
@@ -265,7 +389,13 @@ async function carregarGraficos() {
                                         0.35,
 
                                     fill:
-                                        false
+                                        false,
+
+                                    pointRadius:
+                                        4,
+
+                                    pointHoverRadius:
+                                        6
 
                                 }
 
@@ -280,6 +410,13 @@ async function carregarGraficos() {
 
                             maintainAspectRatio:
                                 false,
+
+                            animation: {
+
+                                duration:
+                                    500
+
+                            },
 
                             plugins: {
 
@@ -335,19 +472,34 @@ async function carregarGraficos() {
             );
 
 
+            const labelsMeses =
+                meses;
+
+
+            const valoresMeses =
+                labelsMeses.map(
+                    function (mes) {
+
+                        return obterNumero(
+                            vendasPorMes[mes]
+                        );
+
+                    }
+                );
+
+
             graficoMeses =
                 new Chart(
                     canvasMeses,
                     {
 
-                        type: "bar",
+                        type:
+                            "bar",
 
                         data: {
 
                             labels:
-                                Object.keys(
-                                    vendasPorMes
-                                ),
+                                labelsMeses,
 
                             datasets: [
 
@@ -357,9 +509,7 @@ async function carregarGraficos() {
                                         "Vendas",
 
                                     data:
-                                        Object.values(
-                                            vendasPorMes
-                                        ),
+                                        valoresMeses,
 
                                     borderWidth:
                                         0,
@@ -380,6 +530,13 @@ async function carregarGraficos() {
 
                             maintainAspectRatio:
                                 false,
+
+                            animation: {
+
+                                duration:
+                                    500
+
+                            },
 
                             plugins: {
 
@@ -417,11 +574,16 @@ async function carregarGraficos() {
 
         }
 
+
+        console.log(
+            "[MOZ TECH] Gráficos carregados com sucesso."
+        );
+
     }
     catch (erro) {
 
         console.error(
-            "Erro ao carregar gráficos:",
+            "[MOZ TECH] Erro ao carregar gráficos:",
             erro
         );
 
@@ -442,14 +604,41 @@ window.carregarGraficos =
 // INICIALIZAÇÃO
 // ==========================================
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
+function iniciarGraficos() {
 
-        carregarGraficos();
+    console.log(
+        "[MOZ TECH] charts.js iniciado."
+    );
 
-    }
-);
+
+    carregarGraficos();
+
+}
+
+
+// ==========================================
+// DOM READY
+// ==========================================
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        iniciarGraficos,
+        {
+            once: true
+        }
+    );
+
+}
+else {
+
+    iniciarGraficos();
+
+}
 
 
 // ==========================================
@@ -457,6 +646,10 @@ document.addEventListener(
 // ==========================================
 
 setInterval(
-    carregarGraficos,
+    function () {
+
+        carregarGraficos();
+
+    },
     10000
 );
