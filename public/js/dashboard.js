@@ -347,16 +347,6 @@
             );
 
 
-            /*
-             * Aceita:
-             *
-             * {
-             *     success: true,
-             *     dashboard: {...}
-             * }
-             */
-
-
             if (
                 !json
             ) {
@@ -703,10 +693,6 @@
             let vendas = [];
 
 
-            // =================================================
-            // ARRAY DIRETO
-            // =================================================
-
             if (
                 Array.isArray(json)
             ) {
@@ -715,12 +701,6 @@
                     json;
 
             }
-
-
-            // =================================================
-            // { vendas: [] }
-            // =================================================
-
             else if (
                 json &&
                 Array.isArray(
@@ -732,12 +712,6 @@
                     json.vendas;
 
             }
-
-
-            // =================================================
-            // { data: [] }
-            // =================================================
-
             else if (
                 json &&
                 Array.isArray(
@@ -749,12 +723,6 @@
                     json.data;
 
             }
-
-
-            // =================================================
-            // { data: { vendas: [] } }
-            // =================================================
-
             else if (
                 json &&
                 json.data &&
@@ -789,12 +757,6 @@
                 "[MOZ TECH] Erro ao carregar vendas:",
                 erro
             );
-
-
-            /*
-             * Não apaga os dados existentes
-             * se a atualização falhar.
-             */
 
 
             return [];
@@ -865,10 +827,6 @@
                 .map(
                     function (venda) {
 
-                        // =================================
-                        // NÚMERO
-                        // =================================
-
                         const numeroVenda =
                             primeiroValor(
                                 venda,
@@ -884,10 +842,6 @@
                             "-";
 
 
-                        // =================================
-                        // MB
-                        // =================================
-
                         const mb =
                             Number(
                                 primeiroValor(
@@ -902,10 +856,6 @@
                                 )
                             ) || 0;
 
-
-                        // =================================
-                        // GB
-                        // =================================
 
                         const gb =
                             Number(
@@ -923,10 +873,6 @@
                                 )
                             ) || 0;
 
-
-                        // =================================
-                        // QUANTIDADE
-                        // =================================
 
                         let quantidade =
                             "-";
@@ -948,10 +894,6 @@
                         }
 
 
-                        // =================================
-                        // VALOR
-                        // =================================
-
                         const valor =
                             primeiroValor(
                                 venda,
@@ -967,10 +909,6 @@
                             );
 
 
-                        // =================================
-                        // STATUS
-                        // =================================
-
                         const status =
                             primeiroValor(
                                 venda,
@@ -981,10 +919,6 @@
                             ) ||
                             "Concluído";
 
-
-                        // =================================
-                        // HTML
-                        // =================================
 
                         return `
 
@@ -1096,7 +1030,6 @@
 
                 event.preventDefault();
 
-
                 event.stopPropagation();
 
 
@@ -1206,10 +1139,6 @@
         mostrarCarregando();
 
 
-        /*
-         * O primeiro carregamento é feito aqui.
-         */
-
         carregarTudo()
             .catch(
                 function (erro) {
@@ -1256,11 +1185,6 @@
 
     setInterval(
         function () {
-
-            /*
-             * Atualiza os dados sem
-             * interferir no menu.
-             */
 
             carregarDashboard();
 
