@@ -2,7 +2,7 @@
 // MOZ TECH
 // APP.JS
 // SISTEMA DE PAINÉIS + MENU MOBILE
-// + TEMA
+// + TEMA CENTRALIZADO
 // + CREDENCIAIS DA API
 // =====================================================
 
@@ -61,22 +61,38 @@
         }
 
 
+        // ---------------------------------------------
+        // DATA-THEME
+        // ---------------------------------------------
+
         document.documentElement.setAttribute(
             "data-theme",
             tema
         );
 
 
-        document.body.classList.remove(
-            "theme-dark",
-            "theme-light"
-        );
+        // ---------------------------------------------
+        // BODY
+        // ---------------------------------------------
+
+        if (document.body) {
+
+            document.body.classList.remove(
+                "theme-dark",
+                "theme-light"
+            );
 
 
-        document.body.classList.add(
-            "theme-" + tema
-        );
+            document.body.classList.add(
+                "theme-" + tema
+            );
 
+        }
+
+
+        // ---------------------------------------------
+        // GUARDAR LOCALMENTE
+        // ---------------------------------------------
 
         localStorage.setItem(
             "tema",
@@ -92,20 +108,60 @@
     }
 
 
+    // =====================================================
+    // CARREGAR TEMA LOCAL
+    // =====================================================
+
     function carregarTemaLocal() {
 
-        const tema =
-            localStorage.getItem("tema") ||
-            "dark";
+        const temaSalvo =
+            localStorage.getItem("tema");
 
 
-        aplicarTema(tema);
+        if (
+            temaSalvo === "light" ||
+            temaSalvo === "dark"
+        ) {
+
+            aplicarTema(
+                temaSalvo
+            );
+
+        }
+        else {
+
+            aplicarTema(
+                "dark"
+            );
+
+        }
 
     }
 
 
+    // =====================================================
+    // ALTERAR TEMA
+    // =====================================================
+
+    function alterarTema(tema) {
+
+        aplicarTema(
+            tema
+        );
+
+    }
+
+
+    // =====================================================
+    // DISPONIBILIZAR TEMA
+    // =====================================================
+
     window.aplicarTema =
         aplicarTema;
+
+
+    window.alterarTema =
+        alterarTema;
 
 
     window.carregarTemaLocal =
@@ -135,12 +191,16 @@
         }
 
 
-        sidebar.classList.add("open");
+        sidebar.classList.add(
+            "open"
+        );
 
 
         if (overlay) {
 
-            overlay.classList.add("active");
+            overlay.classList.add(
+                "active"
+            );
 
         }
 
@@ -179,6 +239,10 @@
 
     }
 
+
+    // =====================================================
+    // FECHAR MENU MOBILE
+    // =====================================================
 
     function fecharMenuMobile() {
 
@@ -244,6 +308,10 @@
 
     }
 
+
+    // =====================================================
+    // ALTERNAR MENU
+    // =====================================================
 
     function alternarMenuMobile() {
 
@@ -579,7 +647,7 @@
 
 
         // =================================================
-        // TUTORIAL / API
+        // TUTORIAL
         // =================================================
 
         if (panelId === "tutorial") {
@@ -640,12 +708,12 @@
             );
 
 
-            // =================================================
-            // USAR API CENTRAL
-            // =================================================
-
             let json;
 
+
+            // =================================================
+            // API CENTRAL
+            // =================================================
 
             if (
                 window.MOZ_API &&
@@ -659,11 +727,12 @@
                     );
 
             }
-            else {
 
-                // ---------------------------------------------
-                // FALLBACK
-                // ---------------------------------------------
+            // =================================================
+            // FALLBACK
+            // =================================================
+
+            else {
 
                 const resposta =
                     await fetch(
@@ -753,16 +822,6 @@
 
             }
 
-
-            console.log(
-                "[MOZ TECH] Configuração:",
-                configuracao
-            );
-
-
-            // =================================================
-            // VERIFICAR
-            // =================================================
 
             if (!configuracao) {
 
@@ -1230,7 +1289,7 @@
 
 
     // =====================================================
-    // INICIAR
+    // INICIAR SISTEMA
     // =====================================================
 
     async function iniciarSistema() {
@@ -1251,7 +1310,7 @@
 
 
         // =================================================
-        // TEMA
+        // TEMA LOCAL PRIMEIRO
         // =================================================
 
         carregarTemaLocal();
