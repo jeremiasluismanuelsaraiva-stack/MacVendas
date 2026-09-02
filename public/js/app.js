@@ -1,8 +1,9 @@
 // =====================================================
 // MOZ TECH
 // APP.JS
-// SISTEMA DE PAINÉIS + MENU MOBILE
-// + TEMA CENTRALIZADO
+// SISTEMA DE PAINÉIS
+// + MENU MOBILE
+// + TEMA GLOBAL
 // + CREDENCIAIS DA API
 // =====================================================
 
@@ -40,7 +41,7 @@
 
 
     // =====================================================
-    // TEMA
+    // TEMA GLOBAL
     // =====================================================
 
     function aplicarTema(tema) {
@@ -62,7 +63,7 @@
 
 
         // ---------------------------------------------
-        // DATA-THEME
+        // HTML
         // ---------------------------------------------
 
         document.documentElement.setAttribute(
@@ -91,7 +92,7 @@
 
 
         // ---------------------------------------------
-        // GUARDAR LOCALMENTE
+        // SALVAR LOCALMENTE
         // ---------------------------------------------
 
         localStorage.setItem(
@@ -114,36 +115,10 @@
 
     function carregarTemaLocal() {
 
-        const temaSalvo =
-            localStorage.getItem("tema");
+        const tema =
+            localStorage.getItem("tema") ||
+            "dark";
 
-
-        if (
-            temaSalvo === "light" ||
-            temaSalvo === "dark"
-        ) {
-
-            aplicarTema(
-                temaSalvo
-            );
-
-        }
-        else {
-
-            aplicarTema(
-                "dark"
-            );
-
-        }
-
-    }
-
-
-    // =====================================================
-    // ALTERAR TEMA
-    // =====================================================
-
-    function alterarTema(tema) {
 
         aplicarTema(
             tema
@@ -153,19 +128,114 @@
 
 
     // =====================================================
-    // DISPONIBILIZAR TEMA
+    // TEMA VINDO DA API
+    // =====================================================
+
+    async function carregarTemaAPI() {
+
+        try {
+
+            if (
+                !window.MOZ_API ||
+                typeof window.MOZ_API.get !== "function"
+            ) {
+
+                console.warn(
+                    "[MOZ TECH] MOZ_API ainda não disponível."
+                );
+
+                return;
+
+            }
+
+
+            const json =
+                await window.MOZ_API.get(
+                    "/configuracoes"
+                );
+
+
+            if (
+                !json ||
+                !json.success ||
+                !Array.isArray(
+                    json.configuracoes
+                ) ||
+                !json.configuracoes.length
+            ) {
+
+                console.warn(
+                    "[MOZ TECH] Tema não encontrado na API."
+                );
+
+                return;
+
+            }
+
+
+            const configuracao =
+                json.configuracoes[0];
+
+
+            const tema =
+                configuracao.tema === "light"
+                    ? "light"
+                    : "dark";
+
+
+            aplicarTema(
+                tema
+            );
+
+
+            // -----------------------------------------
+            // Sincronizar seletor
+            // -----------------------------------------
+
+            const seletor =
+                el("tema");
+
+
+            if (seletor) {
+
+                seletor.value =
+                    tema;
+
+            }
+
+
+            console.log(
+                "[MOZ TECH] Tema sincronizado com API:",
+                tema
+            );
+
+        }
+        catch (erro) {
+
+            console.error(
+                "[MOZ TECH] Erro ao carregar tema da API:",
+                erro
+            );
+
+        }
+
+    }
+
+
+    // =====================================================
+    // EXPORTAR TEMA
     // =====================================================
 
     window.aplicarTema =
         aplicarTema;
 
 
-    window.alterarTema =
-        alterarTema;
-
-
     window.carregarTemaLocal =
         carregarTemaLocal;
+
+
+    window.carregarTemaAPI =
+        carregarTemaAPI;
 
 
     // =====================================================
@@ -240,10 +310,6 @@
     }
 
 
-    // =====================================================
-    // FECHAR MENU MOBILE
-    // =====================================================
-
     function fecharMenuMobile() {
 
         const sidebar =
@@ -308,10 +374,6 @@
 
     }
 
-
-    // =====================================================
-    // ALTERNAR MENU
-    // =====================================================
 
     function alternarMenuMobile() {
 
@@ -703,17 +765,12 @@
 
         try {
 
-            console.log(
-                "[MOZ TECH] Buscando credenciais da API..."
-            );
-
-
             let json;
 
 
-            // =================================================
+            // ---------------------------------------------
             // API CENTRAL
-            // =================================================
+            // ---------------------------------------------
 
             if (
                 window.MOZ_API &&
@@ -727,48 +784,17 @@
                     );
 
             }
-
-            // =================================================
-            // FALLBACK
-            // =================================================
-
             else {
 
-                const resposta =
-                    await fetch(
-                        "/api/configuracoes",
-                        {
-                            method: "GET",
-
-                            headers: {
-                                "Accept":
-                                    "application/json"
-                            },
-
-                            cache:
-                                "no-store"
-                        }
-                    );
-
-
-                if (!resposta.ok) {
-
-                    throw new Error(
-                        "HTTP " +
-                        resposta.status
-                    );
-
-                }
-
-
-                json =
-                    await resposta.json();
+                throw new Error(
+                    "MOZ_API não disponível."
+                );
 
             }
 
 
             console.log(
-                "[MOZ TECH] Resposta:",
+                "[MOZ TECH] Resposta API:",
                 json
             );
 
@@ -857,7 +883,7 @@
 
 
             // =================================================
-            // MOSTRAR UID
+            // MOSTRAR
             // =================================================
 
             if (uidElemento) {
@@ -869,10 +895,6 @@
             }
 
 
-            // =================================================
-            // MOSTRAR API KEY
-            // =================================================
-
             if (apiKeyElemento) {
 
                 apiKeyElemento.textContent =
@@ -881,16 +903,11 @@
 
             }
 
-
-            console.log(
-                "[MOZ TECH] Credenciais carregadas com sucesso."
-            );
-
         }
         catch (erro) {
 
             console.error(
-                "[MOZ TECH] Erro ao carregar credenciais:",
+                "[MOZ TECH] Erro credenciais:",
                 erro
             );
 
@@ -1236,6 +1253,51 @@
 
 
     // =====================================================
+    // SELETOR DE TEMA
+    // =====================================================
+
+    function inicializarSeletorTema() {
+
+        const seletor =
+            el("tema");
+
+
+        if (!seletor) {
+
+            return;
+
+        }
+
+
+        if (
+            seletor.dataset.mozTema ===
+            "true"
+        ) {
+
+            return;
+
+        }
+
+
+        seletor.dataset.mozTema =
+            "true";
+
+
+        seletor.addEventListener(
+            "change",
+            function () {
+
+                aplicarTema(
+                    this.value
+                );
+
+            }
+        );
+
+    }
+
+
+    // =====================================================
     // ESTADO INICIAL
     // =====================================================
 
@@ -1289,7 +1351,7 @@
 
 
     // =====================================================
-    // INICIAR SISTEMA
+    // INICIAR
     // =====================================================
 
     async function iniciarSistema() {
@@ -1310,7 +1372,7 @@
 
 
         // =================================================
-        // TEMA LOCAL PRIMEIRO
+        // PRIMEIRO APLICAR TEMA LOCAL
         // =================================================
 
         carregarTemaLocal();
@@ -1329,6 +1391,15 @@
         inicializarOverlay();
 
         inicializarESC();
+
+        inicializarSeletorTema();
+
+
+        // =================================================
+        // TEMA DA API
+        // =================================================
+
+        await carregarTemaAPI();
 
 
         // =================================================
