@@ -129,7 +129,9 @@
 
 
         if (!sidebar) {
+
             return;
+
         }
 
 
@@ -250,7 +252,9 @@
 
 
         if (!sidebar) {
+
             return;
+
         }
 
 
@@ -284,7 +288,9 @@
 
 
         if (!elemento) {
+
             return;
+
         }
 
 
@@ -635,63 +641,61 @@
 
 
             // =================================================
-            // PEDIR CONFIGURAÇÕES AO BACKEND
+            // USAR API CENTRAL
             // =================================================
 
-            const resposta =
-                await fetch(
-                    "/api/configuracoes",
-                    {
-                        method: "GET",
-
-                        headers: {
-                            "Accept":
-                                "application/json"
-                        },
-
-                        cache:
-                            "no-store"
-                    }
-                );
+            let json;
 
 
-            console.log(
-                "[MOZ TECH] HTTP:",
-                resposta.status
-            );
+            if (
+                window.MOZ_API &&
+                typeof window.MOZ_API.get ===
+                "function"
+            ) {
 
-
-            // =================================================
-            // VERIFICAR HTTP
-            // =================================================
-
-            if (!resposta.ok) {
-
-                const textoErro =
-                    await resposta.text();
-
-
-                console.error(
-                    "[MOZ TECH] Erro HTTP:",
-                    resposta.status,
-                    textoErro
-                );
-
-
-                throw new Error(
-                    "HTTP " +
-                    resposta.status
-                );
+                json =
+                    await window.MOZ_API.get(
+                        "/configuracoes"
+                    );
 
             }
+            else {
+
+                // ---------------------------------------------
+                // FALLBACK
+                // ---------------------------------------------
+
+                const resposta =
+                    await fetch(
+                        "/api/configuracoes",
+                        {
+                            method: "GET",
+
+                            headers: {
+                                "Accept":
+                                    "application/json"
+                            },
+
+                            cache:
+                                "no-store"
+                        }
+                    );
 
 
-            // =================================================
-            // CONVERTER JSON
-            // =================================================
+                if (!resposta.ok) {
 
-            const json =
-                await resposta.json();
+                    throw new Error(
+                        "HTTP " +
+                        resposta.status
+                    );
+
+                }
+
+
+                json =
+                    await resposta.json();
+
+            }
 
 
             console.log(
@@ -757,7 +761,7 @@
 
 
             // =================================================
-            // VERIFICAR CONFIGURAÇÃO
+            // VERIFICAR
             // =================================================
 
             if (!configuracao) {
@@ -1272,9 +1276,16 @@
         // DASHBOARD
         // =================================================
 
-        await window.showPanel(
-            "dashboard"
-        );
+        if (
+            typeof window.showPanel ===
+            "function"
+        ) {
+
+            await window.showPanel(
+                "dashboard"
+            );
+
+        }
 
 
         console.log(
