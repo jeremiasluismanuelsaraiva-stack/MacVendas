@@ -1,31 +1,13 @@
 // =====================================================
 // MACVENDAS - FIREBASE
-// =====================================================
-// Firebase Client
-//
-// FUNÇÕES:
-// - Registro
-// - Login
-// - Recuperação de palavra-passe
-// - Verificação de email
-// - Login Google
-// - API Key do usuário
-// - Realtime Database
+// FIREBASE CLIENT
 // =====================================================
 
-
-// =====================================================
-// FIREBASE APP
-// =====================================================
+"use strict";
 
 import {
     initializeApp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-
-// =====================================================
-// FIREBASE AUTH
-// =====================================================
 
 import {
     getAuth,
@@ -39,11 +21,6 @@ import {
     signInWithPopup
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-
-// =====================================================
-// FIREBASE REALTIME DATABASE
-// =====================================================
-
 import {
     getDatabase,
     ref,
@@ -54,11 +31,7 @@ import {
 
 
 // =====================================================
-// CONFIGURAÇÃO FIREBASE
-// =====================================================
-
-// =====================================================
-// CONFIGURAÇÃO FIREBASE - MACVENDAS
+// CONFIGURAÇÃO
 // =====================================================
 
 const firebaseConfig = {
@@ -88,33 +61,17 @@ const firebaseConfig = {
 
 
 // =====================================================
-// INICIALIZAR FIREBASE
+// FIREBASE
 // =====================================================
 
 const app =
-    initializeApp(
-        firebaseConfig
-    );
-
-
-// =====================================================
-// AUTH
-// =====================================================
+    initializeApp(firebaseConfig);
 
 const auth =
-    getAuth(
-        app
-    );
-
-
-// =====================================================
-// REALTIME DATABASE
-// =====================================================
+    getAuth(app);
 
 const database =
-    getDatabase(
-        app
-    );
+    getDatabase(app);
 
 
 // =====================================================
@@ -130,28 +87,23 @@ function gerarApiKey() {
                 .randomUUID()
                 .replace(/-/g, "");
 
-        return (
-            "mk_" +
-            id
-        );
+        return "mk_" + id;
 
     }
     catch (erro) {
 
         console.warn(
-            "[FIREBASE] crypto.randomUUID indisponível."
+            "[FIREBASE] crypto.randomUUID indisponível:",
+            erro
         );
-
-        const aleatorio =
-            Math.random()
-                .toString(36)
-                .substring(2, 18);
 
         return (
             "mk_" +
             Date.now() +
             "_" +
-            aleatorio
+            Math.random()
+                .toString(36)
+                .substring(2, 18)
         );
 
     }
@@ -160,7 +112,7 @@ function gerarApiKey() {
 
 
 // =====================================================
-// TRADUZIR ERROS DO FIREBASE
+// TRADUZIR ERROS
 // =====================================================
 
 function traduzirErroFirebase(error) {
@@ -221,7 +173,7 @@ function traduzirErroFirebase(error) {
 
 
 // =====================================================
-// CRIAR / GARANTIR DADOS DO USUÁRIO
+// CRIAR DADOS DO USUÁRIO
 // =====================================================
 
 async function criarDadosUsuario(
@@ -249,30 +201,20 @@ async function criarDadosUsuario(
 
 
     const snapshot =
-        await get(
-            usuarioRef
-        );
+        await get(usuarioRef);
 
 
     // =================================================
-    // USUÁRIO JÁ EXISTE
+    // JÁ EXISTE
     // =================================================
 
-    if (
-        snapshot.exists()
-    ) {
+    if (snapshot.exists()) {
 
         const dados =
             snapshot.val() || {};
 
 
-        // ---------------------------------------------
-        // GARANTIR API KEY
-        // ---------------------------------------------
-
-        if (
-            dados.apiKey
-        ) {
+        if (dados.apiKey) {
 
             return dados.apiKey;
 
@@ -286,7 +228,7 @@ async function criarDadosUsuario(
         await update(
             usuarioRef,
             {
-                apiKey
+                apiKey: apiKey
             }
         );
 
@@ -304,28 +246,37 @@ async function criarDadosUsuario(
         gerarApiKey();
 
 
+    const dadosUsuario = {
+
+        uid:
+            user.uid,
+
+        email:
+            user.email || "",
+
+        fullName:
+            name ||
+            user.displayName ||
+            "",
+
+        apiKey:
+            apiKey,
+
+        criadoEm:
+            new Date().toISOString()
+
+    };
+
+
     await set(
         usuarioRef,
-        {
+        dadosUsuario
+    );
 
-            uid:
-                user.uid,
 
-            email:
-                user.email || "",
-
-            fullName:
-                name ||
-                user.displayName ||
-                "",
-
-            apiKey:
-                apiKey,
-
-            criadoEm:
-                new Date().toISOString()
-
-        }
+    console.log(
+        "[FIREBASE] Usuário criado:",
+        user.uid
     );
 
 
@@ -346,34 +297,144 @@ async function registerUser(
 
     try {
 
-        if (
-            !email ||
-            !password
-        ) {
+        name =
+            String(name || "").trim();
+
+        email =
+            String(email || "").trim();
+
+        password =
+            String(password || "");
+
+
+        // =================================================
+        // VALIDAÇÃO
+        // =================================================
+
+        if (!email) {
 
             return {
 
-                success:
-                    false,
+                success: false,
 
                 message:
-                    "Informe o email e a palavra-passe."
+                    "Informe o email."
 
             };
 
         }
 
 
+        if (!password) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "Informe a palavra-passe."
+
+            };
+
+        }
+
+
+        if (password.length < 6) {
+
+            return {
+
+                success: false,
+
+                message:
+                    "A palavra-passe deve ter pelo menos 6 caracteres."
+
+            };
+
+        }
+
+
+        console.log(
+            "[FIREBASE] Criando conta..."
+        );
+
+
+        // =================================================
+        // FIREBASE AUTH
+        // =================================================
+
         const credential =
             await createUserWithEmailAndPassword(
                 auth,
-                email.trim(),
+                email,
                 password
             );
 
 
         const user =
             credential.user;
+
+
+        console.log(
+            "[FIREBASE] Auth criado:",
+            user.uid
+        );
+
+
+        // =================================================
+        // ATUALIZAR DISPLAY NAME
+        // =================================================
+
+        if (
+            name &&
+            !user.displayName
+        ) {
+
+            try {
+
+                const { updateProfile } =
+                    await import(
+                        "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"
+                    );
+
+                await updateProfile(
+                    user,
+                    {
+                        displayName: name
+                    }
+                );
+
+            }
+            catch (erroNome) {
+
+                console.warn(
+                    "[FIREBASE] Não foi possível salvar nome:",
+                    erroNome
+                );
+
+            }
+
+        }
+
+
+        // =================================================
+        // CRIAR DADOS NO DATABASE
+        // =================================================
+
+        console.log(
+            "[FIREBASE] Criando dados no Realtime Database..."
+        );
+
+
+        const apiKey =
+            await criarDadosUsuario(
+                user,
+                name
+            );
+
+
+        console.log(
+            "[FIREBASE] Dados criados com sucesso."
+        );
 
 
         // =================================================
@@ -386,11 +447,15 @@ async function registerUser(
                 user
             );
 
+            console.log(
+                "[FIREBASE] Email de verificação enviado."
+            );
+
         }
         catch (erroEmail) {
 
             console.warn(
-                "[FIREBASE] Erro ao enviar verificação:",
+                "[FIREBASE] Falha ao enviar verificação:",
                 erroEmail
             );
 
@@ -398,53 +463,54 @@ async function registerUser(
 
 
         // =================================================
-        // CRIAR DADOS NO REALTIME DATABASE
+        // GUARDAR LOCAL
         // =================================================
 
-        let apiKey = "";
+        const dadosUsuario = {
 
-        try {
+            uid:
+                user.uid,
 
-            apiKey =
-                await criarDadosUsuario(
-                    user,
-                    name || ""
-                );
+            email:
+                user.email || email,
 
-        }
-        catch (erroDatabase) {
+            name:
+                name,
 
-            console.error(
-                "[FIREBASE] Erro ao criar dados:",
-                erroDatabase
-            );
+            fullName:
+                name,
 
-        }
+            apiKey:
+                apiKey
 
+        };
+
+
+        localStorage.setItem(
+            "userData",
+            JSON.stringify(dadosUsuario)
+        );
+
+
+        localStorage.setItem(
+            "apiKey",
+            apiKey
+        );
+
+
+        // =================================================
+        // RETORNO
+        // =================================================
 
         return {
 
-            success:
-                true,
+            success: true,
 
             message:
                 "Conta criada com sucesso! Verifique seu email.",
 
-            user: {
-
-                uid:
-                    user.uid,
-
-                email:
-                    user.email || "",
-
-                name:
-                    name || "",
-
-                apiKey:
-                    apiKey
-
-            }
+            user:
+                dadosUsuario
 
         };
 
@@ -456,15 +522,13 @@ async function registerUser(
             error
         );
 
+
         return {
 
-            success:
-                false,
+            success: false,
 
             message:
-                traduzirErroFirebase(
-                    error
-                )
+                traduzirErroFirebase(error)
 
         };
 
@@ -484,15 +548,18 @@ async function loginUser(
 
     try {
 
-        if (
-            !email ||
-            !password
-        ) {
+        email =
+            String(email || "").trim();
+
+        password =
+            String(password || "");
+
+
+        if (!email || !password) {
 
             return {
 
-                success:
-                    false,
+                success: false,
 
                 message:
                     "Informe o email e a palavra-passe."
@@ -505,7 +572,7 @@ async function loginUser(
         const credential =
             await signInWithEmailAndPassword(
                 auth,
-                email.trim(),
+                email,
                 password
             );
 
@@ -518,18 +585,13 @@ async function loginUser(
         // VERIFICAR EMAIL
         // =================================================
 
-        if (
-            !user.emailVerified
-        ) {
+        if (!user.emailVerified) {
 
-            await signOut(
-                auth
-            );
+            await signOut(auth);
 
             return {
 
-                success:
-                    false,
+                success: false,
 
                 message:
                     "Seu email ainda não foi verificado. Verifique sua caixa de entrada."
@@ -540,109 +602,57 @@ async function loginUser(
 
 
         // =================================================
-        // DADOS BÁSICOS
+        // OBTER DADOS
         // =================================================
 
+        const dados =
+            await obterDadosUsuario();
+
+
         const dadosUsuario = {
+
+            ...(dados || {}),
 
             uid:
                 user.uid,
 
             email:
-                user.email || "",
+                user.email || email,
 
             name:
-                user.displayName || "",
+                dados?.fullName ||
+                user.displayName ||
+                "",
 
             apiKey:
-                ""
+                dados?.apiKey || ""
 
         };
 
 
         // =================================================
-        // GUARDAR LOGIN
+        // LOCAL STORAGE
         // =================================================
 
-        try {
+        localStorage.setItem(
+            "userData",
+            JSON.stringify(dadosUsuario)
+        );
+
+
+        if (dadosUsuario.apiKey) {
 
             localStorage.setItem(
-                "userData",
-                JSON.stringify(
-                    dadosUsuario
-                )
+                "apiKey",
+                dadosUsuario.apiKey
             );
 
         }
-        catch (erroLocal) {
-
-            console.warn(
-                "[FIREBASE] Erro local:",
-                erroLocal
-            );
-
-        }
-
-
-        // =================================================
-        // API KEY EM SEGUNDO PLANO
-        // =================================================
-
-        criarDadosUsuario(
-            user,
-            user.displayName || ""
-        )
-        .then(
-            apiKey => {
-
-                const dadosAtualizados = {
-
-                    uid:
-                        user.uid,
-
-                    email:
-                        user.email || "",
-
-                    name:
-                        user.displayName || "",
-
-                    apiKey:
-                        apiKey
-
-                };
-
-
-                localStorage.setItem(
-                    "userData",
-                    JSON.stringify(
-                        dadosAtualizados
-                    )
-                );
-
-
-                localStorage.setItem(
-                    "apiKey",
-                    apiKey
-                );
-
-            }
-        )
-        .catch(
-            erro => {
-
-                console.error(
-                    "[FIREBASE] Erro ao criar API Key:",
-                    erro
-                );
-
-            }
-        );
 
 
         return {
 
-            success:
-                true,
+            success: true,
 
             message:
                 "Login realizado com sucesso.",
@@ -660,15 +670,13 @@ async function loginUser(
             error
         );
 
+
         return {
 
-            success:
-                false,
+            success: false,
 
             message:
-                traduzirErroFirebase(
-                    error
-                )
+                traduzirErroFirebase(error)
 
         };
 
@@ -678,7 +686,7 @@ async function loginUser(
 
 
 // =====================================================
-// RECUPERAR PALAVRA-PASSE
+// RECUPERAR SENHA
 // =====================================================
 
 async function recuperarSenha(
@@ -687,14 +695,15 @@ async function recuperarSenha(
 
     try {
 
-        if (
-            !email
-        ) {
+        email =
+            String(email || "").trim();
+
+
+        if (!email) {
 
             return {
 
-                success:
-                    false,
+                success: false,
 
                 message:
                     "Informe seu email."
@@ -706,14 +715,13 @@ async function recuperarSenha(
 
         await sendPasswordResetEmail(
             auth,
-            email.trim()
+            email
         );
 
 
         return {
 
-            success:
-                true,
+            success: true,
 
             message:
                 "Enviamos um link para redefinir sua palavra-passe no email."
@@ -724,19 +732,17 @@ async function recuperarSenha(
     catch (error) {
 
         console.error(
-            "[FIREBASE] Erro ao recuperar palavra-passe:",
+            "[FIREBASE] Erro ao recuperar senha:",
             error
         );
 
+
         return {
 
-            success:
-                false,
+            success: false,
 
             message:
-                traduzirErroFirebase(
-                    error
-                )
+                traduzirErroFirebase(error)
 
         };
 
@@ -757,14 +763,11 @@ async function resendVerification() {
             auth.currentUser;
 
 
-        if (
-            !user
-        ) {
+        if (!user) {
 
             return {
 
-                success:
-                    false,
+                success: false,
 
                 message:
                     "Nenhum usuário está conectado."
@@ -774,15 +777,12 @@ async function resendVerification() {
         }
 
 
-        await sendEmailVerification(
-            user
-        );
+        await sendEmailVerification(user);
 
 
         return {
 
-            success:
-                true,
+            success: true,
 
             message:
                 "Email de verificação reenviado."
@@ -797,15 +797,13 @@ async function resendVerification() {
             error
         );
 
+
         return {
 
-            success:
-                false,
+            success: false,
 
             message:
-                traduzirErroFirebase(
-                    error
-                )
+                traduzirErroFirebase(error)
 
         };
 
@@ -815,23 +813,7 @@ async function resendVerification() {
 
 
 // =====================================================
-// ESTADO DE AUTENTICAÇÃO
-// =====================================================
-
-function onAuthState(
-    callback
-) {
-
-    return onAuthStateChanged(
-        auth,
-        callback
-    );
-
-}
-
-
-// =====================================================
-// LOGIN GOOGLE
+// GOOGLE
 // =====================================================
 
 async function googleLogin() {
@@ -853,6 +835,13 @@ async function googleLogin() {
             result.user;
 
 
+        const apiKey =
+            await criarDadosUsuario(
+                user,
+                user.displayName || ""
+            );
+
+
         const dadosUsuario = {
 
             uid:
@@ -864,95 +853,30 @@ async function googleLogin() {
             name:
                 user.displayName || "",
 
+            fullName:
+                user.displayName || "",
+
             apiKey:
-                ""
+                apiKey
 
         };
 
 
-        // =================================================
-        // GUARDAR LOCALMENTE
-        // =================================================
-
-        try {
-
-            localStorage.setItem(
-                "userData",
-                JSON.stringify(
-                    dadosUsuario
-                )
-            );
-
-        }
-        catch (erroLocal) {
-
-            console.warn(
-                "[FIREBASE] Erro local:",
-                erroLocal
-            );
-
-        }
+        localStorage.setItem(
+            "userData",
+            JSON.stringify(dadosUsuario)
+        );
 
 
-        // =================================================
-        // API KEY
-        // =================================================
-
-        criarDadosUsuario(
-            user,
-            user.displayName || ""
-        )
-        .then(
-            apiKey => {
-
-                const dadosAtualizados = {
-
-                    uid:
-                        user.uid,
-
-                    email:
-                        user.email || "",
-
-                    name:
-                        user.displayName || "",
-
-                    apiKey:
-                        apiKey
-
-                };
-
-
-                localStorage.setItem(
-                    "userData",
-                    JSON.stringify(
-                        dadosAtualizados
-                    )
-                );
-
-
-                localStorage.setItem(
-                    "apiKey",
-                    apiKey
-                );
-
-            }
-        )
-        .catch(
-            erro => {
-
-                console.error(
-                    "[FIREBASE] Erro Google API Key:",
-                    erro
-                );
-
-            }
+        localStorage.setItem(
+            "apiKey",
+            apiKey
         );
 
 
         return {
 
-            success:
-                true,
+            success: true,
 
             message:
                 "Login Google realizado com sucesso.",
@@ -966,19 +890,17 @@ async function googleLogin() {
     catch (error) {
 
         console.error(
-            "[FIREBASE] Erro no login Google:",
+            "[FIREBASE] Erro Google:",
             error
         );
 
+
         return {
 
-            success:
-                false,
+            success: false,
 
             message:
-                traduzirErroFirebase(
-                    error
-                )
+                traduzirErroFirebase(error)
 
         };
 
@@ -995,9 +917,7 @@ async function sair() {
 
     try {
 
-        await signOut(
-            auth
-        );
+        await signOut(auth);
 
 
         localStorage.removeItem(
@@ -1010,8 +930,7 @@ async function sair() {
         );
 
 
-        window.location.href =
-            "/";
+        window.location.href = "/";
 
     }
     catch (error) {
@@ -1027,7 +946,7 @@ async function sair() {
 
 
 // =====================================================
-// OBTER DADOS DO USUÁRIO
+// OBTER DADOS
 // =====================================================
 
 async function obterDadosUsuario() {
@@ -1038,9 +957,7 @@ async function obterDadosUsuario() {
             auth.currentUser;
 
 
-        if (
-            !user
-        ) {
+        if (!user) {
 
             return null;
 
@@ -1050,24 +967,19 @@ async function obterDadosUsuario() {
         const usuarioRef =
             ref(
                 database,
-                "users/" +
-                user.uid
+                "users/" + user.uid
             );
 
 
         const snapshot =
-            await get(
-                usuarioRef
-            );
+            await get(usuarioRef);
 
 
         // =================================================
-        // USUÁRIO NÃO EXISTE
+        // NÃO EXISTE
         // =================================================
 
-        if (
-            !snapshot.exists()
-        ) {
+        if (!snapshot.exists()) {
 
             const apiKey =
                 await criarDadosUsuario(
@@ -1095,9 +1007,7 @@ async function obterDadosUsuario() {
 
             localStorage.setItem(
                 "userData",
-                JSON.stringify(
-                    dadosUsuario
-                )
+                JSON.stringify(dadosUsuario)
             );
 
 
@@ -1113,20 +1023,14 @@ async function obterDadosUsuario() {
 
 
         // =================================================
-        // DADOS EXISTENTES
+        // EXISTE
         // =================================================
 
         const dados =
             snapshot.val() || {};
 
 
-        // =================================================
-        // GARANTIR API KEY
-        // =================================================
-
-        if (
-            !dados.apiKey
-        ) {
+        if (!dados.apiKey) {
 
             dados.apiKey =
                 gerarApiKey();
@@ -1135,19 +1039,13 @@ async function obterDadosUsuario() {
             await update(
                 usuarioRef,
                 {
-
                     apiKey:
                         dados.apiKey
-
                 }
             );
 
         }
 
-
-        // =================================================
-        // RESULTADO
-        // =================================================
 
         const resultado = {
 
@@ -1172,34 +1070,16 @@ async function obterDadosUsuario() {
         };
 
 
-        // =================================================
-        // GUARDAR LOCALMENTE
-        // =================================================
-
-        try {
-
-            localStorage.setItem(
-                "userData",
-                JSON.stringify(
-                    resultado
-                )
-            );
+        localStorage.setItem(
+            "userData",
+            JSON.stringify(resultado)
+        );
 
 
-            localStorage.setItem(
-                "apiKey",
-                resultado.apiKey
-            );
-
-        }
-        catch (erroLocal) {
-
-            console.warn(
-                "[FIREBASE] Erro ao guardar dados:",
-                erroLocal
-            );
-
-        }
+        localStorage.setItem(
+            "apiKey",
+            resultado.apiKey
+        );
 
 
         return resultado;
@@ -1208,7 +1088,7 @@ async function obterDadosUsuario() {
     catch (erro) {
 
         console.error(
-            "[FIREBASE] Erro ao obter dados do usuário:",
+            "[FIREBASE] Erro ao obter dados:",
             erro
         );
 
@@ -1220,17 +1100,32 @@ async function obterDadosUsuario() {
 
 
 // =====================================================
+// ESTADO AUTH
+// =====================================================
+
+function onAuthState(callback) {
+
+    return onAuthStateChanged(
+        auth,
+        callback
+    );
+
+}
+
+
+// =====================================================
 // COMPATIBILIDADE
 // =====================================================
 
 window.criarConta =
     async function (
+        name,
         email,
         senha
     ) {
 
         return await registerUser(
-            "",
+            name,
             email,
             senha
         );
