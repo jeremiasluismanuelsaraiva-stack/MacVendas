@@ -12,6 +12,7 @@ async function carregarPacotes() {
         const resposta =
             await fetch(API + "/pacotes");
 
+
         if (!resposta.ok) {
 
             throw new Error(
@@ -19,6 +20,7 @@ async function carregarPacotes() {
             );
 
         }
+
 
         const json =
             await resposta.json();
@@ -42,7 +44,11 @@ async function carregarPacotes() {
             );
 
 
-        if (!tabela) return;
+        if (!tabela) {
+
+            return;
+
+        }
 
 
         tabela.innerHTML = "";
@@ -55,14 +61,21 @@ async function carregarPacotes() {
         if (pacotes.length === 0) {
 
             tabela.innerHTML = `
+
                 <tr>
+
                     <td
                         colspan="7"
-                        style="text-align:center;padding:25px;"
+                        style="
+                            text-align:center;
+                            padding:25px;
+                        "
                     >
                         Nenhum pacote cadastrado.
                     </td>
+
                 </tr>
+
             `;
 
             return;
@@ -70,70 +83,81 @@ async function carregarPacotes() {
         }
 
 
-        pacotes.forEach(pacote => {
+        // ======================================
+        // MOSTRAR PACOTES
+        // ======================================
 
-            const tr =
-                document.createElement("tr");
+        pacotes.forEach(
+            pacote => {
 
-
-            tr.innerHTML = `
-
-                <td>
-                    ${pacote.nome || "-"}
-                </td>
-
-                <td>
-                    ${pacote.tipo || "-"}
-                </td>
-
-                <td>
-                    ${pacote.gb || 0} GB
-                </td>
-
-                <td>
-                    ${pacote.valor || 0} MT
-                </td>
-
-                <td>
-                    ${pacote.vantagem || "-"}
-                </td>
-
-                <td>
-
-                    ${
-                        pacote.ativo
-                            ? "Ativo"
-                            : "Desativado"
-                    }
-
-                </td>
-
-                <td>
-
-                    <button
-                        class="btn btn-outline"
-                        data-editar-pacote="${pacote.id}"
-                    >
-                        <i class="fas fa-edit"></i>
-                        Editar
-                    </button>
-
-                    <button
-                        class="btn btn-outline"
-                        data-remover-pacote="${pacote.id}"
-                    >
-                        <i class="fas fa-trash"></i>
-                        Remover
-                    </button>
-
-                </td>
-
-            `;
+                const tr =
+                    document.createElement(
+                        "tr"
+                    );
 
 
-            tabela.appendChild(tr);
+                tr.innerHTML = `
 
-        });
+                    <td>
+                        ${pacote.nome || "-"}
+                    </td>
+
+                    <td>
+                        ${pacote.tipo || "-"}
+                    </td>
+
+                    <td>
+                        ${pacote.gb || 0} GB
+                    </td>
+
+                    <td>
+                        ${pacote.valor || 0} MT
+                    </td>
+
+                    <td>
+                        ${pacote.vantagem || "-"}
+                    </td>
+
+                    <td>
+
+                        ${
+                            pacote.ativo
+                                ? "Ativo"
+                                : "Desativado"
+                        }
+
+                    </td>
+
+                    <td>
+
+                        <button
+                            class="btn btn-outline"
+                            data-editar-pacote="${pacote.id}"
+                        >
+                            <i class="fas fa-edit"></i>
+                            Editar
+                        </button>
+
+
+                        <button
+                            class="btn btn-outline"
+                            data-remover-pacote="${pacote.id}"
+                        >
+                            <i class="fas fa-trash"></i>
+                            Remover
+                        </button>
+
+                    </td>
+
+                `;
+
+
+                tabela.appendChild(
+                    tr
+                );
+
+            }
+        );
 
 
         // ======================================
@@ -144,23 +168,28 @@ async function carregarPacotes() {
             .querySelectorAll(
                 "[data-editar-pacote]"
             )
-            .forEach(botao => {
+            .forEach(
+                botao => {
 
-                botao.addEventListener(
-                    "click",
-                    () => {
+                    botao.addEventListener(
+                        "click",
+                        () => {
 
-                        const id =
-                            botao.getAttribute(
-                                "data-editar-pacote"
+                            const id =
+                                botao.getAttribute(
+                                    "data-editar-pacote"
+                                );
+
+
+                            editarPacote(
+                                id
                             );
 
-                        editarPacote(id);
+                        }
+                    );
 
-                    }
-                );
-
-            });
+                }
+            );
 
 
         // ======================================
@@ -171,27 +200,30 @@ async function carregarPacotes() {
             .querySelectorAll(
                 "[data-remover-pacote]"
             )
-            .forEach(botao => {
+            .forEach(
+                botao => {
 
-                botao.addEventListener(
-                    "click",
-                    () => {
+                    botao.addEventListener(
+                        "click",
+                        () => {
 
-                        const id =
-                            botao.getAttribute(
-                                "data-remover-pacote"
+                            const id =
+                                botao.getAttribute(
+                                    "data-remover-pacote"
+                                );
+
+
+                            removerPacote(
+                                id
                             );
 
-                        removerPacote(id);
+                        }
+                    );
 
-                    }
-                );
-
-            });
-
+                }
+            );
 
     }
-
     catch (erro) {
 
         console.error(
@@ -208,7 +240,9 @@ async function carregarPacotes() {
 // ADICIONAR PACOTE
 // ======================================
 
-async function adicionarPacote(dados) {
+async function adicionarPacote(
+    dados
+) {
 
     try {
 
@@ -216,15 +250,21 @@ async function adicionarPacote(dados) {
             await fetch(
                 API + "/pacotes",
                 {
+
                     method: "POST",
 
                     headers: {
+
                         "Content-Type":
                             "application/json"
+
                     },
 
                     body:
-                        JSON.stringify(dados)
+                        JSON.stringify(
+                            dados
+                        )
+
                 }
             );
 
@@ -249,7 +289,6 @@ async function adicionarPacote(dados) {
         return json;
 
     }
-
     catch (erro) {
 
         console.error(
@@ -264,8 +303,12 @@ async function adicionarPacote(dados) {
 
 
         return {
+
             success: false,
-            error: erro.message
+
+            error:
+                erro.message
+
         };
 
     }
@@ -277,7 +320,9 @@ async function adicionarPacote(dados) {
 // EDITAR PACOTE
 // ======================================
 
-async function editarPacote(id) {
+async function editarPacote(
+    id
+) {
 
     const nome =
         prompt(
@@ -285,8 +330,12 @@ async function editarPacote(id) {
         );
 
 
-    if (nome === null) {
+    if (
+        nome === null
+    ) {
+
         return;
+
     }
 
 
@@ -294,7 +343,9 @@ async function editarPacote(id) {
         nome.trim();
 
 
-    if (!nomeFinal) {
+    if (
+        !nomeFinal
+    ) {
 
         alert(
             "O nome do pacote não pode ficar vazio."
@@ -311,19 +362,26 @@ async function editarPacote(id) {
             await fetch(
                 API +
                 "/pacotes/" +
-                encodeURIComponent(id),
+                encodeURIComponent(
+                    id
+                ),
                 {
 
                     method: "PUT",
 
                     headers: {
+
                         "Content-Type":
                             "application/json"
+
                     },
 
                     body:
                         JSON.stringify({
-                            nome: nomeFinal
+
+                            nome:
+                                nomeFinal
+
                         })
 
                 }
@@ -352,7 +410,6 @@ async function editarPacote(id) {
         );
 
     }
-
     catch (erro) {
 
         console.error(
@@ -374,7 +431,9 @@ async function editarPacote(id) {
 // REMOVER PACOTE
 // ======================================
 
-async function removerPacote(id) {
+async function removerPacote(
+    id
+) {
 
     const confirmar =
         confirm(
@@ -382,8 +441,12 @@ async function removerPacote(id) {
         );
 
 
-    if (!confirmar) {
+    if (
+        !confirmar
+    ) {
+
         return;
+
     }
 
 
@@ -393,9 +456,14 @@ async function removerPacote(id) {
             await fetch(
                 API +
                 "/pacotes/" +
-                encodeURIComponent(id),
+                encodeURIComponent(
+                    id
+                ),
                 {
-                    method: "DELETE"
+
+                    method:
+                        "DELETE"
+
                 }
             );
 
@@ -422,7 +490,6 @@ async function removerPacote(id) {
         );
 
     }
-
     catch (erro) {
 
         console.error(
@@ -447,11 +514,14 @@ async function removerPacote(id) {
 window.carregarPacotes =
     carregarPacotes;
 
+
 window.adicionarPacote =
     adicionarPacote;
 
+
 window.editarPacote =
     editarPacote;
+
 
 window.removerPacote =
     removerPacote;
@@ -464,7 +534,10 @@ window.removerPacote =
 carregarPacotes();
 
 
-// Atualização automática
+// ======================================
+// ATUALIZAÇÃO AUTOMÁTICA
+// ======================================
+
 setInterval(
     carregarPacotes,
     10000
