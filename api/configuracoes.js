@@ -1,280 +1,121 @@
 // =====================================================
-// MOZ TECH
-// CONFIGURAÇÕES + CREDENCIAIS DA API
+// MACVENDAS
+// CONFIGURAÇÕES
+// FIREBASE REALTIME DATABASE
 // =====================================================
 
+"use strict";
+
 const express = require("express");
-const crypto = require("crypto");
 
 const router = express.Router();
 
-const db = require("../database/database");
+const { db } =
+    require("./firebase-admin");
+
+const autenticarAPI =
+    require("./auth");
 
 
 // =====================================================
-// GERAR UID
+// VALOR NUMÉRICO
 // =====================================================
 
-function gerarUID() {
+function numero(valor) {
 
-    return (
-        "MOZ-" +
-        Date.now().toString(36).toUpperCase() +
-        "-" +
-        crypto
-            .randomBytes(4)
-            .toString("hex")
-            .toUpperCase()
+    const n =
+        Number(valor);
+
+    return Number.isFinite(n)
+        ? n
+        : 0;
+
+}
+
+
+// =====================================================
+// DATA
+// =====================================================
+
+function agora() {
+
+    return new Date()
+        .toISOString();
+
+}
+
+
+// =====================================================
+// REFERÊNCIA DA CONFIGURAÇÃO
+// =====================================================
+//
+// Cada usuário possui sua própria configuração:
+//
+// configuracoes/
+//    UID_DO_USUARIO/
+//       nomeEmpresa
+//       telefone
+//       email
+//       moeda
+//       vendaGB
+//       custoGB
+//       tema
+//       idioma
+//
+// =====================================================
+
+function configuracaoRef(uid) {
+
+    return db.ref(
+        "configuracoes/" +
+        uid
     );
 
 }
 
 
 // =====================================================
-// GERAR API KEY
+// CRIAR CONFIGURAÇÃO PADRÃO
 // =====================================================
 
-function gerarApiKey() {
+function configuracaoPadrao(uid, usuario) {
 
-    return (
-        "moz_" +
-        crypto
-            .randomBytes(32)
-            .toString("hex")
-    );
-
-}
-
-
-// =====================================================
-// OBTER OU CRIAR CONFIGURAÇÃO
-// =====================================================
-
-function obterConfiguracao() {
-
-    let configuracoes =
-        db.ler("configuracoes") || [];
-
-
-    // -------------------------------------------------
-    // Garantir que seja um array
-    // -------------------------------------------------
-
-    if (!Array.isArray(configuracoes)) {
-
-        configuracoes = [];
-
-    }
-
-
-    // =================================================
-    // CONFIGURAÇÃO JÁ EXISTE
-    // =================================================
-
-    if (configuracoes.length > 0) {
-
-        const configuracao =
-            configuracoes[0];
-
-        let alterou = false;
-
-
-        // -------------------------------------------------
-        // Garantir UID
-        // -------------------------------------------------
-
-        if (!configuracao.uid) {
-
-            configuracao.uid =
-                gerarUID();
-
-            alterou = true;
-
-        }
-
-
-        // -------------------------------------------------
-        // Garantir API KEY
-        // -------------------------------------------------
-
-        if (!configuracao.apiKey) {
-
-            configuracao.apiKey =
-                gerarApiKey();
-
-            alterou = true;
-
-        }
-
-
-        // -------------------------------------------------
-        // Corrigir nome antigo, caso exista
-        // -------------------------------------------------
-
-        if (
-            !configuracao.nomeEmpresa ||
-            configuracao.nomeEmpresa === "Sistema SSD"
-        ) {
-
-            configuracao.nomeEmpresa =
-                "MOZ TECH";
-
-            alterou = true;
-
-        }
-
-
-        // -------------------------------------------------
-        // Remover USSD antigo
-        // -------------------------------------------------
-
-        if (
-            Object.prototype.hasOwnProperty.call(
-                configuracao,
-                "ussd"
-            )
-        ) {
-
-            delete configuracao.ussd;
-
-            alterou = true;
-
-        }
-
-
-        // -------------------------------------------------
-        // Valores padrão
-        // -------------------------------------------------
-
-        if (
-            configuracao.moeda === undefined
-        ) {
-
-            configuracao.moeda =
-                "MT";
-
-            alterou = true;
-
-        }
-
-
-        if (
-            configuracao.vendaGB === undefined
-        ) {
-
-            configuracao.vendaGB =
-                28;
-
-            alterou = true;
-
-        }
-
-
-        if (
-            configuracao.custoGB === undefined
-        ) {
-
-            configuracao.custoGB =
-                21;
-
-            alterou = true;
-
-        }
-
-
-        if (
-            configuracao.tema === undefined
-        ) {
-
-            configuracao.tema =
-                "dark";
-
-            alterou = true;
-
-        }
-
-
-        if (
-            configuracao.idioma === undefined
-        ) {
-
-            configuracao.idioma =
-                "pt";
-
-            alterou = true;
-
-        }
-
-
-        // -------------------------------------------------
-        // Salvar alterações
-        // -------------------------------------------------
-
-        if (alterou) {
-
-            configuracao.atualizado =
-                new Date().toISOString();
-
-
-            db.salvar(
-                "configuracoes",
-                configuracoes
-            );
-
-        }
-
-
-        return configuracao;
-
-    }
-
-
-    // =================================================
-    // CRIAR PRIMEIRA CONFIGURAÇÃO
-    // =================================================
-
-    const configuracao = {
-
-        id:
-            Date.now().toString(),
-
-
-        // -------------------------------------------------
-        // CREDENCIAIS API
-        // -------------------------------------------------
+    return {
 
         uid:
-            gerarUID(),
+            uid,
 
         apiKey:
-            gerarApiKey(),
+            usuario.apiKey || "",
 
 
-        // -------------------------------------------------
+        // =================================================
         // EMPRESA
-        // -------------------------------------------------
+        // =================================================
 
         nomeEmpresa:
-            "MOZ TECH",
+            usuario.fullName ||
+            "MACVENDAS",
 
         telefone:
             "",
 
         email:
+            usuario.email ||
             "",
 
 
-        // -------------------------------------------------
+        // =================================================
         // MOEDA
-        // -------------------------------------------------
+        // =================================================
 
         moeda:
             "MT",
 
 
-        // -------------------------------------------------
+        // =================================================
         // VALORES
-        // -------------------------------------------------
+        // =================================================
 
         vendaGB:
             28,
@@ -283,9 +124,9 @@ function obterConfiguracao() {
             21,
 
 
-        // -------------------------------------------------
+        // =================================================
         // TEMA
-        // -------------------------------------------------
+        // =================================================
 
         tema:
             "dark",
@@ -294,716 +135,522 @@ function obterConfiguracao() {
             "pt",
 
 
-        // -------------------------------------------------
+        // =================================================
         // DATA
-        // -------------------------------------------------
+        // =================================================
+
+        criadoEm:
+            agora(),
 
         atualizado:
-            new Date().toISOString()
+            agora()
 
     };
-
-
-    configuracoes.push(
-        configuracao
-    );
-
-
-    db.salvar(
-        "configuracoes",
-        configuracoes
-    );
-
-
-    return configuracao;
 
 }
 
 
 // =====================================================
-// GET /configuracoes
+// GET /api/configuracoes
 // =====================================================
 //
-// Retorna:
-// - UID
-// - API Key
-// - Dados da empresa
-// - Valores
-// - Configurações gerais
+// Retorna as configurações do usuário autenticado.
 //
 // =====================================================
 
-router.get("/", (req, res) => {
+router.get(
+    "/",
+    autenticarAPI,
+    async (req, res) => {
 
-    try {
+        try {
 
-        const configuracao =
-            obterConfiguracao();
+            const uid =
+                req.usuario.uid;
 
 
-        res.json({
+            const referencia =
+                configuracaoRef(uid);
 
-            success: true,
 
-            configuracoes: [
+            const snapshot =
+                await referencia.once(
+                    "value"
+                );
+
+
+            // =================================================
+            // CONFIGURAÇÃO NÃO EXISTE
+            // =================================================
+
+            if (
+                !snapshot.exists()
+            ) {
+
+                const configuracao =
+                    configuracaoPadrao(
+                        uid,
+                        req.usuario
+                    );
+
+
+                await referencia.set(
+                    configuracao
+                );
+
+
+                return res.json({
+
+                    success: true,
+
+                    configuracao
+
+                });
+
+            }
+
+
+            // =================================================
+            // CONFIGURAÇÃO EXISTENTE
+            // =================================================
+
+            const configuracao =
+                snapshot.val() || {};
+
+
+            // =================================================
+            // GARANTIR DADOS
+            // =================================================
+
+            if (
+                !configuracao.uid
+            ) {
+
+                configuracao.uid =
+                    uid;
+
+            }
+
+
+            if (
+                !configuracao.apiKey
+            ) {
+
+                configuracao.apiKey =
+                    req.usuario.apiKey ||
+                    "";
+
+            }
+
+
+            if (
+                !configuracao.nomeEmpresa
+            ) {
+
+                configuracao.nomeEmpresa =
+                    "MACVENDAS";
+
+            }
+
+
+            if (
+                configuracao.moeda ===
+                undefined
+            ) {
+
+                configuracao.moeda =
+                    "MT";
+
+            }
+
+
+            if (
+                configuracao.vendaGB ===
+                undefined
+            ) {
+
+                configuracao.vendaGB =
+                    28;
+
+            }
+
+
+            if (
+                configuracao.custoGB ===
+                undefined
+            ) {
+
+                configuracao.custoGB =
+                    21;
+
+            }
+
+
+            if (
+                !configuracao.tema
+            ) {
+
+                configuracao.tema =
+                    "dark";
+
+            }
+
+
+            if (
+                !configuracao.idioma
+            ) {
+
+                configuracao.idioma =
+                    "pt";
+
+            }
+
+
+            configuracao.atualizado =
+                agora();
+
+
+            await referencia.update(
                 configuracao
-            ]
-
-        });
-
-    }
-    catch (err) {
-
-        console.error(
-            "Erro ao listar configurações:",
-            err
-        );
-
-
-        res.status(500).json({
-
-            success: false,
-
-            error:
-                err.message ||
-                "Erro ao carregar configurações."
-
-        });
-
-    }
-
-});
-
-
-// =====================================================
-// GET /configuracoes/:id
-// =====================================================
-
-router.get("/:id", (req, res) => {
-
-    try {
-
-        const configuracoes =
-            db.ler("configuracoes") || [];
-
-
-        if (!Array.isArray(configuracoes)) {
-
-            return res.status(404).json({
-
-                success: false,
-
-                error:
-                    "Configurações não encontradas."
-
-            });
-
-        }
-
-
-        const configuracao =
-            configuracoes.find(
-                c =>
-                    String(c.id) ===
-                    String(req.params.id)
             );
 
 
-        if (!configuracao) {
+            return res.json({
 
-            return res.status(404).json({
+                success: true,
+
+                configuracao
+
+            });
+
+        }
+        catch (erro) {
+
+            console.error(
+                "[CONFIGURAÇÕES GET]",
+                erro
+            );
+
+
+            return res.status(500).json({
 
                 success: false,
 
                 error:
-                    "Configuração não encontrada."
+                    "Erro ao carregar configurações."
 
             });
 
         }
 
-
-        let alterou = false;
-
-
-        // -------------------------------------------------
-        // Garantir UID
-        // -------------------------------------------------
-
-        if (!configuracao.uid) {
-
-            configuracao.uid =
-                gerarUID();
-
-            alterou = true;
-
-        }
+    }
+);
 
 
-        // -------------------------------------------------
-        // Garantir API KEY
-        // -------------------------------------------------
+// =====================================================
+// PUT /api/configuracoes
+// =====================================================
+//
+// Atualizar configurações do usuário.
+//
+// =====================================================
 
-        if (!configuracao.apiKey) {
+router.put(
+    "/",
+    autenticarAPI,
+    async (req, res) => {
 
-            configuracao.apiKey =
-                gerarApiKey();
+        try {
 
-            alterou = true;
-
-        }
+            const uid =
+                req.usuario.uid;
 
 
-        // -------------------------------------------------
-        // Remover USSD antigo
-        // -------------------------------------------------
+            const referencia =
+                configuracaoRef(uid);
 
-        if (
-            Object.prototype.hasOwnProperty.call(
-                configuracao,
-                "ussd"
-            )
-        ) {
+
+            const snapshot =
+                await referencia.once(
+                    "value"
+                );
+
+
+            let atual = {};
+
+
+            if (
+                snapshot.exists()
+            ) {
+
+                atual =
+                    snapshot.val() || {};
+
+            }
+
+
+            // =================================================
+            // ATUALIZAR
+            // =================================================
+
+            const configuracao = {
+
+                ...atual,
+
+
+                // -------------------------------------------------
+                // IDENTIFICAÇÃO
+                // -------------------------------------------------
+
+                uid:
+                    uid,
+
+                apiKey:
+                    req.usuario.apiKey ||
+                    atual.apiKey ||
+                    "",
+
+
+                // -------------------------------------------------
+                // EMPRESA
+                // -------------------------------------------------
+
+                nomeEmpresa:
+                    req.body.nomeEmpresa ??
+                    atual.nomeEmpresa ??
+                    "MACVENDAS",
+
+                telefone:
+                    req.body.telefone ??
+                    atual.telefone ??
+                    "",
+
+                email:
+                    req.body.email ??
+                    atual.email ??
+                    "",
+
+
+                // -------------------------------------------------
+                // MOEDA
+                // -------------------------------------------------
+
+                moeda:
+                    req.body.moeda ??
+                    atual.moeda ??
+                    "MT",
+
+
+                // -------------------------------------------------
+                // VALORES
+                // -------------------------------------------------
+
+                vendaGB:
+                    req.body.vendaGB !== undefined
+                        ? numero(
+                            req.body.vendaGB
+                        )
+                        : numero(
+                            atual.vendaGB ??
+                            28
+                        ),
+
+                custoGB:
+                    req.body.custoGB !== undefined
+                        ? numero(
+                            req.body.custoGB
+                        )
+                        : numero(
+                            atual.custoGB ??
+                            21
+                        ),
+
+
+                // -------------------------------------------------
+                // TEMA
+                // -------------------------------------------------
+
+                tema:
+                    req.body.tema ??
+                    atual.tema ??
+                    "dark",
+
+                idioma:
+                    req.body.idioma ??
+                    atual.idioma ??
+                    "pt",
+
+
+                // -------------------------------------------------
+                // DATA
+                // -------------------------------------------------
+
+                criadoEm:
+                    atual.criadoEm ||
+                    agora(),
+
+                atualizado:
+                    agora()
+
+            };
+
+
+            // =================================================
+            // REMOVER USSD ANTIGO
+            // =================================================
 
             delete configuracao.ussd;
 
-            alterou = true;
-
-        }
-
-
-        // -------------------------------------------------
-        // Corrigir nome antigo
-        // -------------------------------------------------
-
-        if (
-            configuracao.nomeEmpresa ===
-            "Sistema SSD"
-        ) {
-
-            configuracao.nomeEmpresa =
-                "MOZ TECH";
-
-            alterou = true;
-
-        }
-
-
-        // -------------------------------------------------
-        // Salvar se necessário
-        // -------------------------------------------------
-
-        if (alterou) {
-
-            configuracao.atualizado =
-                new Date().toISOString();
-
-
-            db.salvar(
-                "configuracoes",
-                configuracoes
-            );
-
-        }
-
-
-        res.json({
-
-            success: true,
-
-            configuracao
-
-        });
-
-    }
-    catch (err) {
-
-        console.error(
-            "Erro ao buscar configuração:",
-            err
-        );
-
-
-        res.status(500).json({
-
-            success: false,
-
-            error:
-                err.message ||
-                "Erro ao buscar configuração."
-
-        });
-
-    }
-
-});
-
-
-// =====================================================
-// POST /configuracoes
-// =====================================================
-//
-// Criar/substituir configuração
-//
-// =====================================================
-
-router.post("/", (req, res) => {
-
-    try {
-
-        let configuracoes =
-            db.ler("configuracoes") || [];
-
-
-        if (!Array.isArray(configuracoes)) {
-
-            configuracoes = [];
-
-        }
-
-
-        // -------------------------------------------------
-        // CREDENCIAIS
-        // -------------------------------------------------
-
-        const uid =
-            req.body.uid ||
-            gerarUID();
-
-
-        const apiKey =
-            req.body.apiKey ||
-            gerarApiKey();
-
-
-        // -------------------------------------------------
-        // NOVA CONFIGURAÇÃO
-        // -------------------------------------------------
-
-        const configuracao = {
-
-            id:
-                Date.now().toString(),
-
 
             // =================================================
-            // CREDENCIAIS API
+            // SALVAR
             // =================================================
 
-            uid:
-                uid,
-
-            apiKey:
-                apiKey,
-
-
-            // =================================================
-            // EMPRESA
-            // =================================================
-
-            nomeEmpresa:
-                req.body.nomeEmpresa ||
-                "MOZ TECH",
-
-            telefone:
-                req.body.telefone ||
-                "",
-
-            email:
-                req.body.email ||
-                "",
-
-
-            // =================================================
-            // MOEDA
-            // =================================================
-
-            moeda:
-                req.body.moeda ||
-                "MT",
-
-
-            // =================================================
-            // VALORES
-            // =================================================
-
-            vendaGB:
-                Number(
-                    req.body.vendaGB !== undefined
-                        ? req.body.vendaGB
-                        : 28
-                ),
-
-            custoGB:
-                Number(
-                    req.body.custoGB !== undefined
-                        ? req.body.custoGB
-                        : 21
-                ),
-
-
-            // =================================================
-            // TEMA
-            // =================================================
-
-            tema:
-                req.body.tema ||
-                "dark",
-
-            idioma:
-                req.body.idioma ||
-                "pt",
-
-
-            // =================================================
-            // DATA
-            // =================================================
-
-            atualizado:
-                new Date().toISOString()
-
-        };
-
-
-        // -------------------------------------------------
-        // MANTER APENAS UMA CONFIGURAÇÃO
-        // -------------------------------------------------
-
-        configuracoes.length = 0;
-
-        configuracoes.push(
-            configuracao
-        );
-
-
-        // -------------------------------------------------
-        // SALVAR
-        // -------------------------------------------------
-
-        db.salvar(
-            "configuracoes",
-            configuracoes
-        );
-
-
-        // -------------------------------------------------
-        // RESPOSTA
-        // -------------------------------------------------
-
-        res.json({
-
-            success: true,
-
-            configuracao
-
-        });
-
-    }
-    catch (err) {
-
-        console.error(
-            "Erro ao criar configuração:",
-            err
-        );
-
-
-        res.status(500).json({
-
-            success: false,
-
-            error:
-                err.message ||
-                "Erro ao criar configuração."
-
-        });
-
-    }
-
-});
-
-
-// =====================================================
-// PUT /configuracoes/:id
-// =====================================================
-//
-// Atualizar configuração
-//
-// =====================================================
-
-router.put("/:id", (req, res) => {
-
-    try {
-
-        let configuracoes =
-            db.ler("configuracoes") || [];
-
-
-        if (!Array.isArray(configuracoes)) {
-
-            configuracoes = [];
-
-        }
-
-
-        const index =
-            configuracoes.findIndex(
-                c =>
-                    String(c.id) ===
-                    String(req.params.id)
+            await referencia.set(
+                configuracao
             );
 
 
-        if (index === -1) {
+            return res.json({
 
-            return res.status(404).json({
+                success: true,
+
+                message:
+                    "Configurações atualizadas com sucesso.",
+
+                configuracao
+
+            });
+
+        }
+        catch (erro) {
+
+            console.error(
+                "[CONFIGURAÇÕES PUT]",
+                erro
+            );
+
+
+            return res.status(500).json({
 
                 success: false,
 
                 error:
-                    "Configuração não encontrada."
+                    "Erro ao atualizar configurações."
 
             });
 
         }
 
-
-        const atual =
-            configuracoes[index];
-
-
-        // -------------------------------------------------
-        // Atualizar
-        // -------------------------------------------------
-
-        const atualizada = {
-
-            ...atual,
-
-            ...req.body,
-
-
-            // -------------------------------------------------
-            // Nunca perder UID
-            // -------------------------------------------------
-
-            uid:
-                atual.uid ||
-                gerarUID(),
-
-
-            // -------------------------------------------------
-            // Nunca perder API KEY
-            // -------------------------------------------------
-
-            apiKey:
-                atual.apiKey ||
-                gerarApiKey(),
-
-
-            // -------------------------------------------------
-            // Nome da empresa
-            // -------------------------------------------------
-
-            nomeEmpresa:
-                req.body.nomeEmpresa ||
-                atual.nomeEmpresa ||
-                "MOZ TECH",
-
-
-            // -------------------------------------------------
-            // Venda por GB
-            // -------------------------------------------------
-
-            vendaGB:
-                req.body.vendaGB !== undefined
-                    ? Number(
-                        req.body.vendaGB
-                    )
-                    : atual.vendaGB,
-
-
-            // -------------------------------------------------
-            // Custo por GB
-            // -------------------------------------------------
-
-            custoGB:
-                req.body.custoGB !== undefined
-                    ? Number(
-                        req.body.custoGB
-                    )
-                    : atual.custoGB,
-
-
-            // -------------------------------------------------
-            // Data
-            // -------------------------------------------------
-
-            atualizado:
-                new Date().toISOString()
-
-        };
-
-
-        // -------------------------------------------------
-        // Remover USSD caso venha no body
-        // -------------------------------------------------
-
-        delete atualizada.ussd;
-
-
-        configuracoes[index] =
-            atualizada;
-
-
-        db.salvar(
-            "configuracoes",
-            configuracoes
-        );
-
-
-        res.json({
-
-            success: true,
-
-            configuracao:
-                atualizada
-
-        });
-
     }
-    catch (err) {
-
-        console.error(
-            "Erro ao atualizar configuração:",
-            err
-        );
-
-
-        res.status(500).json({
-
-            success: false,
-
-            error:
-                err.message ||
-                "Erro ao atualizar configuração."
-
-        });
-
-    }
-
-});
+);
 
 
 // =====================================================
-// POST /configuracoes/regenerar-api-key
+// GET /api/configuracoes/:id
 // =====================================================
 //
-// Gera uma nova API Key.
+// Mantido para compatibilidade.
 //
-// A API Key anterior deixa de funcionar.
+// Como agora existe apenas uma configuração por usuário,
+// o ID pode ser ignorado e devolvemos a configuração
+// do usuário autenticado.
+//
+// =====================================================
+
+router.get(
+    "/:id",
+    autenticarAPI,
+    async (req, res) => {
+
+        try {
+
+            const uid =
+                req.usuario.uid;
+
+
+            const snapshot =
+                await configuracaoRef(
+                    uid
+                )
+                .once(
+                    "value"
+                );
+
+
+            if (
+                !snapshot.exists()
+            ) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    error:
+                        "Configuração não encontrada."
+
+                });
+
+            }
+
+
+            return res.json({
+
+                success: true,
+
+                configuracao:
+                    snapshot.val()
+
+            });
+
+        }
+        catch (erro) {
+
+            console.error(
+                "[CONFIGURAÇÃO ID]",
+                erro
+            );
+
+
+            return res.status(500).json({
+
+                success: false,
+
+                error:
+                    "Erro ao buscar configuração."
+
+            });
+
+        }
+
+    }
+);
+
+
+// =====================================================
+// POST /api/configuracoes/regenerar-api-key
+// =====================================================
+//
+// IMPORTANTE:
+// A API Key é criada pelo sistema de autenticação.
+// Aqui não devemos simplesmente criar uma chave local
+// diferente da que está em users/{uid}.
 //
 // =====================================================
 
 router.post(
     "/regenerar-api-key",
-    (req, res) => {
+    autenticarAPI,
+    async (req, res) => {
 
-        try {
+        return res.status(403).json({
 
-            const configuracao =
-                obterConfiguracao();
+            success: false,
 
+            error:
+                "A regeneração da API Key deve ser feita pelo sistema de autenticação do usuário."
 
-            const configuracoes =
-                db.ler("configuracoes") || [];
-
-
-            configuracao.apiKey =
-                gerarApiKey();
-
-
-            configuracao.atualizado =
-                new Date().toISOString();
-
-
-            // -------------------------------------------------
-            // Procurar configuração
-            // -------------------------------------------------
-
-            const index =
-                configuracoes.findIndex(
-                    c =>
-                        String(c.id) ===
-                        String(configuracao.id)
-                );
-
-
-            if (index >= 0) {
-
-                configuracoes[index] =
-                    configuracao;
-
-            }
-            else {
-
-                configuracoes.length = 0;
-
-                configuracoes.push(
-                    configuracao
-                );
-
-            }
-
-
-            // -------------------------------------------------
-            // Salvar
-            // -------------------------------------------------
-
-            db.salvar(
-                "configuracoes",
-                configuracoes
-            );
-
-
-            // -------------------------------------------------
-            // Resposta
-            // -------------------------------------------------
-
-            res.json({
-
-                success: true,
-
-                message:
-                    "API Key regenerada com sucesso.",
-
-                uid:
-                    configuracao.uid,
-
-                apiKey:
-                    configuracao.apiKey
-
-            });
-
-        }
-        catch (err) {
-
-            console.error(
-                "Erro ao regenerar API Key:",
-                err
-            );
-
-
-            res.status(500).json({
-
-                success: false,
-
-                error:
-                    err.message ||
-                    "Erro ao regenerar API Key."
-
-            });
-
-        }
+        });
 
     }
 );
