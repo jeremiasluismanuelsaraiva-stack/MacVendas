@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt">
+
 <head>
 
     <meta charset="UTF-8">
@@ -23,23 +24,33 @@
 
 </head>
 
+
 <body>
+
+
+    <!-- =====================================================
+         TEMA
+    ====================================================== -->
 
     <button
         class="theme-toggle"
-        onclick="toggleTheme()"
+        type="button"
+        id="themeToggle"
     >
+
         <i class="fas fa-moon"></i>
+
         <span>Tema</span>
+
     </button>
 
 
     <div class="container">
 
 
-        <!-- =========================
+        <!-- =================================================
              LOGIN
-        ========================== -->
+        ================================================== -->
 
         <div
             id="loginForm"
@@ -65,7 +76,9 @@
 
             <div class="form-group">
 
-                <label>Email</label>
+                <label for="loginEmail">
+                    Email
+                </label>
 
                 <input
                     type="email"
@@ -79,7 +92,9 @@
 
             <div class="form-group">
 
-                <label>Senha</label>
+                <label for="loginPassword">
+                    Senha
+                </label>
 
                 <input
                     type="password"
@@ -92,9 +107,9 @@
 
 
             <button
+                type="button"
                 class="btn btn-primary"
                 id="loginButton"
-                onclick="handleLogin()"
             >
                 Entrar
             </button>
@@ -102,7 +117,7 @@
 
             <div class="auth-footer">
 
-                <span onclick="showForgotPassword()">
+                <span id="forgotLink">
                     Esqueci da palavra-passe
                 </span>
 
@@ -113,7 +128,7 @@
 
                 Não tem conta?
 
-                <span onclick="showRegister()">
+                <span id="registerLink">
                     Criar conta
                 </span>
 
@@ -122,15 +137,14 @@
         </div>
 
 
-
-        <!-- =========================
+        <!-- =================================================
              REGISTRO
-        ========================== -->
+        ================================================== -->
 
         <div
             id="registerForm"
             class="auth-card"
-            style="display: none;"
+            style="display:none;"
         >
 
             <div class="auth-header">
@@ -152,7 +166,9 @@
 
             <div class="form-group">
 
-                <label>Nome Completo</label>
+                <label for="registerName">
+                    Nome Completo
+                </label>
 
                 <input
                     type="text"
@@ -166,7 +182,9 @@
 
             <div class="form-group">
 
-                <label>Email</label>
+                <label for="registerEmail">
+                    Email
+                </label>
 
                 <input
                     type="email"
@@ -180,7 +198,9 @@
 
             <div class="form-group">
 
-                <label>Senha</label>
+                <label for="registerPassword">
+                    Senha
+                </label>
 
                 <input
                     type="password"
@@ -193,9 +213,9 @@
 
 
             <button
+                type="button"
                 class="btn btn-primary"
                 id="registerButton"
-                onclick="handleRegister()"
             >
                 Criar Conta
             </button>
@@ -205,7 +225,7 @@
 
                 Já tem conta?
 
-                <span onclick="showLogin()">
+                <span id="loginLink">
                     Fazer login
                 </span>
 
@@ -214,15 +234,14 @@
         </div>
 
 
-
-        <!-- =========================
-             RECUPERAR PALAVRA-PASSE
-        ========================== -->
+        <!-- =================================================
+             RECUPERAR SENHA
+        ================================================== -->
 
         <div
             id="forgotPasswordForm"
             class="auth-card"
-            style="display: none;"
+            style="display:none;"
         >
 
             <div class="auth-header">
@@ -246,7 +265,9 @@
 
             <div class="form-group">
 
-                <label>Email</label>
+                <label for="forgotEmail">
+                    Email
+                </label>
 
                 <input
                     type="email"
@@ -259,9 +280,9 @@
 
 
             <button
+                type="button"
                 class="btn btn-primary"
                 id="forgotButton"
-                onclick="handleForgotPassword()"
             >
                 Enviar link
             </button>
@@ -269,7 +290,7 @@
 
             <div class="auth-footer">
 
-                <span onclick="showLogin()">
+                <span id="forgotBackLink">
                     Voltar ao login
                 </span>
 
@@ -278,15 +299,14 @@
         </div>
 
 
-
-        <!-- =========================
+        <!-- =================================================
              VERIFICAÇÃO
-        ========================== -->
+        ================================================== -->
 
         <div
             id="verifyForm"
             class="auth-card"
-            style="display: none;"
+            style="display:none;"
         >
 
             <div class="auth-header">
@@ -309,8 +329,9 @@
 
 
             <button
+                type="button"
                 class="btn btn-primary"
-                onclick="resendVerificationEmail()"
+                id="resendButton"
             >
                 Reenviar Email
             </button>
@@ -318,7 +339,7 @@
 
             <div class="auth-footer">
 
-                <span onclick="showLogin()">
+                <span id="verifyBackLink">
                     Voltar ao login
                 </span>
 
@@ -329,77 +350,108 @@
     </div>
 
 
-
-    <!-- =========================
+    <!-- =====================================================
          FIREBASE
-    ========================== -->
+    ====================================================== -->
 
     <script type="module">
 
         import {
 
             registerUser,
-
             loginUser,
-
             recuperarSenha,
-
             resendVerification
 
-        } from './firebase.js';
+        } from "./firebase.js";
 
+
+        // =================================================
+        // ELEMENTOS
+        // =================================================
+
+        const loginForm =
+            document.getElementById("loginForm");
+
+        const registerForm =
+            document.getElementById("registerForm");
+
+        const forgotPasswordForm =
+            document.getElementById("forgotPasswordForm");
+
+        const verifyForm =
+            document.getElementById("verifyForm");
+
+
+        const loginButton =
+            document.getElementById("loginButton");
+
+        const registerButton =
+            document.getElementById("registerButton");
+
+        const forgotButton =
+            document.getElementById("forgotButton");
+
+        const resendButton =
+            document.getElementById("resendButton");
 
 
         // =================================================
         // TEMA
         // =================================================
 
-        window.toggleTheme = () => {
-
-            const current =
-                document.documentElement
-                    .getAttribute('data-theme');
+        const themeToggle =
+            document.getElementById("themeToggle");
 
 
-            const newTheme =
-                current === 'dark'
-                    ? 'light'
-                    : 'dark';
+        function aplicarTema() {
 
+            const tema =
+                localStorage.getItem("theme") ||
+                "light";
 
             document.documentElement
                 .setAttribute(
-                    'data-theme',
-                    newTheme
-                );
-
-
-            localStorage.setItem(
-                'theme',
-                newTheme
-            );
-
-        };
-
-
-        const savedTheme =
-            localStorage.getItem('theme');
-
-
-        if (savedTheme) {
-
-            document.documentElement
-                .setAttribute(
-                    'data-theme',
-                    savedTheme
+                    "data-theme",
+                    tema
                 );
 
         }
 
 
+        themeToggle.addEventListener(
+            "click",
+            () => {
+
+                const atual =
+                    document.documentElement
+                        .getAttribute("data-theme");
+
+                const novo =
+                    atual === "dark"
+                        ? "light"
+                        : "dark";
+
+                document.documentElement
+                    .setAttribute(
+                        "data-theme",
+                        novo
+                    );
+
+                localStorage.setItem(
+                    "theme",
+                    novo
+                );
+
+            }
+        );
+
+
+        aplicarTema();
+
 
         // =================================================
-        // MENSAGENS
+        // MENSAGEM
         // =================================================
 
         function showMessage(
@@ -408,228 +460,184 @@
             type
         ) {
 
-            const el =
+            const elemento =
                 document.getElementById(
                     elementId
                 );
 
-
-            if (!el) return;
-
-
-            el.textContent = text;
+            if (!elemento) {
+                return;
+            }
 
 
-            el.className =
-                `message ${type}`;
+            elemento.textContent =
+                text || "";
+
+
+            elemento.className =
+                "message " +
+                (type || "");
 
         }
 
 
-
         // =================================================
-        // ESCONDER TODAS AS TELAS
+        // ESCONDER TODAS
         // =================================================
 
         function hideAllForms() {
 
-            document.getElementById(
-                'loginForm'
-            ).style.display = 'none';
+            loginForm.style.display =
+                "none";
 
+            registerForm.style.display =
+                "none";
 
-            document.getElementById(
-                'registerForm'
-            ).style.display = 'none';
+            forgotPasswordForm.style.display =
+                "none";
 
-
-            document.getElementById(
-                'forgotPasswordForm'
-            ).style.display = 'none';
-
-
-            document.getElementById(
-                'verifyForm'
-            ).style.display = 'none';
+            verifyForm.style.display =
+                "none";
 
         }
-
 
 
         // =================================================
         // LOGIN
         // =================================================
 
-        window.showLogin = () => {
+        function showLogin() {
 
             hideAllForms();
 
+            loginForm.style.display =
+                "block";
 
-            document.getElementById(
-                'loginForm'
-            ).style.display = 'block';
-
-        };
-
+        }
 
 
         // =================================================
         // REGISTRO
         // =================================================
 
-        window.showRegister = () => {
+        function showRegister() {
 
             hideAllForms();
 
+            registerForm.style.display =
+                "block";
 
-            document.getElementById(
-                'registerForm'
-            ).style.display = 'block';
+            showMessage(
+                "registerMessage",
+                "",
+                ""
+            );
 
-        };
-
+        }
 
 
         // =================================================
-        // RECUPERAR PALAVRA-PASSE
+        // RECUPERAR
         // =================================================
 
-        window.showForgotPassword = () => {
+        function showForgotPassword() {
 
             hideAllForms();
 
+            forgotPasswordForm.style.display =
+                "block";
 
-            document.getElementById(
-                'forgotPasswordForm'
-            ).style.display = 'block';
+            showMessage(
+                "forgotMessage",
+                "",
+                ""
+            );
 
-
-            document.getElementById(
-                'forgotMessage'
-            ).className = 'message';
-
-
-            document.getElementById(
-                'forgotMessage'
-            ).textContent = '';
-
-        };
-
-
-
-        window.handleForgotPassword = async () => {
-
-            const email =
-                document.getElementById(
-                    'forgotEmail'
-                ).value.trim();
-
-
-            if (!email) {
-
-                showMessage(
-                    'forgotMessage',
-                    'Digite seu email.',
-                    'error'
-                );
-
-                return;
-
-            }
-
-
-            const button =
-                document.getElementById(
-                    'forgotButton'
-                );
-
-
-            button.disabled = true;
-
-            button.textContent =
-                'Enviando...';
-
-
-            try {
-
-                const result =
-                    await recuperarSenha(email);
-
-
-                showMessage(
-                    'forgotMessage',
-                    result.message,
-                    result.success
-                        ? 'success'
-                        : 'error'
-                );
-
-            } catch (error) {
-
-                console.error(error);
-
-
-                showMessage(
-                    'forgotMessage',
-                    error.message ||
-                    'Não foi possível enviar o link.',
-                    'error'
-                );
-
-            } finally {
-
-                button.disabled = false;
-
-                button.textContent =
-                    'Enviar link';
-
-            }
-
-        };
-
+        }
 
 
         // =================================================
         // VERIFICAÇÃO
         // =================================================
 
-        window.showVerify = () => {
+        function showVerify() {
 
             hideAllForms();
 
+            verifyForm.style.display =
+                "block";
 
-            document.getElementById(
-                'verifyForm'
-            ).style.display = 'block';
+        }
 
-        };
 
+        // =================================================
+        // LINKS
+        // =================================================
+
+        document
+            .getElementById("registerLink")
+            .addEventListener(
+                "click",
+                showRegister
+            );
+
+
+        document
+            .getElementById("loginLink")
+            .addEventListener(
+                "click",
+                showLogin
+            );
+
+
+        document
+            .getElementById("forgotLink")
+            .addEventListener(
+                "click",
+                showForgotPassword
+            );
+
+
+        document
+            .getElementById("forgotBackLink")
+            .addEventListener(
+                "click",
+                showLogin
+            );
+
+
+        document
+            .getElementById("verifyBackLink")
+            .addEventListener(
+                "click",
+                showLogin
+            );
 
 
         // =================================================
         // LOGIN
         // =================================================
 
-        window.handleLogin = async () => {
+        async function handleLogin() {
 
             const email =
-                document.getElementById(
-                    'loginEmail'
-                ).value.trim();
-
+                document
+                    .getElementById("loginEmail")
+                    .value
+                    .trim();
 
             const password =
-                document.getElementById(
-                    'loginPassword'
-                ).value;
+                document
+                    .getElementById("loginPassword")
+                    .value;
 
 
             if (!email || !password) {
 
                 showMessage(
-                    'loginMessage',
-                    'Preencha todos os campos.',
-                    'error'
+                    "loginMessage",
+                    "Preencha todos os campos.",
+                    "error"
                 );
 
                 return;
@@ -637,19 +645,19 @@
             }
 
 
-            const button =
-                document.getElementById(
-                    'loginButton'
-                );
+            loginButton.disabled =
+                true;
 
-
-            button.disabled = true;
-
-            button.textContent =
-                'Entrando...';
+            loginButton.innerHTML =
+                '<i class="fas fa-spinner fa-spin"></i> Entrando...';
 
 
             try {
+
+                console.log(
+                    "[LOGIN] Iniciando login..."
+                );
+
 
                 const result =
                     await loginUser(
@@ -658,77 +666,113 @@
                     );
 
 
-                if (result.success) {
-
-                    localStorage.setItem(
-                        'userData',
-                        JSON.stringify(
-                            result.user
-                        )
-                    );
+                console.log(
+                    "[LOGIN] Resultado:",
+                    result
+                );
 
 
-                    // Só aqui redireciona
-                    window.location.href =
-                        '/dashboard.html';
+                if (
+                    result &&
+                    result.success
+                ) {
 
-                } else {
+                    if (
+                        result.user
+                    ) {
+
+                        localStorage.setItem(
+                            "userData",
+                            JSON.stringify(
+                                result.user
+                            )
+                        );
+
+                    }
+
 
                     showMessage(
-                        'loginMessage',
-                        result.message,
-                        'error'
+                        "loginMessage",
+                        "Login realizado com sucesso.",
+                        "success"
                     );
+
+
+                    setTimeout(
+                        () => {
+
+                            window.location.href =
+                                "/dashboard.html";
+
+                        },
+                        300
+                    );
+
+
+                    return;
 
                 }
 
-            } catch (error) {
 
-                console.error(error);
+                showMessage(
+                    "loginMessage",
+                    result?.message ||
+                    "Não foi possível fazer login.",
+                    "error"
+                );
+
+            }
+            catch (error) {
+
+                console.error(
+                    "[LOGIN] Erro:",
+                    error
+                );
 
 
                 showMessage(
-                    'loginMessage',
-                    error.message ||
-                    'Erro ao fazer login.',
-                    'error'
+                    "loginMessage",
+                    error?.message ||
+                    "Erro ao fazer login.",
+                    "error"
                 );
 
-            } finally {
+            }
+            finally {
 
-                button.disabled = false;
+                loginButton.disabled =
+                    false;
 
-                button.textContent =
-                    'Entrar';
+                loginButton.innerHTML =
+                    "Entrar";
 
             }
 
-        };
-
+        }
 
 
         // =================================================
         // REGISTRO
         // =================================================
 
-        window.handleRegister = async () => {
+        async function handleRegister() {
 
             const name =
-                document.getElementById(
-                    'registerName'
-                ).value.trim();
-
+                document
+                    .getElementById("registerName")
+                    .value
+                    .trim();
 
             const email =
-                document.getElementById(
-                    'registerEmail'
-                ).value.trim();
-
+                document
+                    .getElementById("registerEmail")
+                    .value
+                    .trim();
 
             const password =
-                document.getElementById(
-                    'registerPassword'
-                ).value;
+                document
+                    .getElementById("registerPassword")
+                    .value;
 
 
             if (
@@ -738,9 +782,9 @@
             ) {
 
                 showMessage(
-                    'registerMessage',
-                    'Preencha todos os campos.',
-                    'error'
+                    "registerMessage",
+                    "Preencha todos os campos.",
+                    "error"
                 );
 
                 return;
@@ -748,12 +792,14 @@
             }
 
 
-            if (password.length < 6) {
+            if (
+                password.length < 6
+            ) {
 
                 showMessage(
-                    'registerMessage',
-                    'A senha deve ter pelo menos 6 caracteres.',
-                    'error'
+                    "registerMessage",
+                    "A senha deve ter pelo menos 6 caracteres.",
+                    "error"
                 );
 
                 return;
@@ -761,19 +807,19 @@
             }
 
 
-            const button =
-                document.getElementById(
-                    'registerButton'
-                );
+            registerButton.disabled =
+                true;
 
-
-            button.disabled = true;
-
-            button.textContent =
-                'Criando...';
+            registerButton.innerHTML =
+                '<i class="fas fa-spinner fa-spin"></i> Criando...';
 
 
             try {
+
+                console.log(
+                    "[REGISTRO] Criando conta..."
+                );
+
 
                 const result =
                     await registerUser(
@@ -783,113 +829,274 @@
                     );
 
 
-                if (result.success) {
+                console.log(
+                    "[REGISTRO] Resultado:",
+                    result
+                );
+
+
+                if (
+                    result &&
+                    result.success
+                ) {
 
                     showMessage(
-                        'registerMessage',
-                        result.message,
-                        'success'
+                        "registerMessage",
+                        result.message ||
+                        "Conta criada com sucesso!",
+                        "success"
                     );
+
+
+                    if (
+                        result.user
+                    ) {
+
+                        localStorage.setItem(
+                            "userData",
+                            JSON.stringify(
+                                result.user
+                            )
+                        );
+
+                    }
 
 
                     setTimeout(
                         () => {
 
-                            window.showVerify();
+                            showVerify();
 
                         },
-                        3000
+                        1000
                     );
 
-                } else {
 
-                    showMessage(
-                        'registerMessage',
-                        result.message,
-                        'error'
-                    );
+                    return;
 
                 }
 
-            } catch (error) {
 
-                console.error(error);
+                showMessage(
+                    "registerMessage",
+                    result?.message ||
+                    "Não foi possível criar a conta.",
+                    "error"
+                );
+
+            }
+            catch (error) {
+
+                console.error(
+                    "[REGISTRO] Erro:",
+                    error
+                );
 
 
                 showMessage(
-                    'registerMessage',
-                    error.message ||
-                    'Erro ao criar conta.',
-                    'error'
+                    "registerMessage",
+                    error?.message ||
+                    "Erro ao criar conta.",
+                    "error"
                 );
 
-            } finally {
+            }
+            finally {
 
-                button.disabled = false;
+                registerButton.disabled =
+                    false;
 
-                button.textContent =
-                    'Criar Conta';
+                registerButton.innerHTML =
+                    "Criar Conta";
 
             }
 
-        };
+        }
 
+
+        // =================================================
+        // RECUPERAR SENHA
+        // =================================================
+
+        async function handleForgotPassword() {
+
+            const email =
+                document
+                    .getElementById("forgotEmail")
+                    .value
+                    .trim();
+
+
+            if (!email) {
+
+                showMessage(
+                    "forgotMessage",
+                    "Digite seu email.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            forgotButton.disabled =
+                true;
+
+            forgotButton.innerHTML =
+                '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+
+
+            try {
+
+                const result =
+                    await recuperarSenha(
+                        email
+                    );
+
+
+                showMessage(
+                    "forgotMessage",
+                    result?.message ||
+                    "Operação concluída.",
+                    result?.success
+                        ? "success"
+                        : "error"
+                );
+
+            }
+            catch (error) {
+
+                console.error(
+                    "[RECUPERAÇÃO]",
+                    error
+                );
+
+
+                showMessage(
+                    "forgotMessage",
+                    error?.message ||
+                    "Não foi possível enviar o link.",
+                    "error"
+                );
+
+            }
+            finally {
+
+                forgotButton.disabled =
+                    false;
+
+                forgotButton.innerHTML =
+                    "Enviar link";
+
+            }
+
+        }
 
 
         // =================================================
         // REENVIAR VERIFICAÇÃO
         // =================================================
 
-        window.resendVerificationEmail =
-            async () => {
+        async function resendVerificationEmail() {
 
-                try {
+            resendButton.disabled =
+                true;
 
-                    const result =
-                        await resendVerification();
-
-
-                    showMessage(
-                        'verifyMessage',
-                        result.message,
-                        result.success
-                            ? 'success'
-                            : 'error'
-                    );
-
-                } catch (error) {
-
-                    console.error(error);
+            resendButton.innerHTML =
+                '<i class="fas fa-spinner fa-spin"></i> Enviando...';
 
 
-                    showMessage(
-                        'verifyMessage',
-                        error.message ||
-                        'Erro ao reenviar email.',
-                        'error'
-                    );
+            try {
 
-                }
+                const result =
+                    await resendVerification();
 
-            };
 
+                showMessage(
+                    "verifyMessage",
+                    result?.message ||
+                    "Operação concluída.",
+                    result?.success
+                        ? "success"
+                        : "error"
+                );
+
+            }
+            catch (error) {
+
+                console.error(
+                    "[VERIFICAÇÃO]",
+                    error
+                );
+
+
+                showMessage(
+                    "verifyMessage",
+                    error?.message ||
+                    "Erro ao reenviar email.",
+                    "error"
+                );
+
+            }
+            finally {
+
+                resendButton.disabled =
+                    false;
+
+                resendButton.innerHTML =
+                    "Reenviar Email";
+
+            }
+
+        }
 
 
         // =================================================
-        // ENTER NO LOGIN
+        // EVENTOS
+        // =================================================
+
+        loginButton.addEventListener(
+            "click",
+            handleLogin
+        );
+
+
+        registerButton.addEventListener(
+            "click",
+            handleRegister
+        );
+
+
+        forgotButton.addEventListener(
+            "click",
+            handleForgotPassword
+        );
+
+
+        resendButton.addEventListener(
+            "click",
+            resendVerificationEmail
+        );
+
+
+        // =================================================
+        // ENTER - LOGIN
         // =================================================
 
         document
-            .getElementById(
-                'loginPassword'
-            )
-            ?.addEventListener(
-                'keypress',
-                (e) => {
+            .getElementById("loginPassword")
+            .addEventListener(
+                "keydown",
+                event => {
 
-                    if (e.key === 'Enter') {
+                    if (
+                        event.key === "Enter"
+                    ) {
 
-                        window.handleLogin();
+                        event.preventDefault();
+
+                        handleLogin();
 
                     }
 
@@ -897,22 +1104,23 @@
             );
 
 
-
         // =================================================
-        // ENTER NA RECUPERAÇÃO
+        // ENTER - REGISTRO
         // =================================================
 
         document
-            .getElementById(
-                'forgotEmail'
-            )
-            ?.addEventListener(
-                'keypress',
-                (e) => {
+            .getElementById("registerPassword")
+            .addEventListener(
+                "keydown",
+                event => {
 
-                    if (e.key === 'Enter') {
+                    if (
+                        event.key === "Enter"
+                    ) {
 
-                        window.handleForgotPassword();
+                        event.preventDefault();
+
+                        handleRegister();
 
                     }
 
@@ -920,29 +1128,36 @@
             );
 
 
-
         // =================================================
-        // ENTER NO REGISTRO
+        // ENTER - RECUPERAÇÃO
         // =================================================
 
         document
-            .getElementById(
-                'registerPassword'
-            )
-            ?.addEventListener(
-                'keypress',
-                (e) => {
+            .getElementById("forgotEmail")
+            .addEventListener(
+                "keydown",
+                event => {
 
-                    if (e.key === 'Enter') {
+                    if (
+                        event.key === "Enter"
+                    ) {
 
-                        window.handleRegister();
+                        event.preventDefault();
+
+                        handleForgotPassword();
 
                     }
 
                 }
             );
+
+
+        console.log(
+            "[AUTH] Página de autenticação carregada."
+        );
 
     </script>
 
 </body>
+
 </html>
