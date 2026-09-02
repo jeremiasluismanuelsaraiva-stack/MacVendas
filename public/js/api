@@ -1,270 +1,109 @@
-// =====================================================
-// MOZ TECH
-// API.JS
-// CENTRAL DE COMUNICAÇÃO COM O BACKEND
-// =====================================================
-
 "use strict";
-
-
-// =====================================================
-// URL BASE DA API
-// =====================================================
 
 const API_BASE_URL = "/api";
 
-
-// =====================================================
-// GET
-// =====================================================
-
 async function apiGet(endpoint) {
 
-    try {
-
-        const resposta =
-            await fetch(
-                API_BASE_URL + endpoint,
-                {
-                    method: "GET",
-
-                    headers: {
-                        "Accept":
-                            "application/json"
-                    },
-
-                    cache:
-                        "no-store"
-                }
-            );
-
-
-        if (!resposta.ok) {
-
-            throw new Error(
-                "Erro HTTP " +
-                resposta.status
-            );
-
+    const resposta = await fetch(
+        API_BASE_URL + endpoint,
+        {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            },
+            cache: "no-store"
         }
+    );
 
-
-        return await resposta.json();
-
-    }
-    catch (erro) {
-
-        console.error(
-            "[MOZ API] Erro GET:",
-            endpoint,
-            erro
+    if (!resposta.ok) {
+        throw new Error(
+            "Erro HTTP " + resposta.status
         );
-
-        throw erro;
-
     }
 
+    return await resposta.json();
 }
 
 
-// =====================================================
-// POST
-// =====================================================
+async function apiPost(endpoint, dados) {
 
-async function apiPost(
-    endpoint,
-    dados
-) {
-
-    try {
-
-        const resposta =
-            await fetch(
-                API_BASE_URL + endpoint,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json",
-
-                        "Accept":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify(
-                            dados
-                        )
-                }
-            );
-
-
-        if (!resposta.ok) {
-
-            throw new Error(
-                "Erro HTTP " +
-                resposta.status
-            );
-
+    const resposta = await fetch(
+        API_BASE_URL + endpoint,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(dados)
         }
+    );
 
-
-        return await resposta.json();
-
-    }
-    catch (erro) {
-
-        console.error(
-            "[MOZ API] Erro POST:",
-            endpoint,
-            erro
+    if (!resposta.ok) {
+        throw new Error(
+            "Erro HTTP " + resposta.status
         );
-
-        throw erro;
-
     }
 
+    return await resposta.json();
 }
 
 
-// =====================================================
-// PUT
-// =====================================================
+async function apiPut(endpoint, dados) {
 
-async function apiPut(
-    endpoint,
-    dados
-) {
-
-    try {
-
-        const resposta =
-            await fetch(
-                API_BASE_URL + endpoint,
-                {
-                    method: "PUT",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json",
-
-                        "Accept":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify(
-                            dados
-                        )
-                }
-            );
-
-
-        if (!resposta.ok) {
-
-            throw new Error(
-                "Erro HTTP " +
-                resposta.status
-            );
-
+    const resposta = await fetch(
+        API_BASE_URL + endpoint,
+        {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(dados)
         }
+    );
 
-
-        return await resposta.json();
-
-    }
-    catch (erro) {
-
-        console.error(
-            "[MOZ API] Erro PUT:",
-            endpoint,
-            erro
+    if (!resposta.ok) {
+        throw new Error(
+            "Erro HTTP " + resposta.status
         );
-
-        throw erro;
-
     }
 
+    return await resposta.json();
 }
 
 
-// =====================================================
-// DELETE
-// =====================================================
+async function apiDelete(endpoint) {
 
-async function apiDelete(
-    endpoint
-) {
-
-    try {
-
-        const resposta =
-            await fetch(
-                API_BASE_URL + endpoint,
-                {
-                    method: "DELETE",
-
-                    headers: {
-                        "Accept":
-                            "application/json"
-                    }
-                }
-            );
-
-
-        if (!resposta.ok) {
-
-            throw new Error(
-                "Erro HTTP " +
-                resposta.status
-            );
-
+    const resposta = await fetch(
+        API_BASE_URL + endpoint,
+        {
+            method: "DELETE",
+            headers: {
+                "Accept": "application/json"
+            }
         }
+    );
 
-
-        return await resposta.json();
-
-    }
-    catch (erro) {
-
-        console.error(
-            "[MOZ API] Erro DELETE:",
-            endpoint,
-            erro
+    if (!resposta.ok) {
+        throw new Error(
+            "Erro HTTP " + resposta.status
         );
-
-        throw erro;
-
     }
 
+    return await resposta.json();
 }
 
-
-// =====================================================
-// API MOZ TECH
-// =====================================================
 
 window.MOZ_API = {
 
-    get:
-        apiGet,
-
-    post:
-        apiPost,
-
-    put:
-        apiPut,
-
-    delete:
-        apiDelete
+    get: apiGet,
+    post: apiPost,
+    put: apiPut,
+    delete: apiDelete
 
 };
 
-
-// =====================================================
-// TESTE
-// =====================================================
 
 console.log(
     "[MOZ API] API carregada:",
