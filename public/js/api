@@ -1,828 +1,455 @@
 "use strict";
 
-// =====================================================
-// MOZ TECH
-// API CLIENT
-// public/js/api.js
-// =====================================================
-
-const API_BASE_URL = "/api";
 
 // =====================================================
-// CREDENCIAIS
+// CONFIGURAÇÃO
 // =====================================================
 
-let MOZ_UID =
-    localStorage.getItem("uid") || "";
-
-let MOZ_API_KEY =
-    localStorage.getItem("apiKey") || "";
+const API_URL =
+    window.location.origin + "/api";
 
 
 // =====================================================
-// DEFINIR CREDENCIAIS
+// ELEMENTOS
 // =====================================================
 
-function definirCredenciais(uid, apiKey) {
+const elementoNome =
+    document.getElementById("nomeUsuario");
 
-    MOZ_UID =
-        String(uid || "").trim();
+const elementoEmail =
+    document.getElementById("emailUsuario");
 
-    MOZ_API_KEY =
-        String(apiKey || "").trim();
+const elementoUID =
+    document.getElementById("uidUsuario");
 
-
-    // =================================================
-    // SALVAR NO MESMO LOCALSTORAGE DO FIREBASE
-    // =================================================
-
-    if (MOZ_UID) {
-
-        localStorage.setItem(
-            "uid",
-            MOZ_UID
-        );
-
-    }
-    else {
-
-        localStorage.removeItem(
-            "uid"
-        );
-
-    }
-
-
-    if (MOZ_API_KEY) {
-
-        localStorage.setItem(
-            "apiKey",
-            MOZ_API_KEY
-        );
-
-    }
-    else {
-
-        localStorage.removeItem(
-            "apiKey"
-        );
-
-    }
-
-
-    // =================================================
-    // CREDENCIAIS GLOBAIS
-    // =================================================
-
-    window.MOZ_CREDENCIAIS_API = {
-
-        uid:
-            MOZ_UID,
-
-        apiKey:
-            MOZ_API_KEY
-
-    };
-
-
-    console.log(
-        "[MOZ API] Credenciais definidas."
-    );
-
-    console.log(
-        "[MOZ API] UID:",
-        MOZ_UID || "(não definido)"
-    );
-
-}
+const elementoAPIKey =
+    document.getElementById("apiKeyUsuario");
 
 
 // =====================================================
-// OBTER CREDENCIAIS
+// DADOS DO USUÁRIO
 // =====================================================
 
-function obterCredenciais() {
+let usuarioAPI = {
 
-    // -------------------------------------------------
-    // Tentar atualizar diretamente do localStorage
-    // -------------------------------------------------
+    uid: "",
 
-    const uidStorage =
-        localStorage.getItem("uid");
+    apiKey: "",
 
-    const apiKeyStorage =
-        localStorage.getItem("apiKey");
+    fullName: "",
 
+    email: ""
 
-    if (uidStorage) {
-
-        MOZ_UID =
-            uidStorage.trim();
-
-    }
-
-
-    if (apiKeyStorage) {
-
-        MOZ_API_KEY =
-            apiKeyStorage.trim();
-
-    }
-
-
-    return {
-
-        uid:
-            MOZ_UID,
-
-        apiKey:
-            MOZ_API_KEY
-
-    };
-
-}
+};
 
 
 // =====================================================
-// ATUALIZAR CREDENCIAIS DO FIREBASE
+// BUSCAR DADOS DO USUÁRIO
 // =====================================================
 
-async function atualizarCredenciaisFirebase() {
+async function carregarUsuario() {
 
     try {
 
-        // -------------------------------------------------
-        // Firebase já disponibilizou a função
-        // -------------------------------------------------
-
-        if (
-            typeof window.obterDadosUsuario ===
-            "function"
-        ) {
-
-            const dados =
-                await window.obterDadosUsuario();
+        console.log(
+            "[API] Carregando dados do usuário..."
+        );
 
 
-            if (
-                dados &&
-                dados.uid &&
-                dados.apiKey
-            ) {
-
-                definirCredenciais(
-                    dados.uid,
-                    dados.apiKey
-                );
+        /*
+         * O sistema deve enviar:
+         *
+         * x-uid
+         * x-api-key
+         *
+         * para autenticação.
+         */
 
 
-                console.log(
-                    "[MOZ API] Credenciais sincronizadas com Firebase."
-                );
+        const uid =
+            localStorage.getItem("uid") ||
+            localStorage.getItem("userUID") ||
+            "";
 
 
-                return {
-                    uid:
-                        dados.uid,
+        const apiKey =
+            localStorage.getItem("apiKey") ||
+            localStorage.getItem("api_key") ||
+            "";
 
-                    apiKey:
-                        dados.apiKey
-                };
 
-            }
+        if (!uid || !apiKey) {
+
+            console.warn(
+                "[API] UID ou API Key não encontrados."
+            );
+
+            return;
 
         }
+
+
+        usuarioAPI.uid =
+            uid;
+
+        usuarioAPI.apiKey =
+            apiKey;
+
+
+        // =================================================
+        // MOSTRAR NA TELA
+        // =================================================
+
+        mostrarUsuario();
+
+        atualizarExemplos();
+
 
     }
     catch (erro) {
 
-        console.warn(
-            "[MOZ API] Não foi possível sincronizar com Firebase:",
+        console.error(
+            "[API] Erro ao carregar usuário:",
             erro
         );
 
     }
 
-
-    // -------------------------------------------------
-    // Fallback: localStorage
-    // -------------------------------------------------
-
-    return obterCredenciais();
-
 }
 
 
 // =====================================================
-// COMPATIBILIDADE
+// MOSTRAR USUÁRIO
 // =====================================================
 
-async function atualizarCredenciais(
-    uid,
-    apiKey
-) {
+function mostrarUsuario() {
 
-    // Se foram fornecidas manualmente
-    if (
-        uid &&
-        apiKey
-    ) {
+    if (elementoNome) {
 
-        definirCredenciais(
-            uid,
-            apiKey
-        );
-
-        return obterCredenciais();
+        elementoNome.textContent =
+            usuarioAPI.fullName ||
+            "Usuário";
 
     }
 
 
-    // Caso contrário, buscar Firebase
-    return await atualizarCredenciaisFirebase();
+    if (elementoEmail) {
+
+        elementoEmail.textContent =
+            usuarioAPI.email ||
+            "";
+
+    }
+
+
+    if (elementoUID) {
+
+        elementoUID.textContent =
+            usuarioAPI.uid ||
+            "Não disponível";
+
+    }
+
+
+    if (elementoAPIKey) {
+
+        elementoAPIKey.textContent =
+            usuarioAPI.apiKey ||
+            "Não disponível";
+
+    }
 
 }
 
 
 // =====================================================
-// PROCESSAR RESPOSTA
+// COPIAR UID
 // =====================================================
 
-async function processarResposta(
-    resposta
-) {
+async function copiarUID() {
 
-    let dados = null;
+    if (!usuarioAPI.uid) {
+
+        alert(
+            "UID não disponível."
+        );
+
+        return;
+
+    }
 
 
     try {
 
-        dados =
-            await resposta.json();
+        await navigator.clipboard.writeText(
+            usuarioAPI.uid
+        );
+
+
+        alert(
+            "UID copiado!"
+        );
 
     }
     catch (erro) {
 
-        dados = null;
+        console.error(
+            "[API] Erro ao copiar UID:",
+            erro
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// COPIAR API KEY
+// =====================================================
+
+async function copiarAPIKey() {
+
+    if (!usuarioAPI.apiKey) {
+
+        alert(
+            "API Key não disponível."
+        );
+
+        return;
 
     }
 
 
-    if (!resposta.ok) {
+    try {
 
-        const mensagem =
-            dados?.error ||
-            dados?.message ||
-            "Erro HTTP " +
-            resposta.status;
+        await navigator.clipboard.writeText(
+            usuarioAPI.apiKey
+        );
 
+
+        alert(
+            "API Key copiada!"
+        );
+
+    }
+    catch (erro) {
 
         console.error(
-            "[MOZ API] HTTP " +
-            resposta.status + ":",
-            mensagem
-        );
-
-
-        throw new Error(
-            mensagem
+            "[API] Erro ao copiar API Key:",
+            erro
         );
 
     }
-
-
-    return dados;
 
 }
 
 
 // =====================================================
-// HEADERS
+// ATUALIZAR EXEMPLOS
 // =====================================================
 
-function criarHeaders(
-    incluirJSON = false
-) {
+function atualizarExemplos() {
 
-    // Atualizar valores do localStorage
-    obterCredenciais();
-
-
-    const headers = {
-
-        "Accept":
-            "application/json"
-
-    };
-
-
-    if (incluirJSON) {
-
-        headers[
-            "Content-Type"
-        ] =
-            "application/json";
-
-    }
-
-
-    // =================================================
-    // UID
-    // =================================================
-
-    if (MOZ_UID) {
-
-        headers[
-            "x-uid"
-        ] =
-            MOZ_UID;
-
-    }
-
-
-    // =================================================
-    // API KEY
-    // =================================================
-
-    if (MOZ_API_KEY) {
-
-        headers[
-            "x-api-key"
-        ] =
-            MOZ_API_KEY;
-
-    }
-
-
-    return headers;
-
-}
-
-
-// =====================================================
-// CONSTRUIR URL
-// =====================================================
-
-function construirURL(
-    endpoint
-) {
-
-    endpoint =
-        String(endpoint || "")
-            .trim();
-
-
-    if (!endpoint) {
-
-        throw new Error(
-            "Endpoint da API não informado."
+    const exemplos =
+        document.querySelectorAll(
+            "[data-api-example]"
         );
 
-    }
+
+    exemplos.forEach(
+        function (elemento) {
+
+            let codigo =
+                elemento.textContent;
 
 
-    if (
-        !endpoint.startsWith("/")
-    ) {
-
-        endpoint =
-            "/" +
-            endpoint;
-
-    }
+            codigo =
+                codigo.replace(
+                    /SEU_UID/g,
+                    usuarioAPI.uid
+                );
 
 
-    return (
-        API_BASE_URL +
-        endpoint
+            codigo =
+                codigo.replace(
+                    /SUA_API_KEY/g,
+                    usuarioAPI.apiKey
+                );
+
+
+            elemento.textContent =
+                codigo;
+
+        }
     );
 
 }
 
 
 // =====================================================
-// GET
+// COPIAR CÓDIGO
 // =====================================================
 
-async function apiGet(
-    endpoint
-) {
+async function copiarCodigo(elemento) {
 
-    const url =
-        construirURL(
-            endpoint
+    if (!elemento) {
+
+        return;
+
+    }
+
+
+    try {
+
+        await navigator.clipboard.writeText(
+            elemento.textContent
         );
 
 
-    console.log(
-        "[MOZ API] GET:",
-        url
-    );
-
-
-    const resposta =
-        await fetch(
-            url,
-            {
-
-                method:
-                    "GET",
-
-                headers:
-                    criarHeaders(false),
-
-                credentials:
-                    "include",
-
-                cache:
-                    "no-store"
-
-            }
+        alert(
+            "Código copiado!"
         );
 
+    }
+    catch (erro) {
 
-    return await processarResposta(
-        resposta
-    );
+        console.error(
+            "[API] Erro ao copiar código:",
+            erro
+        );
+
+    }
 
 }
 
 
 // =====================================================
-// POST
+// EVENTOS
 // =====================================================
 
-async function apiPost(
-    endpoint,
-    dados = {}
-) {
+function inicializarEventos() {
 
-    obterCredenciais();
-
-
-    const corpo = {
-
-        ...dados
-
-    };
-
-
-    if (
-        MOZ_UID &&
-        !corpo.uid
-    ) {
-
-        corpo.uid =
-            MOZ_UID;
-
-    }
-
-
-    if (
-        MOZ_API_KEY &&
-        !corpo.apiKey
-    ) {
-
-        corpo.apiKey =
-            MOZ_API_KEY;
-
-    }
-
-
-    const url =
-        construirURL(
-            endpoint
+    const btnUID =
+        document.getElementById(
+            "btnCopiarUID"
         );
 
 
-    console.log(
-        "[MOZ API] POST:",
-        url
-    );
-
-
-    const resposta =
-        await fetch(
-            url,
-            {
-
-                method:
-                    "POST",
-
-                headers:
-                    criarHeaders(true),
-
-                credentials:
-                    "include",
-
-                body:
-                    JSON.stringify(
-                        corpo
-                    )
-
-            }
+    const btnAPIKey =
+        document.getElementById(
+            "btnCopiarAPIKey"
         );
 
 
-    return await processarResposta(
-        resposta
-    );
+    if (btnUID) {
 
-}
-
-
-// =====================================================
-// PUT
-// =====================================================
-
-async function apiPut(
-    endpoint,
-    dados = {}
-) {
-
-    obterCredenciais();
-
-
-    const corpo = {
-
-        ...dados
-
-    };
-
-
-    if (
-        MOZ_UID &&
-        !corpo.uid
-    ) {
-
-        corpo.uid =
-            MOZ_UID;
+        btnUID.addEventListener(
+            "click",
+            copiarUID
+        );
 
     }
 
 
-    if (
-        MOZ_API_KEY &&
-        !corpo.apiKey
-    ) {
+    if (btnAPIKey) {
 
-        corpo.apiKey =
-            MOZ_API_KEY;
+        btnAPIKey.addEventListener(
+            "click",
+            copiarAPIKey
+        );
 
     }
 
 
-    const url =
-        construirURL(
-            endpoint
+    const botoesCodigo =
+        document.querySelectorAll(
+            "[data-copiar-codigo]"
         );
 
 
-    console.log(
-        "[MOZ API] PUT:",
-        url
-    );
+    botoesCodigo.forEach(
+        function (botao) {
+
+            botao.addEventListener(
+                "click",
+                function () {
+
+                    const bloco =
+                        document.getElementById(
+                            botao.dataset.copiarCodigo
+                        );
 
 
-    const resposta =
-        await fetch(
-            url,
-            {
+                    copiarCodigo(
+                        bloco
+                    );
 
-                method:
-                    "PUT",
-
-                headers:
-                    criarHeaders(true),
-
-                credentials:
-                    "include",
-
-                body:
-                    JSON.stringify(
-                        corpo
-                    )
-
-            }
-        );
-
-
-    return await processarResposta(
-        resposta
-    );
-
-}
-
-
-// =====================================================
-// DELETE
-// =====================================================
-
-async function apiDelete(
-    endpoint,
-    dados = {}
-) {
-
-    obterCredenciais();
-
-
-    const corpo = {
-
-        ...dados
-
-    };
-
-
-    if (
-        MOZ_UID &&
-        !corpo.uid
-    ) {
-
-        corpo.uid =
-            MOZ_UID;
-
-    }
-
-
-    if (
-        MOZ_API_KEY &&
-        !corpo.apiKey
-    ) {
-
-        corpo.apiKey =
-            MOZ_API_KEY;
-
-    }
-
-
-    const possuiCorpo =
-        Object.keys(
-            corpo
-        ).length > 0;
-
-
-    const opcoes = {
-
-        method:
-            "DELETE",
-
-        headers:
-            criarHeaders(
-                possuiCorpo
-            ),
-
-        credentials:
-            "include"
-
-    };
-
-
-    if (possuiCorpo) {
-
-        opcoes.body =
-            JSON.stringify(
-                corpo
+                }
             );
 
-    }
-
-
-    const url =
-        construirURL(
-            endpoint
-        );
-
-
-    console.log(
-        "[MOZ API] DELETE:",
-        url
-    );
-
-
-    const resposta =
-        await fetch(
-            url,
-            opcoes
-        );
-
-
-    return await processarResposta(
-        resposta
+        }
     );
 
 }
 
 
 // =====================================================
-// API GLOBAL
+// INICIALIZAÇÃO
 // =====================================================
 
-window.MOZ_API = {
+function inicializarAPI() {
 
-    get:
-        apiGet,
+    console.log(
+        "[API] Inicializando página de integração..."
+    );
 
-    post:
-        apiPost,
 
-    put:
-        apiPut,
+    inicializarEventos();
 
-    delete:
-        apiDelete,
+    carregarUsuario();
 
-    definirCredenciais:
-        definirCredenciais,
 
-    atualizarCredenciais:
-        atualizarCredenciais,
+    console.log(
+        "[API] Página de integração pronta."
+    );
 
-    atualizarCredenciaisFirebase:
-        atualizarCredenciaisFirebase,
-
-    obterCredenciais:
-        obterCredenciais
-
-};
+}
 
 
 // =====================================================
-// COMPATIBILIDADE
-// =====================================================
-
-window.apiGet =
-    apiGet;
-
-window.apiPost =
-    apiPost;
-
-window.apiPut =
-    apiPut;
-
-window.apiDelete =
-    apiDelete;
-
-
-// =====================================================
-// CREDENCIAIS GLOBAIS
-// =====================================================
-
-window.MOZ_CREDENCIAIS_API = {
-
-    uid:
-        MOZ_UID,
-
-    apiKey:
-        MOZ_API_KEY
-
-};
-
-
-// =====================================================
-// SINCRONIZAR AO CARREGAR
+// DOM READY
 // =====================================================
 
 if (
-    MOZ_UID &&
-    MOZ_API_KEY
+    document.readyState ===
+    "loading"
 ) {
 
-    console.log(
-        "[MOZ API] Credenciais encontradas no localStorage."
+    document.addEventListener(
+        "DOMContentLoaded",
+        inicializarAPI,
+        {
+            once: true
+        }
     );
 
 }
 else {
 
-    console.log(
-        "[MOZ API] Credenciais ainda não disponíveis."
-    );
+    inicializarAPI();
 
 }
 
 
 // =====================================================
-// LOG
+// FUNÇÕES GLOBAIS
 // =====================================================
 
-console.log(
-    "[MOZ API] API carregada:",
-    API_BASE_URL
-);
+window.copiarUID =
+    copiarUID;
 
+window.copiarAPIKey =
+    copiarAPIKey;
 
-// =====================================================
-// EXPORTAR
-// =====================================================
-
-if (
-    typeof window !== "undefined"
-) {
-
-    window.definirCredenciais =
-        definirCredenciais;
-
-    window.obterCredenciais =
-        obterCredenciais;
-
-}
+window.copiarCodigo =
+    copiarCodigo;
