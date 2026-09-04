@@ -19,17 +19,11 @@
     const paineis = {
 
         dashboard: "panelDashboard",
-
         crm: "panelCRM",
-
         pacotes: "panelPacotes",
-
         pedidos: "panelPedidos",
-
         dispositivos: "panelDispositivos",
-
         tutorial: "panelTutorial",
-
         config: "panelConfig"
 
     };
@@ -68,19 +62,11 @@
         }
 
 
-        // =================================================
-        // HTML
-        // =================================================
-
         document.documentElement.setAttribute(
             "data-theme",
             tema
         );
 
-
-        // =================================================
-        // BODY
-        // =================================================
 
         if (document.body) {
 
@@ -97,42 +83,10 @@
         }
 
 
-        // =================================================
-        // SALVAR LOCALMENTE
-        // =================================================
-
-        try {
-
-            localStorage.setItem(
-                "tema",
-                tema
-            );
-
-        }
-        catch (erro) {
-
-            console.warn(
-                "[MOZ TECH] Não foi possível salvar tema local:",
-                erro
-            );
-
-        }
-
-
-        // =================================================
-        // SINCRONIZAR SELECTOR
-        // =================================================
-
-        const seletor =
-            el("tema");
-
-
-        if (seletor) {
-
-            seletor.value =
-                tema;
-
-        }
+        localStorage.setItem(
+            "tema",
+            tema
+        );
 
 
         console.log(
@@ -149,25 +103,9 @@
 
     function carregarTemaLocal() {
 
-        let tema =
+        const tema =
+            localStorage.getItem("tema") ||
             "dark";
-
-
-        try {
-
-            tema =
-                localStorage.getItem("tema") ||
-                "dark";
-
-        }
-        catch (erro) {
-
-            console.warn(
-                "[MOZ TECH] Erro ao ler tema local:",
-                erro
-            );
-
-        }
 
 
         aplicarTema(
@@ -185,10 +123,6 @@
 
         try {
 
-            // =================================================
-            // VERIFICAR MOZ_API
-            // =================================================
-
             if (
                 !window.MOZ_API ||
                 typeof window.MOZ_API.get !== "function"
@@ -203,10 +137,6 @@
             }
 
 
-            // =================================================
-            // BUSCAR CONFIGURAÇÕES
-            // =================================================
-
             const json =
                 await window.MOZ_API.get(
                     "/configuracoes"
@@ -219,18 +149,13 @@
             );
 
 
-            // =================================================
-            // VERIFICAR RESPOSTA
-            // =================================================
-
             if (
                 !json ||
                 json.success !== true
             ) {
 
                 console.warn(
-                    "[MOZ TECH] Configurações não disponíveis:",
-                    json
+                    "[MOZ TECH] Configurações inválidas."
                 );
 
                 return;
@@ -239,75 +164,24 @@
 
 
             // =================================================
-            // OBTER CONFIGURAÇÃO
-            // =================================================
-            //
-            // O backend atual retorna:
+            // BACKEND RETORNA:
             //
             // {
             //     success: true,
             //     configuracao: {...}
             // }
-            //
-            // Também deixamos compatibilidade com:
-            //
-            // configuracoes
-            // config
-            // data
-            //
             // =================================================
 
-            let configuracao =
-                null;
+            const configuracao =
+                json.configuracao ||
+                json.config ||
+                json.data;
 
 
-            if (
-                json.configuracao
-            ) {
-
-                configuracao =
-                    json.configuracao;
-
-            }
-            else if (
-                Array.isArray(
-                    json.configuracoes
-                ) &&
-                json.configuracoes.length
-            ) {
-
-                configuracao =
-                    json.configuracoes[0];
-
-            }
-            else if (
-                json.config
-            ) {
-
-                configuracao =
-                    json.config;
-
-            }
-            else if (
-                json.data
-            ) {
-
-                configuracao =
-                    json.data;
-
-            }
-
-
-            // =================================================
-            // VERIFICAR CONFIGURAÇÃO
-            // =================================================
-
-            if (
-                !configuracao
-            ) {
+            if (!configuracao) {
 
                 console.warn(
-                    "[MOZ TECH] Nenhuma configuração encontrada."
+                    "[MOZ TECH] Configuração não encontrada."
                 );
 
                 return;
@@ -315,17 +189,8 @@
             }
 
 
-            // =================================================
-            // TEMA
-            // =================================================
-
             const tema =
-                String(
-                    configuracao.tema ||
-                    "dark"
-                )
-                .toLowerCase()
-                .trim() === "light"
+                configuracao.tema === "light"
                     ? "light"
                     : "dark";
 
@@ -333,6 +198,18 @@
             aplicarTema(
                 tema
             );
+
+
+            const seletor =
+                el("tema");
+
+
+            if (seletor) {
+
+                seletor.value =
+                    tema;
+
+            }
 
 
             console.log(
@@ -378,10 +255,8 @@
         const sidebar =
             el("sidebar");
 
-
         const overlay =
             el("menuOverlay");
-
 
         const botao =
             el("menuToggle");
@@ -436,30 +311,20 @@
         }
 
 
-        if (document.body) {
-
-            document.body.classList.add(
-                "menu-open"
-            );
-
-        }
+        document.body.classList.add(
+            "menu-open"
+        );
 
     }
 
-
-    // =====================================================
-    // FECHAR MENU MOBILE
-    // =====================================================
 
     function fecharMenuMobile() {
 
         const sidebar =
             el("sidebar");
 
-
         const overlay =
             el("menuOverlay");
-
 
         const botao =
             el("menuToggle");
@@ -511,20 +376,12 @@
         }
 
 
-        if (document.body) {
-
-            document.body.classList.remove(
-                "menu-open"
-            );
-
-        }
+        document.body.classList.remove(
+            "menu-open"
+        );
 
     }
 
-
-    // =====================================================
-    // ALTERNAR MENU
-    // =====================================================
 
     function alternarMenuMobile() {
 
@@ -611,9 +468,7 @@
         // DASHBOARD
         // =================================================
 
-        if (
-            panelId === "dashboard"
-        ) {
+        if (panelId === "dashboard") {
 
             if (
                 typeof window.carregarTudo ===
@@ -665,9 +520,7 @@
         // CRM
         // =================================================
 
-        if (
-            panelId === "crm"
-        ) {
+        if (panelId === "crm") {
 
             if (
                 typeof window.carregarClientes ===
@@ -707,9 +560,7 @@
         // PACOTES
         // =================================================
 
-        if (
-            panelId === "pacotes"
-        ) {
+        if (panelId === "pacotes") {
 
             if (
                 typeof window.carregarPacotes ===
@@ -749,9 +600,7 @@
         // PEDIDOS
         // =================================================
 
-        if (
-            panelId === "pedidos"
-        ) {
+        if (panelId === "pedidos") {
 
             if (
                 typeof window.carregarPedidos ===
@@ -791,9 +640,7 @@
         // DISPOSITIVOS
         // =================================================
 
-        if (
-            panelId === "dispositivos"
-        ) {
+        if (panelId === "dispositivos") {
 
             if (
                 typeof window.carregarDispositivos ===
@@ -833,9 +680,7 @@
         // CONFIGURAÇÕES
         // =================================================
 
-        if (
-            panelId === "config"
-        ) {
+        if (panelId === "config") {
 
             if (
                 typeof window.carregarConfiguracoes ===
@@ -875,112 +720,13 @@
         // TUTORIAL
         // =================================================
 
-        if (
-            panelId === "tutorial"
-        ) {
+        if (panelId === "tutorial") {
 
             await carregarCredenciaisTutorial();
 
             return;
 
         }
-
-    }
-
-
-    // =====================================================
-    // OBTER CONFIGURAÇÃO DA API
-    // =====================================================
-
-    async function obterConfiguracaoAPI() {
-
-        if (
-            !window.MOZ_API ||
-            typeof window.MOZ_API.get !== "function"
-        ) {
-
-            throw new Error(
-                "MOZ_API não disponível."
-            );
-
-        }
-
-
-        const json =
-            await window.MOZ_API.get(
-                "/configuracoes"
-            );
-
-
-        console.log(
-            "[MOZ TECH] Resposta /configuracoes:",
-            json
-        );
-
-
-        if (
-            !json ||
-            json.success !== true
-        ) {
-
-            throw new Error(
-                json?.error ||
-                "A API não retornou uma configuração válida."
-            );
-
-        }
-
-
-        // =================================================
-        // BACKEND ATUAL
-        // =================================================
-
-        if (
-            json.configuracao
-        ) {
-
-            return json.configuracao;
-
-        }
-
-
-        // =================================================
-        // COMPATIBILIDADE
-        // =================================================
-
-        if (
-            Array.isArray(
-                json.configuracoes
-            ) &&
-            json.configuracoes.length
-        ) {
-
-            return json.configuracoes[0];
-
-        }
-
-
-        if (
-            json.config
-        ) {
-
-            return json.config;
-
-        }
-
-
-        if (
-            json.data
-        ) {
-
-            return json.data;
-
-        }
-
-
-        throw new Error(
-            "Nenhuma configuração encontrada."
-        );
 
     }
 
@@ -999,10 +745,6 @@
             el("tutorialApiKey");
 
 
-        // =================================================
-        // SE NÃO EXISTIREM OS ELEMENTOS
-        // =================================================
-
         if (
             !uidElemento &&
             !apiKeyElemento
@@ -1012,10 +754,6 @@
 
         }
 
-
-        // =================================================
-        // ESTADO INICIAL
-        // =================================================
 
         if (uidElemento) {
 
@@ -1035,12 +773,72 @@
 
         try {
 
+            if (
+                !window.MOZ_API ||
+                typeof window.MOZ_API.get !== "function"
+            ) {
+
+                throw new Error(
+                    "MOZ_API não disponível."
+                );
+
+            }
+
+
             // =================================================
-            // BUSCAR CONFIGURAÇÃO
+            // BUSCAR CONFIGURAÇÕES
+            // =================================================
+
+            const json =
+                await window.MOZ_API.get(
+                    "/configuracoes"
+                );
+
+
+            console.log(
+                "[MOZ TECH] Configurações recebidas:",
+                json
+            );
+
+
+            if (
+                !json ||
+                json.success !== true
+            ) {
+
+                throw new Error(
+                    json?.error ||
+                    "A API não retornou uma configuração válida."
+                );
+
+            }
+
+
+            // =================================================
+            // BACKEND ATUAL
+            //
+            // {
+            //     success: true,
+            //     configuracao: {
+            //         uid: "...",
+            //         apiKey: "..."
+            //     }
+            // }
             // =================================================
 
             const configuracao =
-                await obterConfiguracaoAPI();
+                json.configuracao ||
+                json.config ||
+                json.data;
+
+
+            if (!configuracao) {
+
+                throw new Error(
+                    "Nenhuma configuração encontrada."
+                );
+
+            }
 
 
             // =================================================
@@ -1094,34 +892,22 @@
 
 
             // =================================================
-            // SALVAR PARA USO DO TUTORIAL
+            // GUARDAR PARA OS BOTÕES DE COPIAR
             // =================================================
 
-            window.MOZ_CREDENCIAIS = {
+            window.MOZ_CREDENCIAIS_API = {
 
-                uid,
+                uid:
+                    uid,
 
-                apiKey
+                apiKey:
+                    apiKey
 
             };
 
 
             console.log(
-                "[MOZ TECH] Credenciais carregadas:",
-                {
-                    uid: uid ? "OK" : "VAZIO",
-                    apiKey: apiKey ? "OK" : "VAZIO"
-                }
-            );
-
-
-            // =================================================
-            // ATUALIZAR CÓDIGOS DO TUTORIAL
-            // =================================================
-
-            atualizarCodigoTutorial(
-                uid,
-                apiKey
+                "[MOZ TECH] Credenciais carregadas."
             );
 
         }
@@ -1154,263 +940,133 @@
 
 
     // =====================================================
-    // ATUALIZAR CÓDIGO DO TUTORIAL
+    // COPIAR UID
     // =====================================================
 
-    function atualizarCodigoTutorial(
-        uid,
-        apiKey
-    ) {
+    window.copiarUID =
+        async function () {
 
-        // =================================================
-        // CÓDIGOS
-        // =================================================
-
-        const blocos =
-            document.querySelectorAll(
-                "pre code"
-            );
+            const credenciais =
+                window.MOZ_CREDENCIAIS_API;
 
 
-        if (!blocos.length) {
+            if (
+                !credenciais ||
+                !credenciais.uid
+            ) {
 
-            return;
+                await carregarCredenciaisTutorial();
 
-        }
-
-
-        blocos.forEach(function (bloco) {
-
-            let codigo =
-                bloco.textContent;
+            }
 
 
-            if (!codigo) {
+            const uid =
+                window.MOZ_CREDENCIAIS_API?.uid;
+
+
+            if (!uid) {
+
+                alert(
+                    "UID não disponível."
+                );
 
                 return;
 
             }
 
 
-            codigo =
-                codigo.replace(
-                    /SEU_UID/g,
-                    uid || "SEU_UID"
+            try {
+
+                await navigator.clipboard.writeText(
+                    uid
                 );
 
 
-            codigo =
-                codigo.replace(
-                    /SUA_API_KEY/g,
-                    apiKey || "SUA_API_KEY"
+                alert(
+                    "UID copiado com sucesso!"
+                );
+
+            }
+            catch (erro) {
+
+                console.error(
+                    "[MOZ TECH] Erro ao copiar UID:",
+                    erro
                 );
 
 
-            bloco.textContent =
-                codigo;
-
-        });
-
-    }
-
-
-    // =====================================================
-    // COPIAR UID
-    // =====================================================
-
-    async function copiarUID() {
-
-        try {
-
-            const configuracao =
-                await obterConfiguracaoAPI();
-
-
-            const uid =
-                configuracao.uid ||
-                configuracao.UID ||
-                configuracao.userId ||
-                configuracao.user_id ||
-                "";
-
-
-            if (!uid) {
-
-                throw new Error(
-                    "UID não encontrado."
+                alert(
+                    "Não foi possível copiar o UID."
                 );
 
             }
 
-
-            await navigator.clipboard.writeText(
-                uid
-            );
-
-
-            console.log(
-                "[MOZ TECH] UID copiado."
-            );
-
-
-            mostrarMensagemCopia(
-                "UID copiado com sucesso!"
-            );
-
-        }
-        catch (erro) {
-
-            console.error(
-                "[MOZ TECH] Erro ao copiar UID:",
-                erro
-            );
-
-
-            mostrarMensagemCopia(
-                "Não foi possível copiar o UID."
-            );
-
-        }
-
-    }
+        };
 
 
     // =====================================================
     // COPIAR API KEY
     // =====================================================
 
-    async function copiarApiKey() {
+    window.copiarApiKey =
+        async function () {
 
-        try {
-
-            const configuracao =
-                await obterConfiguracaoAPI();
-
-
-            const apiKey =
-                configuracao.apiKey ||
-                configuracao.apikey ||
-                configuracao.api_key ||
-                configuracao.API_KEY ||
-                "";
+            const credenciais =
+                window.MOZ_CREDENCIAIS_API;
 
 
-            if (!apiKey) {
+            if (
+                !credenciais ||
+                !credenciais.apiKey
+            ) {
 
-                throw new Error(
-                    "API Key não encontrada."
-                );
+                await carregarCredenciaisTutorial();
 
             }
 
 
-            await navigator.clipboard.writeText(
-                apiKey
-            );
+            const apiKey =
+                window.MOZ_CREDENCIAIS_API?.apiKey;
 
 
-            console.log(
-                "[MOZ TECH] API Key copiada."
-            );
+            if (!apiKey) {
+
+                alert(
+                    "API Key não disponível."
+                );
+
+                return;
+
+            }
 
 
-            mostrarMensagemCopia(
-                "API Key copiada com sucesso!"
-            );
+            try {
 
-        }
-        catch (erro) {
-
-            console.error(
-                "[MOZ TECH] Erro ao copiar API Key:",
-                erro
-            );
+                await navigator.clipboard.writeText(
+                    apiKey
+                );
 
 
-            mostrarMensagemCopia(
-                "Não foi possível copiar a API Key."
-            );
+                alert(
+                    "API Key copiada com sucesso!"
+                );
 
-        }
+            }
+            catch (erro) {
 
-    }
-
-
-    // =====================================================
-    // MENSAGEM DE CÓPIA
-    // =====================================================
-
-    function mostrarMensagemCopia(
-        mensagem
-    ) {
-
-        console.log(
-            "[MOZ TECH]",
-            mensagem
-        );
+                console.error(
+                    "[MOZ TECH] Erro ao copiar API Key:",
+                    erro
+                );
 
 
-        // =================================================
-        // TOAST EXISTENTE
-        // =================================================
+                alert(
+                    "Não foi possível copiar a API Key."
+                );
 
-        const toast =
-            el("mozToast");
+            }
 
-
-        if (toast) {
-
-            toast.textContent =
-                mensagem;
-
-
-            toast.classList.add(
-                "show"
-            );
-
-
-            setTimeout(
-                function () {
-
-                    toast.classList.remove(
-                        "show"
-                    );
-
-                },
-                2000
-            );
-
-
-            return;
-
-        }
-
-
-        // =================================================
-        // ALERTA SIMPLES
-        // =================================================
-
-        alert(
-            mensagem
-        );
-
-    }
-
-
-    // =====================================================
-    // EXPORTAR CREDENCIAIS
-    // =====================================================
-
-    window.carregarCredenciaisTutorial =
-        carregarCredenciaisTutorial;
-
-
-    window.copiarUID =
-        copiarUID;
-
-
-    window.copiarApiKey =
-        copiarApiKey;
+        };
 
 
     // =====================================================
@@ -1425,10 +1081,6 @@
                 panelId
             );
 
-
-            // =================================================
-            // VERIFICAR PAINEL
-            // =================================================
 
             const painelId =
                 paineis[panelId];
@@ -1450,11 +1102,8 @@
             // ESCONDER TODOS
             // =================================================
 
-            Object.values(
-                paineis
-            )
-            .forEach(
-                function (id) {
+            Object.values(paineis)
+                .forEach(function (id) {
 
                     const painel =
                         el(id);
@@ -1467,8 +1116,7 @@
 
                     }
 
-                }
-            );
+                });
 
 
             // =================================================
@@ -1503,15 +1151,13 @@
                 .querySelectorAll(
                     ".menu-item[data-panel]"
                 )
-                .forEach(
-                    function (item) {
+                .forEach(function (item) {
 
-                        item.classList.remove(
-                            "active"
-                        );
+                    item.classList.remove(
+                        "active"
+                    );
 
-                    }
-                );
+                });
 
 
             const itemAtivo =
@@ -1535,25 +1181,13 @@
             // CARREGAR DADOS
             // =================================================
 
-            try {
-
-                await carregarPainel(
-                    panelId
-                );
-
-            }
-            catch (erro) {
-
-                console.error(
-                    "[MOZ TECH] Erro ao carregar painel:",
-                    erro
-                );
-
-            }
+            await carregarPainel(
+                panelId
+            );
 
 
             // =================================================
-            // FECHAR MENU NO MOBILE
+            // MOBILE
             // =================================================
 
             if (
@@ -1579,54 +1213,52 @@
             );
 
 
-        botoes.forEach(
-            function (botao) {
+        botoes.forEach(function (botao) {
 
-                if (
-                    botao.dataset.mozAppMenu ===
-                    "true"
-                ) {
+            if (
+                botao.dataset.mozAppMenu ===
+                "true"
+            ) {
 
-                    return;
-
-                }
-
-
-                botao.dataset.mozAppMenu =
-                    "true";
-
-
-                botao.addEventListener(
-                    "click",
-                    async function (event) {
-
-                        event.preventDefault();
-
-                        event.stopPropagation();
-
-
-                        const panel =
-                            botao.getAttribute(
-                                "data-panel"
-                            );
-
-
-                        if (!panel) {
-
-                            return;
-
-                        }
-
-
-                        await window.showPanel(
-                            panel
-                        );
-
-                    }
-                );
+                return;
 
             }
-        );
+
+
+            botao.dataset.mozAppMenu =
+                "true";
+
+
+            botao.addEventListener(
+                "click",
+                async function (event) {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+
+                    const panel =
+                        botao.getAttribute(
+                            "data-panel"
+                        );
+
+
+                    if (!panel) {
+
+                        return;
+
+                    }
+
+
+                    await window.showPanel(
+                        panel
+                    );
+
+                }
+            );
+
+        });
 
     }
 
@@ -1669,7 +1301,6 @@
                 event.preventDefault();
 
                 event.stopPropagation();
-
 
                 alternarMenuMobile();
 
@@ -1728,9 +1359,7 @@
 
     function inicializarESC() {
 
-        if (
-            window.__mozAppESC
-        ) {
+        if (window.__mozAppESC) {
 
             return;
 
@@ -1793,56 +1422,11 @@
 
         seletor.addEventListener(
             "change",
-            async function () {
-
-                const tema =
-                    this.value;
-
+            function () {
 
                 aplicarTema(
-                    tema
+                    this.value
                 );
-
-
-                // =================================================
-                // SALVAR TEMA NA API
-                // =================================================
-
-                try {
-
-                    if (
-                        !window.MOZ_API ||
-                        typeof window.MOZ_API.put !==
-                        "function"
-                    ) {
-
-                        return;
-
-                    }
-
-
-                    await window.MOZ_API.put(
-                        "/configuracoes",
-                        {
-                            tema: tema
-                        }
-                    );
-
-
-                    console.log(
-                        "[MOZ TECH] Tema salvo na API:",
-                        tema
-                    );
-
-                }
-                catch (erro) {
-
-                    console.error(
-                        "[MOZ TECH] Erro ao salvar tema:",
-                        erro
-                    );
-
-                }
 
             }
         );
@@ -1893,40 +1477,18 @@
                 "false"
             );
 
-
-            botao.setAttribute(
-                "aria-label",
-                "Abrir menu"
-            );
-
-
-            const icon =
-                botao.querySelector("i");
-
-
-            if (icon) {
-
-                icon.className =
-                    "fas fa-bars";
-
-            }
-
         }
 
 
-        if (document.body) {
-
-            document.body.classList.remove(
-                "menu-open"
-            );
-
-        }
+        document.body.classList.remove(
+            "menu-open"
+        );
 
     }
 
 
     // =====================================================
-    // INICIAR SISTEMA
+    // INICIAR
     // =====================================================
 
     async function iniciarSistema() {
@@ -1947,7 +1509,7 @@
 
 
         // =================================================
-        // TEMA LOCAL PRIMEIRO
+        // TEMA LOCAL
         // =================================================
 
         carregarTemaLocal();
@@ -1959,24 +1521,19 @@
 
         estadoInicial();
 
-
         inicializarMenu();
-
 
         inicializarBotaoMobile();
 
-
         inicializarOverlay();
 
-
         inicializarESC();
-
 
         inicializarSeletorTema();
 
 
         // =================================================
-        // TEMA DA API
+        // TEMA API
         // =================================================
 
         await carregarTemaAPI();
@@ -2006,7 +1563,7 @@
 
 
     // =====================================================
-    // EXPORTAR MENU
+    // EXPORTAR
     // =====================================================
 
     window.abrirMenuMobile =
@@ -2019,6 +1576,10 @@
 
     window.alternarMenuMobile =
         alternarMenuMobile;
+
+
+    window.carregarCredenciaisTutorial =
+        carregarCredenciaisTutorial;
 
 
     // =====================================================
