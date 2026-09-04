@@ -1537,73 +1537,43 @@
 
     function inicializarMenu() {
 
-        const botoes =
-            document.querySelectorAll(
-                ".menu-item[data-panel]"
-            );
-
+        const botoes = document.querySelectorAll(
+            ".menu-item[data-panel]"
+        );
 
         console.log(
             "[MOZ TECH] Botões encontrados:",
             botoes.length
         );
 
-
         botoes.forEach(function (botao) {
 
-            if (
-                botao.dataset.mozAppMenu ===
-                "true"
-            ) {
+            botao.onclick = function (event) {
 
-                return;
+                event.preventDefault();
+                event.stopPropagation();
 
-            }
+                const panel =
+                    botao.getAttribute("data-panel");
 
+                console.log(
+                    "[MOZ TECH] BOTÃO CLICADO:",
+                    panel
+                );
 
-            botao.dataset.mozAppMenu =
-                "true";
+                if (!panel) {
 
-
-            botao.addEventListener(
-                "click",
-                function (event) {
-
-                    event.preventDefault();
-
-                    event.stopPropagation();
-
-
-                    const panel =
-                        botao.dataset.panel ||
-                        botao.getAttribute(
-                            "data-panel"
-                        );
-
-
-                    console.log(
-                        "[MOZ TECH] Clique:",
-                        panel
+                    console.error(
+                        "[MOZ TECH] Botão sem data-panel"
                     );
 
-
-                    if (!panel) {
-
-                        console.error(
-                            "[MOZ TECH] Botão sem data-panel."
-                        );
-
-                        return;
-
-                    }
-
-
-                    window.showPanel(
-                        panel
-                    );
+                    return;
 
                 }
-            );
+
+                window.showPanel(panel);
+
+            };
 
         });
 
