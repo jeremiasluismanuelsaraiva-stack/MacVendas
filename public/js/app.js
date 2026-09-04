@@ -19,11 +19,17 @@
     const paineis = {
 
         dashboard: "panelDashboard",
+
         crm: "panelCRM",
+
         pacotes: "panelPacotes",
+
         pedidos: "panelPedidos",
+
         dispositivos: "panelDispositivos",
+
         tutorial: "panelTutorial",
+
         config: "panelConfig"
 
     };
@@ -89,10 +95,16 @@
         );
 
 
-        console.log(
-            "[MOZ TECH] Tema:",
-            tema
-        );
+        const seletor =
+            el("tema");
+
+
+        if (seletor) {
+
+            seletor.value =
+                tema;
+
+        }
 
     }
 
@@ -128,10 +140,6 @@
                 typeof window.MOZ_API.get !== "function"
             ) {
 
-                console.warn(
-                    "[MOZ TECH] MOZ_API ainda não disponível."
-                );
-
                 return;
 
             }
@@ -166,27 +174,9 @@
             }
 
 
-            const tema =
-                configuracao.tema === "light"
-                    ? "light"
-                    : "dark";
-
-
             aplicarTema(
-                tema
+                configuracao.tema
             );
-
-
-            const seletor =
-                el("tema");
-
-
-            if (seletor) {
-
-                seletor.value =
-                    tema;
-
-            }
 
         }
         catch (erro) {
@@ -195,6 +185,9 @@
                 "[MOZ TECH] Não foi possível carregar tema da API:",
                 erro.message
             );
+
+            // IMPORTANTE:
+            // erro de API NÃO impede o sistema de funcionar
 
         }
 
@@ -411,9 +404,7 @@
     // CARREGAR PAINEL
     // =====================================================
 
-    async function carregarPainel(
-        panelId
-    ) {
+    async function carregarPainel(panelId) {
 
         console.log(
             "[MOZ TECH] Carregando painel:",
@@ -425,48 +416,34 @@
         // DASHBOARD
         // =================================================
 
-        if (
-            panelId === "dashboard"
-        ) {
+        if (panelId === "dashboard") {
 
-            if (
-                typeof window.carregarTudo ===
-                "function"
-            ) {
+            try {
 
-                try {
+                if (
+                    typeof window.carregarTudo ===
+                    "function"
+                ) {
 
                     await window.carregarTudo();
 
                 }
-                catch (erro) {
-
-                    console.error(
-                        "[MOZ TECH] Erro dashboard:",
-                        erro
-                    );
-
-                }
-
-            }
-            else if (
-                typeof window.carregarDashboard ===
-                "function"
-            ) {
-
-                try {
+                else if (
+                    typeof window.carregarDashboard ===
+                    "function"
+                ) {
 
                     await window.carregarDashboard();
 
                 }
-                catch (erro) {
 
-                    console.error(
-                        "[MOZ TECH] Erro dashboard:",
-                        erro
-                    );
+            }
+            catch (erro) {
 
-                }
+                console.error(
+                    "[MOZ TECH] Erro Dashboard:",
+                    erro
+                );
 
             }
 
@@ -479,35 +456,38 @@
         // CRM
         // =================================================
 
-        if (
-            panelId === "crm"
-        ) {
+        if (panelId === "crm") {
 
-            if (
-                typeof window.carregarClientes ===
-                "function"
-            ) {
+            try {
 
-                try {
+                if (
+                    typeof window.carregarClientes ===
+                    "function"
+                ) {
 
                     await window.carregarClientes();
 
                 }
-                catch (erro) {
+                else {
 
-                    console.error(
-                        "[MOZ TECH] Erro CRM:",
-                        erro
+                    mostrarErroPainel(
+                        "crmConteudo",
+                        "Não foi possível carregar os clientes."
                     );
 
                 }
 
             }
-            else {
+            catch (erro) {
+
+                console.error(
+                    "[MOZ TECH] Erro CRM:",
+                    erro
+                );
 
                 mostrarErroPainel(
                     "crmConteudo",
-                    "Não foi possível carregar os clientes."
+                    "Erro ao carregar clientes."
                 );
 
             }
@@ -521,35 +501,38 @@
         // PACOTES
         // =================================================
 
-        if (
-            panelId === "pacotes"
-        ) {
+        if (panelId === "pacotes") {
 
-            if (
-                typeof window.carregarPacotes ===
-                "function"
-            ) {
+            try {
 
-                try {
+                if (
+                    typeof window.carregarPacotes ===
+                    "function"
+                ) {
 
                     await window.carregarPacotes();
 
                 }
-                catch (erro) {
+                else {
 
-                    console.error(
-                        "[MOZ TECH] Erro pacotes:",
-                        erro
+                    mostrarErroPainel(
+                        "pacotesConteudo",
+                        "Não foi possível carregar os pacotes."
                     );
 
                 }
 
             }
-            else {
+            catch (erro) {
+
+                console.error(
+                    "[MOZ TECH] Erro Pacotes:",
+                    erro
+                );
 
                 mostrarErroPainel(
                     "pacotesConteudo",
-                    "Não foi possível carregar os pacotes."
+                    "Erro ao carregar pacotes."
                 );
 
             }
@@ -563,35 +546,38 @@
         // PEDIDOS
         // =================================================
 
-        if (
-            panelId === "pedidos"
-        ) {
+        if (panelId === "pedidos") {
 
-            if (
-                typeof window.carregarPedidos ===
-                "function"
-            ) {
+            try {
 
-                try {
+                if (
+                    typeof window.carregarPedidos ===
+                    "function"
+                ) {
 
                     await window.carregarPedidos();
 
                 }
-                catch (erro) {
+                else {
 
-                    console.error(
-                        "[MOZ TECH] Erro pedidos:",
-                        erro
+                    mostrarErroPainel(
+                        "pedidosConteudo",
+                        "Não foi possível carregar os pedidos."
                     );
 
                 }
 
             }
-            else {
+            catch (erro) {
+
+                console.error(
+                    "[MOZ TECH] Erro Pedidos:",
+                    erro
+                );
 
                 mostrarErroPainel(
                     "pedidosConteudo",
-                    "Não foi possível carregar os pedidos."
+                    "Erro ao carregar pedidos."
                 );
 
             }
@@ -605,35 +591,38 @@
         // DISPOSITIVOS
         // =================================================
 
-        if (
-            panelId === "dispositivos"
-        ) {
+        if (panelId === "dispositivos") {
 
-            if (
-                typeof window.carregarDispositivos ===
-                "function"
-            ) {
+            try {
 
-                try {
+                if (
+                    typeof window.carregarDispositivos ===
+                    "function"
+                ) {
 
                     await window.carregarDispositivos();
 
                 }
-                catch (erro) {
+                else {
 
-                    console.error(
-                        "[MOZ TECH] Erro dispositivos:",
-                        erro
+                    mostrarErroPainel(
+                        "dispositivosConteudo",
+                        "Não foi possível carregar os dispositivos."
                     );
 
                 }
 
             }
-            else {
+            catch (erro) {
+
+                console.error(
+                    "[MOZ TECH] Erro Dispositivos:",
+                    erro
+                );
 
                 mostrarErroPainel(
                     "dispositivosConteudo",
-                    "Não foi possível carregar os dispositivos."
+                    "Erro ao carregar dispositivos."
                 );
 
             }
@@ -647,35 +636,38 @@
         // CONFIGURAÇÕES
         // =================================================
 
-        if (
-            panelId === "config"
-        ) {
+        if (panelId === "config") {
 
-            if (
-                typeof window.carregarConfiguracoes ===
-                "function"
-            ) {
+            try {
 
-                try {
+                if (
+                    typeof window.carregarConfiguracoes ===
+                    "function"
+                ) {
 
                     await window.carregarConfiguracoes();
 
                 }
-                catch (erro) {
+                else {
 
-                    console.error(
-                        "[MOZ TECH] Erro configurações:",
-                        erro
+                    mostrarErroPainel(
+                        "configConteudo",
+                        "Não foi possível carregar as configurações."
                     );
 
                 }
 
             }
-            else {
+            catch (erro) {
+
+                console.error(
+                    "[MOZ TECH] Erro Configurações:",
+                    erro
+                );
 
                 mostrarErroPainel(
                     "configConteudo",
-                    "Não foi possível carregar as configurações."
+                    "Erro ao carregar configurações."
                 );
 
             }
@@ -689,11 +681,21 @@
         // TUTORIAL
         // =================================================
 
-        if (
-            panelId === "tutorial"
-        ) {
+        if (panelId === "tutorial") {
 
-            await carregarCredenciaisTutorial();
+            try {
+
+                await carregarCredenciaisTutorial();
+
+            }
+            catch (erro) {
+
+                console.error(
+                    "[MOZ TECH] Erro Tutorial:",
+                    erro
+                );
+
+            }
 
             return;
 
@@ -743,49 +745,9 @@
 
         try {
 
-            // =================================================
-            // 1. VERIFICAR CREDENCIAIS JÁ SALVAS
-            // =================================================
-
-            let credenciais = null;
-
-
-            if (
-                window.MOZ_API &&
-                typeof window.MOZ_API.obterCredenciais ===
-                "function"
-            ) {
-
-                credenciais =
-                    window.MOZ_API.obterCredenciais();
-
-            }
-
-
-            if (
-                credenciais &&
-                credenciais.uid &&
-                credenciais.apiKey
-            ) {
-
-                mostrarCredenciais(
-                    credenciais.uid,
-                    credenciais.apiKey
-                );
-
-                return;
-
-            }
-
-
-            // =================================================
-            // 2. API DISPONÍVEL?
-            // =================================================
-
             if (
                 !window.MOZ_API ||
-                typeof window.MOZ_API.get !==
-                "function"
+                typeof window.MOZ_API.get !== "function"
             ) {
 
                 throw new Error(
@@ -794,10 +756,6 @@
 
             }
 
-
-            // =================================================
-            // 3. BUSCAR CONFIGURAÇÃO
-            // =================================================
 
             const json =
                 await window.MOZ_API.get(
@@ -824,10 +782,6 @@
             }
 
 
-            // =================================================
-            // 4. CONFIGURAÇÃO
-            // =================================================
-
             const configuracao =
                 json.configuracao ||
                 json.config ||
@@ -843,10 +797,6 @@
             }
 
 
-            // =================================================
-            // 5. UID
-            // =================================================
-
             const uid =
                 configuracao.uid ||
                 configuracao.UID ||
@@ -854,10 +804,6 @@
                 configuracao.user_id ||
                 "";
 
-
-            // =================================================
-            // 6. API KEY
-            // =================================================
 
             const apiKey =
                 configuracao.apiKey ||
@@ -867,49 +813,37 @@
                 "";
 
 
-            if (!uid) {
+            if (uidElemento) {
 
-                throw new Error(
-                    "UID não encontrado."
-                );
-
-            }
-
-
-            if (!apiKey) {
-
-                throw new Error(
-                    "API Key não encontrada."
-                );
+                uidElemento.textContent =
+                    uid ||
+                    "UID não encontrado";
 
             }
 
 
-            // =================================================
-            // 7. GUARDAR CREDENCIAIS
-            // =================================================
+            if (apiKeyElemento) {
 
-            if (
-                window.MOZ_API &&
-                typeof window.MOZ_API.definirCredenciais ===
-                "function"
-            ) {
+                apiKeyElemento.textContent =
+                    apiKey ||
+                    "API Key não encontrada";
 
-                window.MOZ_API.definirCredenciais(
+            }
+
+
+            window.MOZ_CREDENCIAIS_API = {
+
+                uid:
                     uid,
+
+                apiKey:
                     apiKey
-                );
 
-            }
+            };
 
 
-            // =================================================
-            // 8. MOSTRAR
-            // =================================================
-
-            mostrarCredenciais(
-                uid,
-                apiKey
+            console.log(
+                "[MOZ TECH] Credenciais carregadas."
             );
 
         }
@@ -942,58 +876,6 @@
 
 
     // =====================================================
-    // MOSTRAR CREDENCIAIS
-    // =====================================================
-
-    function mostrarCredenciais(
-        uid,
-        apiKey
-    ) {
-
-        const uidElemento =
-            el("tutorialUid");
-
-        const apiKeyElemento =
-            el("tutorialApiKey");
-
-
-        if (uidElemento) {
-
-            uidElemento.textContent =
-                uid ||
-                "UID não encontrado";
-
-        }
-
-
-        if (apiKeyElemento) {
-
-            apiKeyElemento.textContent =
-                apiKey ||
-                "API Key não encontrada";
-
-        }
-
-
-        window.MOZ_CREDENCIAIS_API = {
-
-            uid:
-                uid || "",
-
-            apiKey:
-                apiKey || ""
-
-        };
-
-
-        console.log(
-            "[MOZ TECH] Credenciais mostradas."
-        );
-
-    }
-
-
-    // =====================================================
     // COPIAR UID
     // =====================================================
 
@@ -1002,25 +884,17 @@
 
             try {
 
-                let credenciais =
-                    window.MOZ_CREDENCIAIS_API;
-
-
                 if (
-                    !credenciais ||
-                    !credenciais.uid
+                    !window.MOZ_CREDENCIAIS_API?.uid
                 ) {
 
                     await carregarCredenciaisTutorial();
-
-                    credenciais =
-                        window.MOZ_CREDENCIAIS_API;
 
                 }
 
 
                 const uid =
-                    credenciais?.uid;
+                    window.MOZ_CREDENCIAIS_API?.uid;
 
 
                 if (!uid) {
@@ -1070,25 +944,17 @@
 
             try {
 
-                let credenciais =
-                    window.MOZ_CREDENCIAIS_API;
-
-
                 if (
-                    !credenciais ||
-                    !credenciais.apiKey
+                    !window.MOZ_CREDENCIAIS_API?.apiKey
                 ) {
 
                     await carregarCredenciaisTutorial();
-
-                    credenciais =
-                        window.MOZ_CREDENCIAIS_API;
 
                 }
 
 
                 const apiKey =
-                    credenciais?.apiKey;
+                    window.MOZ_CREDENCIAIS_API?.apiKey;
 
 
                 if (!apiKey) {
@@ -1180,7 +1046,7 @@
 
 
             // =================================================
-            // MOSTRAR PAINEL
+            // ABRIR PAINEL
             // =================================================
 
             const painel =
@@ -1238,16 +1104,28 @@
 
 
             // =================================================
-            // CARREGAR DADOS
+            // CARREGAR CONTEÚDO
             // =================================================
 
-            await carregarPainel(
-                panelId
-            );
+            try {
+
+                await carregarPainel(
+                    panelId
+                );
+
+            }
+            catch (erro) {
+
+                console.error(
+                    "[MOZ TECH] Erro ao carregar painel:",
+                    erro
+                );
+
+            }
 
 
             // =================================================
-            // FECHAR MENU MOBILE
+            // FECHAR MENU NO MOBILE
             // =================================================
 
             if (
@@ -1297,7 +1175,7 @@
 
             botao.addEventListener(
                 "click",
-                async function (event) {
+                function (event) {
 
                     event.preventDefault();
 
@@ -1305,13 +1183,14 @@
 
 
                     const panel =
+                        botao.dataset.panel ||
                         botao.getAttribute(
                             "data-panel"
                         );
 
 
                     console.log(
-                        "[MOZ TECH] Botão clicado:",
+                        "[MOZ TECH] Clique:",
                         panel
                     );
 
@@ -1327,7 +1206,11 @@
                     }
 
 
-                    await window.showPanel(
+                    // NÃO esperar aqui.
+                    // Assim um erro/carregamento de outro
+                    // sistema não bloqueia os botões.
+
+                    window.showPanel(
                         panel
                     );
 
@@ -1340,7 +1223,7 @@
 
 
     // =====================================================
-    // BOTÃO MOBILE
+    // BOTÃO MENU MOBILE
     // =====================================================
 
     function inicializarBotaoMobile() {
@@ -1377,6 +1260,7 @@
                 event.preventDefault();
 
                 event.stopPropagation();
+
 
                 alternarMenuMobile();
 
@@ -1466,7 +1350,7 @@
 
 
     // =====================================================
-    // SELETOR TEMA
+    // SELETOR DE TEMA
     // =====================================================
 
     function inicializarSeletorTema() {
@@ -1551,22 +1435,24 @@
                 "false"
             );
 
-        }
 
-
-        if (document.body) {
-
-            document.body.classList.remove(
-                "menu-open"
+            botao.setAttribute(
+                "aria-label",
+                "Abrir menu"
             );
 
         }
+
+
+        document.body.classList.remove(
+            "menu-open"
+        );
 
     }
 
 
     // =====================================================
-    // INICIAR
+    // INICIAR SISTEMA
     // =====================================================
 
     async function iniciarSistema() {
@@ -1575,11 +1461,9 @@
             "======================================"
         );
 
-
         console.log(
             "MOZ TECH - SISTEMA INICIADO"
         );
-
 
         console.log(
             "======================================"
@@ -1594,10 +1478,15 @@
 
 
         // =================================================
-        // MENU
+        // ESTADO
         // =================================================
 
         estadoInicial();
+
+
+        // =================================================
+        // MENU
+        // =================================================
 
         inicializarMenu();
 
@@ -1614,44 +1503,39 @@
         // TEMA API
         // =================================================
         //
-        // NÃO deixar erro da API bloquear os botões.
+        // NÃO deixar erro da API parar o sistema.
         //
         // =================================================
 
-        try {
+        carregarTemaAPI()
+            .catch(function (erro) {
 
-            await carregarTemaAPI();
+                console.warn(
+                    "[MOZ TECH] Tema API:",
+                    erro
+                );
 
-        }
-        catch (erro) {
-
-            console.warn(
-                "[MOZ TECH] Tema API ignorado:",
-                erro
-            );
-
-        }
+            });
 
 
         // =================================================
-        // DASHBOARD
+        // ABRIR DASHBOARD
         // =================================================
 
-        try {
+        setTimeout(function () {
 
-            await window.showPanel(
-                "dashboard"
-            );
+            if (
+                typeof window.showPanel ===
+                "function"
+            ) {
 
-        }
-        catch (erro) {
+                window.showPanel(
+                    "dashboard"
+                );
 
-            console.error(
-                "[MOZ TECH] Erro ao abrir dashboard:",
-                erro
-            );
+            }
 
-        }
+        }, 0);
 
 
         console.log(
