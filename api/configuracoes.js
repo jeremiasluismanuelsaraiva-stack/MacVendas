@@ -1,14 +1,9 @@
-// =====================================================
-// MACVENDAS
-// CONFIGURAÇÕES
-// FIREBASE REALTIME DATABASE
-// =====================================================
-
 "use strict";
 
 const express = require("express");
 
-const router = express.Router();
+const router =
+    express.Router();
 
 const { db } =
     require("./firebase-admin");
@@ -46,39 +41,26 @@ function agora() {
 
 
 // =====================================================
-// REFERÊNCIA DA CONFIGURAÇÃO
-// =====================================================
-//
-// Cada usuário possui sua própria configuração:
-//
-// configuracoes/
-//    UID_DO_USUARIO/
-//       nomeEmpresa
-//       telefone
-//       email
-//       moeda
-//       vendaGB
-//       custoGB
-//       tema
-//       idioma
-//
+// REFERÊNCIA
 // =====================================================
 
 function configuracaoRef(uid) {
 
     return db.ref(
-        "configuracoes/" +
-        uid
+        "configuracoes/" + uid
     );
 
 }
 
 
 // =====================================================
-// CRIAR CONFIGURAÇÃO PADRÃO
+// CONFIGURAÇÃO PADRÃO
 // =====================================================
 
-function configuracaoPadrao(uid, usuario) {
+function configuracaoPadrao(
+    uid,
+    usuario
+) {
 
     return {
 
@@ -136,7 +118,7 @@ function configuracaoPadrao(uid, usuario) {
 
 
         // =================================================
-        // DATA
+        // DATAS
         // =================================================
 
         criadoEm:
@@ -151,17 +133,18 @@ function configuracaoPadrao(uid, usuario) {
 
 
 // =====================================================
-// GET /api/configuracoes
+// GET
+// /api/configuracoes
 // =====================================================
 //
-// Retorna as configurações do usuário autenticado.
+// Retorna a configuração do usuário autenticado.
 //
 // =====================================================
 
 router.get(
     "/",
     autenticarAPI,
-    async (req, res) => {
+    async function (req, res) {
 
         try {
 
@@ -180,12 +163,10 @@ router.get(
 
 
             // =================================================
-            // CONFIGURAÇÃO NÃO EXISTE
+            // CRIAR SE NÃO EXISTIR
             // =================================================
 
-            if (
-                !snapshot.exists()
-            ) {
+            if (!snapshot.exists()) {
 
                 const configuracao =
                     configuracaoPadrao(
@@ -211,7 +192,7 @@ router.get(
 
 
             // =================================================
-            // CONFIGURAÇÃO EXISTENTE
+            // EXISTENTE
             // =================================================
 
             const configuracao =
@@ -219,39 +200,52 @@ router.get(
 
 
             // =================================================
-            // GARANTIR DADOS
+            // GARANTIR UID
             // =================================================
 
-            if (
-                !configuracao.uid
-            ) {
+            configuracao.uid =
+                uid;
 
-                configuracao.uid =
-                    uid;
+
+            // =================================================
+            // API KEY
+            // =================================================
+
+            configuracao.apiKey =
+                req.usuario.apiKey ||
+                configuracao.apiKey ||
+                "";
+
+
+            // =================================================
+            // EMPRESA
+            // =================================================
+
+            if (!configuracao.nomeEmpresa) {
+
+                configuracao.nomeEmpresa =
+                    req.usuario.fullName ||
+                    "MACVENDAS";
 
             }
 
 
-            if (
-                !configuracao.apiKey
-            ) {
+            // =================================================
+            // EMAIL
+            // =================================================
 
-                configuracao.apiKey =
-                    req.usuario.apiKey ||
+            if (!configuracao.email) {
+
+                configuracao.email =
+                    req.usuario.email ||
                     "";
 
             }
 
 
-            if (
-                !configuracao.nomeEmpresa
-            ) {
-
-                configuracao.nomeEmpresa =
-                    "MACVENDAS";
-
-            }
-
+            // =================================================
+            // PADRÕES
+            // =================================================
 
             if (
                 configuracao.moeda ===
@@ -286,9 +280,7 @@ router.get(
             }
 
 
-            if (
-                !configuracao.tema
-            ) {
+            if (!configuracao.tema) {
 
                 configuracao.tema =
                     "dark";
@@ -296,12 +288,18 @@ router.get(
             }
 
 
-            if (
-                !configuracao.idioma
-            ) {
+            if (!configuracao.idioma) {
 
                 configuracao.idioma =
                     "pt";
+
+            }
+
+
+            if (!configuracao.criadoEm) {
+
+                configuracao.criadoEm =
+                    agora();
 
             }
 
@@ -310,10 +308,18 @@ router.get(
                 agora();
 
 
+            // =================================================
+            // SALVAR
+            // =================================================
+
             await referencia.update(
                 configuracao
             );
 
+
+            // =================================================
+            // RESPOSTA
+            // =================================================
 
             return res.json({
 
@@ -348,17 +354,14 @@ router.get(
 
 
 // =====================================================
-// PUT /api/configuracoes
-// =====================================================
-//
-// Atualizar configurações do usuário.
-//
+// PUT
+// /api/configuracoes
 // =====================================================
 
 router.put(
     "/",
     autenticarAPI,
-    async (req, res) => {
+    async function (req, res) {
 
         try {
 
@@ -379,9 +382,7 @@ router.put(
             let atual = {};
 
 
-            if (
-                snapshot.exists()
-            ) {
+            if (snapshot.exists()) {
 
                 atual =
                     snapshot.val() || {};
@@ -390,17 +391,13 @@ router.put(
 
 
             // =================================================
-            // ATUALIZAR
+            // CONFIGURAÇÃO
             // =================================================
 
             const configuracao = {
 
                 ...atual,
 
-
-                // -------------------------------------------------
-                // IDENTIFICAÇÃO
-                // -------------------------------------------------
 
                 uid:
                     uid,
@@ -411,9 +408,9 @@ router.put(
                     "",
 
 
-                // -------------------------------------------------
+                // =================================================
                 // EMPRESA
-                // -------------------------------------------------
+                // =================================================
 
                 nomeEmpresa:
                     req.body.nomeEmpresa ??
@@ -428,12 +425,13 @@ router.put(
                 email:
                     req.body.email ??
                     atual.email ??
+                    req.usuario.email ??
                     "",
 
 
-                // -------------------------------------------------
+                // =================================================
                 // MOEDA
-                // -------------------------------------------------
+                // =================================================
 
                 moeda:
                     req.body.moeda ??
@@ -441,9 +439,9 @@ router.put(
                     "MT",
 
 
-                // -------------------------------------------------
+                // =================================================
                 // VALORES
-                // -------------------------------------------------
+                // =================================================
 
                 vendaGB:
                     req.body.vendaGB !== undefined
@@ -466,9 +464,9 @@ router.put(
                         ),
 
 
-                // -------------------------------------------------
+                // =================================================
                 // TEMA
-                // -------------------------------------------------
+                // =================================================
 
                 tema:
                     req.body.tema ??
@@ -481,9 +479,9 @@ router.put(
                     "pt",
 
 
-                // -------------------------------------------------
+                // =================================================
                 // DATA
-                // -------------------------------------------------
+                // =================================================
 
                 criadoEm:
                     atual.criadoEm ||
@@ -496,7 +494,7 @@ router.put(
 
 
             // =================================================
-            // REMOVER USSD ANTIGO
+            // NÃO USAR USSD ANTIGO
             // =================================================
 
             delete configuracao.ussd;
@@ -547,21 +545,14 @@ router.put(
 
 
 // =====================================================
-// GET /api/configuracoes/:id
-// =====================================================
-//
-// Mantido para compatibilidade.
-//
-// Como agora existe apenas uma configuração por usuário,
-// o ID pode ser ignorado e devolvemos a configuração
-// do usuário autenticado.
-//
+// GET
+// /api/configuracoes/:id
 // =====================================================
 
 router.get(
     "/:id",
     autenticarAPI,
-    async (req, res) => {
+    async function (req, res) {
 
         try {
 
@@ -570,17 +561,11 @@ router.get(
 
 
             const snapshot =
-                await configuracaoRef(
-                    uid
-                )
-                .once(
-                    "value"
-                );
+                await configuracaoRef(uid)
+                    .once("value");
 
 
-            if (
-                !snapshot.exists()
-            ) {
+            if (!snapshot.exists()) {
 
                 return res.status(404).json({
 
@@ -594,12 +579,25 @@ router.get(
             }
 
 
+            const configuracao =
+                snapshot.val() || {};
+
+
+            configuracao.uid =
+                uid;
+
+
+            configuracao.apiKey =
+                req.usuario.apiKey ||
+                configuracao.apiKey ||
+                "";
+
+
             return res.json({
 
                 success: true,
 
-                configuracao:
-                    snapshot.val()
+                configuracao
 
             });
 
@@ -628,20 +626,13 @@ router.get(
 
 
 // =====================================================
-// POST /api/configuracoes/regenerar-api-key
-// =====================================================
-//
-// IMPORTANTE:
-// A API Key é criada pelo sistema de autenticação.
-// Aqui não devemos simplesmente criar uma chave local
-// diferente da que está em users/{uid}.
-//
+// REGENERAR API KEY
 // =====================================================
 
 router.post(
     "/regenerar-api-key",
     autenticarAPI,
-    async (req, res) => {
+    async function (req, res) {
 
         return res.status(403).json({
 
@@ -660,4 +651,5 @@ router.post(
 // EXPORTAR
 // =====================================================
 
-module.exports = router;
+module.exports =
+    router;
