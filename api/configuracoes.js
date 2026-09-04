@@ -2,14 +2,11 @@
 
 const express = require("express");
 
-const router =
-    express.Router();
+const router = express.Router();
 
-const { db } =
-    require("./firebase-admin");
+const { db } = require("./firebase-admin");
 
-const autenticarAPI =
-    require("./auth");
+const autenticarAPI = require("./auth");
 
 
 // =====================================================
@@ -18,8 +15,7 @@ const autenticarAPI =
 
 function numero(valor) {
 
-    const n =
-        Number(valor);
+    const n = Number(valor);
 
     return Number.isFinite(n)
         ? n
@@ -29,19 +25,18 @@ function numero(valor) {
 
 
 // =====================================================
-// DATA
+// DATA ATUAL
 // =====================================================
 
 function agora() {
 
-    return new Date()
-        .toISOString();
+    return new Date().toISOString();
 
 }
 
 
 // =====================================================
-// REFERÊNCIA
+// REFERÊNCIA FIREBASE
 // =====================================================
 
 function configuracaoRef(uid) {
@@ -57,15 +52,11 @@ function configuracaoRef(uid) {
 // CONFIGURAÇÃO PADRÃO
 // =====================================================
 
-function configuracaoPadrao(
-    uid,
-    usuario
-) {
+function configuracaoPadrao(uid, usuario) {
 
     return {
 
-        uid:
-            uid,
+        uid: uid,
 
         apiKey:
             usuario.apiKey || "",
@@ -133,12 +124,7 @@ function configuracaoPadrao(
 
 
 // =====================================================
-// GET
-// /api/configuracoes
-// =====================================================
-//
-// Retorna a configuração do usuário autenticado.
-//
+// GET /api/configuracoes
 // =====================================================
 
 router.get(
@@ -152,18 +138,36 @@ router.get(
                 req.usuario.uid;
 
 
+            if (!uid) {
+
+                return res.status(401).json({
+
+                    success: false,
+
+                    error:
+                        "Usuário não autenticado."
+
+                });
+
+            }
+
+
+            console.log(
+                "[CONFIGURAÇÕES] GET para:",
+                uid
+            );
+
+
             const referencia =
                 configuracaoRef(uid);
 
 
             const snapshot =
-                await referencia.once(
-                    "value"
-                );
+                await referencia.once("value");
 
 
             // =================================================
-            // CRIAR SE NÃO EXISTIR
+            // NÃO EXISTE
             // =================================================
 
             if (!snapshot.exists()) {
@@ -180,11 +184,18 @@ router.get(
                 );
 
 
+                console.log(
+                    "[CONFIGURAÇÕES] Configuração padrão criada."
+                );
+
+
                 return res.json({
 
                     success: true,
 
-                    configuracao
+                    configuracao:
+
+                        configuracao
 
                 });
 
@@ -231,6 +242,21 @@ router.get(
 
 
             // =================================================
+            // TELEFONE
+            // =================================================
+
+            if (
+                configuracao.telefone ===
+                undefined
+            ) {
+
+                configuracao.telefone =
+                    "";
+
+            }
+
+
+            // =================================================
             // EMAIL
             // =================================================
 
@@ -244,7 +270,7 @@ router.get(
 
 
             // =================================================
-            // PADRÕES
+            // MOEDA
             // =================================================
 
             if (
@@ -258,6 +284,10 @@ router.get(
             }
 
 
+            // =================================================
+            // VENDA POR GB
+            // =================================================
+
             if (
                 configuracao.vendaGB ===
                 undefined
@@ -268,6 +298,10 @@ router.get(
 
             }
 
+
+            // =================================================
+            // CUSTO POR GB
+            // =================================================
 
             if (
                 configuracao.custoGB ===
@@ -280,6 +314,10 @@ router.get(
             }
 
 
+            // =================================================
+            // TEMA
+            // =================================================
+
             if (!configuracao.tema) {
 
                 configuracao.tema =
@@ -287,6 +325,10 @@ router.get(
 
             }
 
+
+            // =================================================
+            // IDIOMA
+            // =================================================
 
             if (!configuracao.idioma) {
 
@@ -296,6 +338,10 @@ router.get(
             }
 
 
+            // =================================================
+            // DATA DE CRIAÇÃO
+            // =================================================
+
             if (!configuracao.criadoEm) {
 
                 configuracao.criadoEm =
@@ -304,12 +350,23 @@ router.get(
             }
 
 
+            // =================================================
+            // ATUALIZAÇÃO
+            // =================================================
+
             configuracao.atualizado =
                 agora();
 
 
             // =================================================
-            // SALVAR
+            // REMOVER USSD ANTIGO
+            // =================================================
+
+            delete configuracao.ussd;
+
+
+            // =================================================
+            // ATUALIZAR FIREBASE
             // =================================================
 
             await referencia.update(
@@ -325,7 +382,9 @@ router.get(
 
                 success: true,
 
-                configuracao
+                configuracao:
+
+                    configuracao
 
             });
 
@@ -333,7 +392,7 @@ router.get(
         catch (erro) {
 
             console.error(
-                "[CONFIGURAÇÕES GET]",
+                "[CONFIGURAÇÕES GET] Erro:",
                 erro
             );
 
@@ -354,8 +413,7 @@ router.get(
 
 
 // =====================================================
-// PUT
-// /api/configuracoes
+// PUT /api/configuracoes
 // =====================================================
 
 router.put(
@@ -391,13 +449,17 @@ router.put(
 
 
             // =================================================
-            // CONFIGURAÇÃO
+            // NOVA CONFIGURAÇÃO
             // =================================================
 
             const configuracao = {
 
                 ...atual,
 
+
+                // =================================================
+                // IDENTIFICAÇÃO
+                // =================================================
 
                 uid:
                     uid,
@@ -445,19 +507,24 @@ router.put(
 
                 vendaGB:
                     req.body.vendaGB !== undefined
+
                         ? numero(
                             req.body.vendaGB
                         )
+
                         : numero(
                             atual.vendaGB ??
                             28
                         ),
 
+
                 custoGB:
                     req.body.custoGB !== undefined
+
                         ? numero(
                             req.body.custoGB
                         )
+
                         : numero(
                             atual.custoGB ??
                             21
@@ -473,6 +540,11 @@ router.put(
                     atual.tema ??
                     "dark",
 
+
+                // =================================================
+                // IDIOMA
+                // =================================================
+
                 idioma:
                     req.body.idioma ??
                     atual.idioma ??
@@ -480,7 +552,7 @@ router.put(
 
 
                 // =================================================
-                // DATA
+                // DATAS
                 // =================================================
 
                 criadoEm:
@@ -509,6 +581,16 @@ router.put(
             );
 
 
+            console.log(
+                "[CONFIGURAÇÕES] Configuração atualizada:",
+                uid
+            );
+
+
+            // =================================================
+            // RESPOSTA
+            // =================================================
+
             return res.json({
 
                 success: true,
@@ -516,7 +598,9 @@ router.put(
                 message:
                     "Configurações atualizadas com sucesso.",
 
-                configuracao
+                configuracao:
+
+                    configuracao
 
             });
 
@@ -524,7 +608,7 @@ router.put(
         catch (erro) {
 
             console.error(
-                "[CONFIGURAÇÕES PUT]",
+                "[CONFIGURAÇÕES PUT] Erro:",
                 erro
             );
 
@@ -545,8 +629,7 @@ router.put(
 
 
 // =====================================================
-// GET
-// /api/configuracoes/:id
+// GET /api/configuracoes/:id
 // =====================================================
 
 router.get(
@@ -593,11 +676,16 @@ router.get(
                 "";
 
 
+            delete configuracao.ussd;
+
+
             return res.json({
 
                 success: true,
 
-                configuracao
+                configuracao:
+
+                    configuracao
 
             });
 
@@ -605,7 +693,7 @@ router.get(
         catch (erro) {
 
             console.error(
-                "[CONFIGURAÇÃO ID]",
+                "[CONFIGURAÇÃO ID] Erro:",
                 erro
             );
 
