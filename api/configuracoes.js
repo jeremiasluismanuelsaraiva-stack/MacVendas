@@ -36,7 +36,13 @@ function agora() {
 
 
 // =====================================================
-// REFERÊNCIA FIREBASE
+// REFERÊNCIA DA CONFIGURAÇÃO
+// =====================================================
+//
+// Cada usuário possui apenas uma configuração:
+//
+// configuracoes/{uid}
+//
 // =====================================================
 
 function configuracaoRef(uid) {
@@ -56,7 +62,12 @@ function configuracaoPadrao(uid, usuario) {
 
     return {
 
-        uid: uid,
+        // =================================================
+        // IDENTIFICAÇÃO
+        // =================================================
+
+        uid:
+            uid,
 
         apiKey:
             usuario.apiKey || "",
@@ -104,6 +115,11 @@ function configuracaoPadrao(uid, usuario) {
         tema:
             "dark",
 
+
+        // =================================================
+        // IDIOMA
+        // =================================================
+
         idioma:
             "pt",
 
@@ -134,6 +150,10 @@ router.get(
 
         try {
 
+            // =================================================
+            // UID DO USUÁRIO
+            // =================================================
+
             const uid =
                 req.usuario.uid;
 
@@ -153,21 +173,31 @@ router.get(
 
 
             console.log(
-                "[CONFIGURAÇÕES] GET para:",
+                "[CONFIGURAÇÕES] GET:",
                 uid
             );
 
+
+            // =================================================
+            // REFERÊNCIA FIREBASE
+            // =================================================
 
             const referencia =
                 configuracaoRef(uid);
 
 
+            // =================================================
+            // BUSCAR CONFIGURAÇÃO
+            // =================================================
+
             const snapshot =
-                await referencia.once("value");
+                await referencia.once(
+                    "value"
+                );
 
 
             // =================================================
-            // NÃO EXISTE
+            // SE NÃO EXISTIR
             // =================================================
 
             if (!snapshot.exists()) {
@@ -179,13 +209,18 @@ router.get(
                     );
 
 
+                // =================================================
+                // CRIAR CONFIGURAÇÃO PADRÃO
+                // =================================================
+
                 await referencia.set(
                     configuracao
                 );
 
 
                 console.log(
-                    "[CONFIGURAÇÕES] Configuração padrão criada."
+                    "[CONFIGURAÇÕES] Configuração padrão criada:",
+                    uid
                 );
 
 
@@ -194,7 +229,6 @@ router.get(
                     success: true,
 
                     configuracao:
-
                         configuracao
 
                 });
@@ -203,7 +237,7 @@ router.get(
 
 
             // =================================================
-            // EXISTENTE
+            // CONFIGURAÇÃO EXISTENTE
             // =================================================
 
             const configuracao =
@@ -229,10 +263,13 @@ router.get(
 
 
             // =================================================
-            // EMPRESA
+            // NOME DA EMPRESA
             // =================================================
 
-            if (!configuracao.nomeEmpresa) {
+            if (
+                configuracao.nomeEmpresa ===
+                undefined
+            ) {
 
                 configuracao.nomeEmpresa =
                     req.usuario.fullName ||
@@ -260,7 +297,10 @@ router.get(
             // EMAIL
             // =================================================
 
-            if (!configuracao.email) {
+            if (
+                configuracao.email ===
+                undefined
+            ) {
 
                 configuracao.email =
                     req.usuario.email ||
@@ -351,7 +391,7 @@ router.get(
 
 
             // =================================================
-            // ATUALIZAÇÃO
+            // DATA DE ATUALIZAÇÃO
             // =================================================
 
             configuracao.atualizado =
@@ -360,6 +400,11 @@ router.get(
 
             // =================================================
             // REMOVER USSD ANTIGO
+            // =================================================
+            //
+            // Caso exista uma configuração antiga com
+            // "ussd", ela será removida.
+            //
             // =================================================
 
             delete configuracao.ussd;
@@ -383,7 +428,6 @@ router.get(
                 success: true,
 
                 configuracao:
-
                     configuracao
 
             });
@@ -423,13 +467,45 @@ router.put(
 
         try {
 
+            // =================================================
+            // UID DO USUÁRIO
+            // =================================================
+
             const uid =
                 req.usuario.uid;
 
 
+            if (!uid) {
+
+                return res.status(401).json({
+
+                    success: false,
+
+                    error:
+                        "Usuário não autenticado."
+
+                });
+
+            }
+
+
+            console.log(
+                "[CONFIGURAÇÕES] PUT:",
+                uid
+            );
+
+
+            // =================================================
+            // REFERÊNCIA FIREBASE
+            // =================================================
+
             const referencia =
                 configuracaoRef(uid);
 
+
+            // =================================================
+            // BUSCAR CONFIGURAÇÃO ATUAL
+            // =================================================
 
             const snapshot =
                 await referencia.once(
@@ -449,7 +525,7 @@ router.put(
 
 
             // =================================================
-            // NOVA CONFIGURAÇÃO
+            // CRIAR NOVA CONFIGURAÇÃO
             // =================================================
 
             const configuracao = {
@@ -477,6 +553,7 @@ router.put(
                 nomeEmpresa:
                     req.body.nomeEmpresa ??
                     atual.nomeEmpresa ??
+                    req.usuario.fullName ??
                     "MACVENDAS",
 
                 telefone:
@@ -502,7 +579,7 @@ router.put(
 
 
                 // =================================================
-                // VALORES
+                // VENDA POR GB
                 // =================================================
 
                 vendaGB:
@@ -517,6 +594,10 @@ router.put(
                             28
                         ),
 
+
+                // =================================================
+                // CUSTO POR GB
+                // =================================================
 
                 custoGB:
                     req.body.custoGB !== undefined
@@ -566,14 +647,14 @@ router.put(
 
 
             // =================================================
-            // NÃO USAR USSD ANTIGO
+            // REMOVER USSD ANTIGO
             // =================================================
 
             delete configuracao.ussd;
 
 
             // =================================================
-            // SALVAR
+            // SALVAR NO FIREBASE
             // =================================================
 
             await referencia.set(
@@ -599,7 +680,6 @@ router.put(
                     "Configurações atualizadas com sucesso.",
 
                 configuracao:
-
                     configuracao
 
             });
@@ -631,6 +711,14 @@ router.put(
 // =====================================================
 // GET /api/configuracoes/:id
 // =====================================================
+//
+// Mantido para compatibilidade.
+//
+// O ID recebido na URL não é utilizado para acessar
+// outro usuário. A configuração pertence sempre ao
+// usuário autenticado.
+//
+// =====================================================
 
 router.get(
     "/:id",
@@ -643,10 +731,32 @@ router.get(
                 req.usuario.uid;
 
 
+            if (!uid) {
+
+                return res.status(401).json({
+
+                    success: false,
+
+                    error:
+                        "Usuário não autenticado."
+
+                });
+
+            }
+
+
+            // =================================================
+            // BUSCAR CONFIGURAÇÃO
+            // =================================================
+
             const snapshot =
                 await configuracaoRef(uid)
                     .once("value");
 
+
+            // =================================================
+            // NÃO ENCONTRADA
+            // =================================================
 
             if (!snapshot.exists()) {
 
@@ -662,13 +772,25 @@ router.get(
             }
 
 
+            // =================================================
+            // CONFIGURAÇÃO
+            // =================================================
+
             const configuracao =
                 snapshot.val() || {};
 
 
+            // =================================================
+            // GARANTIR UID
+            // =================================================
+
             configuracao.uid =
                 uid;
 
+
+            // =================================================
+            // API KEY
+            // =================================================
 
             configuracao.apiKey =
                 req.usuario.apiKey ||
@@ -676,15 +798,22 @@ router.get(
                 "";
 
 
+            // =================================================
+            // REMOVER USSD ANTIGO
+            // =================================================
+
             delete configuracao.ussd;
 
+
+            // =================================================
+            // RESPOSTA
+            // =================================================
 
             return res.json({
 
                 success: true,
 
                 configuracao:
-
                     configuracao
 
             });
