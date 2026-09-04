@@ -9,11 +9,8 @@
 
 
     // =====================================================
-    // CONFIGURAÇÃO
+    // CONTROLE
     // =====================================================
-
-    const API = "/api";
-
 
     let carregandoDashboard = false;
 
@@ -110,7 +107,7 @@
 
 
     // =====================================================
-    // PRIMEIRO VALOR EXISTENTE
+    // PRIMEIRO VALOR
     // =====================================================
 
     function primeiroValor(objeto, campos) {
@@ -179,31 +176,11 @@
         return String(
             valor ?? ""
         )
-
-            .replace(
-                /&/g,
-                "&amp;"
-            )
-
-            .replace(
-                /</g,
-                "&lt;"
-            )
-
-            .replace(
-                />/g,
-                "&gt;"
-            )
-
-            .replace(
-                /"/g,
-                "&quot;"
-            )
-
-            .replace(
-                /'/g,
-                "&#039;"
-            );
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
 
     }
 
@@ -214,52 +191,21 @@
 
     function mostrarCarregando() {
 
-        atualizar(
-            "vendas",
-            "..."
-        );
+        atualizar("vendas", "...");
 
+        atualizar("valor", "...");
 
-        atualizar(
-            "valor",
-            "..."
-        );
+        atualizar("clientes", "...");
 
+        atualizar("disp", "...");
 
-        atualizar(
-            "clientes",
-            "..."
-        );
+        atualizar("totalGB", "...");
 
+        atualizar("lucro", "...");
 
-        atualizar(
-            "disp",
-            "..."
-        );
+        atualizar("custo", "...");
 
-
-        atualizar(
-            "totalGB",
-            "..."
-        );
-
-
-        atualizar(
-            "lucro",
-            "..."
-        );
-
-
-        atualizar(
-            "custo",
-            "..."
-        );
-
-
-        atualizar(
-            "pedidos",
-            "..."
-        );
+        atualizar("pedidos", "...");
 
 
         const data =
@@ -277,8 +223,144 @@
 
 
     // =====================================================
+    // OBTER CREDENCIAIS
+    // =====================================================
+
+    function obterCredenciais() {
+
+        const credenciais =
+            window.MOZ_CREDENCIAIS_API;
+
+
+        if (
+            credenciais &&
+            credenciais.uid &&
+            credenciais.apiKey
+        ) {
+
+            return {
+
+                uid:
+                    String(
+                        credenciais.uid
+                    ).trim(),
+
+                apiKey:
+                    String(
+                        credenciais.apiKey
+                    ).trim()
+
+            };
+
+        }
+
+
+        const uid =
+            localStorage.getItem("uid") ||
+            localStorage.getItem("moz_uid");
+
+
+        const apiKey =
+            localStorage.getItem("apiKey") ||
+            localStorage.getItem("moz_api_key");
+
+
+        if (
+            uid &&
+            apiKey
+        ) {
+
+            return {
+
+                uid:
+                    String(uid).trim(),
+
+                apiKey:
+                    String(apiKey).trim()
+
+            };
+
+        }
+
+
+        return null;
+
+    }
+
+
+    // =====================================================
+    // HEADERS DA API
+    // =====================================================
+
+    function headersAPI() {
+
+        const credenciais =
+            obterCredenciais();
+
+
+        const headers = {
+
+            "Accept":
+                "application/json"
+
+        };
+
+
+        if (
+            credenciais &&
+            credenciais.uid &&
+            credenciais.apiKey
+        ) {
+
+            headers.uid =
+                credenciais.uid;
+
+            headers["x-api-key"] =
+                credenciais.apiKey;
+
+            headers.apiKey =
+                credenciais.apiKey;
+
+        }
+
+
+        return headers;
+
+    }
+
+
+    // =====================================================
+    // VERIFICAR AUTENTICAÇÃO
+    // =====================================================
+
+    function verificarCredenciais() {
+
+        const credenciais =
+            obterCredenciais();
+
+
+        if (
+            !credenciais ||
+            !credenciais.uid ||
+            !credenciais.apiKey
+        ) {
+
+            console.warn(
+                "[MOZ TECH] Credenciais da API ainda não disponíveis."
+            );
+
+            return false;
+
+        }
+
+
+        return true;
+
+    }
+
+
+    // =====================================================
     // CARREGAR DASHBOARD
-    // GET /api/dashboard
     // =====================================================
 
     async function carregarDashboard() {
@@ -288,6 +370,13 @@
             console.log(
                 "[MOZ TECH] Dashboard já está carregando."
             );
+
+            return null;
+
+        }
+
+
+        if (!verificarCredenciais()) {
 
             return null;
 
@@ -307,16 +396,18 @@
 
             const resposta =
                 await fetch(
-                    API + "/dashboard",
+                    "/api/dashboard",
                     {
-                        method: "GET",
 
-                        headers: {
-                            "Accept":
-                                "application/json"
-                        },
+                        method:
+                            "GET",
 
-                        cache: "no-store"
+                        headers:
+                            headersAPI(),
+
+                        cache:
+                            "no-store"
+
                     }
                 );
 
@@ -329,9 +420,23 @@
 
             if (!resposta.ok) {
 
+                const texto =
+                    await resposta.text()
+                        .catch(
+                            function () {
+                                return "";
+                            }
+                        );
+
+
                 throw new Error(
                     "HTTP " +
-                    resposta.status
+                    resposta.status +
+                    (
+                        texto
+                            ? " - " + texto
+                            : ""
+                    )
                 );
 
             }
@@ -347,9 +452,7 @@
             );
 
 
-            if (
-                !json
-            ) {
+            if (!json) {
 
                 throw new Error(
                     "Resposta vazia da API."
@@ -364,6 +467,7 @@
 
                 throw new Error(
                     json.error ||
+                    json.message ||
                     "API retornou erro."
                 );
 
@@ -392,20 +496,18 @@
             // VENDAS
             // =================================================
 
-            const vendas =
-                primeiroValor(
-                    d,
-                    [
-                        "vendas",
-                        "totalVendas",
-                        "total_vendas"
-                    ]
-                );
-
-
             atualizar(
                 "vendas",
-                numero(vendas)
+                numero(
+                    primeiroValor(
+                        d,
+                        [
+                            "vendas",
+                            "totalVendas",
+                            "total_vendas"
+                        ]
+                    )
+                )
             );
 
 
@@ -413,20 +515,18 @@
             // FATURAMENTO
             // =================================================
 
-            const faturamento =
-                primeiroValor(
-                    d,
-                    [
-                        "faturamento",
-                        "totalFaturamento",
-                        "total_faturamento"
-                    ]
-                );
-
-
             atualizar(
                 "valor",
-                dinheiro(faturamento)
+                dinheiro(
+                    primeiroValor(
+                        d,
+                        [
+                            "faturamento",
+                            "totalFaturamento",
+                            "total_faturamento"
+                        ]
+                    )
+                )
             );
 
 
@@ -434,20 +534,18 @@
             // CLIENTES
             // =================================================
 
-            const clientes =
-                primeiroValor(
-                    d,
-                    [
-                        "clientes",
-                        "totalClientes",
-                        "total_clientes"
-                    ]
-                );
-
-
             atualizar(
                 "clientes",
-                numero(clientes)
+                numero(
+                    primeiroValor(
+                        d,
+                        [
+                            "clientes",
+                            "totalClientes",
+                            "total_clientes"
+                        ]
+                    )
+                )
             );
 
 
@@ -455,20 +553,18 @@
             // DISPOSITIVOS
             // =================================================
 
-            const dispositivos =
-                primeiroValor(
-                    d,
-                    [
-                        "dispositivos",
-                        "totalDispositivos",
-                        "total_dispositivos"
-                    ]
-                );
-
-
             atualizar(
                 "disp",
-                numero(dispositivos)
+                numero(
+                    primeiroValor(
+                        d,
+                        [
+                            "dispositivos",
+                            "totalDispositivos",
+                            "total_dispositivos"
+                        ]
+                    )
+                )
             );
 
 
@@ -476,22 +572,19 @@
             // TOTAL GB
             // =================================================
 
-            const totalGB =
-                primeiroValor(
-                    d,
-                    [
-                        "totalGB",
-                        "totalGb",
-                        "total_gb",
-                        "gb"
-                    ]
-                );
-
-
             atualizar(
                 "totalGB",
-                numero(totalGB) +
-                " GB"
+                numero(
+                    primeiroValor(
+                        d,
+                        [
+                            "totalGB",
+                            "totalGb",
+                            "total_gb",
+                            "gb"
+                        ]
+                    )
+                ) + " GB"
             );
 
 
@@ -499,20 +592,18 @@
             // LUCRO
             // =================================================
 
-            const lucro =
-                primeiroValor(
-                    d,
-                    [
-                        "lucro",
-                        "totalLucro",
-                        "total_lucro"
-                    ]
-                );
-
-
             atualizar(
                 "lucro",
-                dinheiro(lucro)
+                dinheiro(
+                    primeiroValor(
+                        d,
+                        [
+                            "lucro",
+                            "totalLucro",
+                            "total_lucro"
+                        ]
+                    )
+                )
             );
 
 
@@ -520,20 +611,18 @@
             // CUSTO
             // =================================================
 
-            const custo =
-                primeiroValor(
-                    d,
-                    [
-                        "custo",
-                        "totalCusto",
-                        "total_custo"
-                    ]
-                );
-
-
             atualizar(
                 "custo",
-                dinheiro(custo)
+                dinheiro(
+                    primeiroValor(
+                        d,
+                        [
+                            "custo",
+                            "totalCusto",
+                            "total_custo"
+                        ]
+                    )
+                )
             );
 
 
@@ -541,20 +630,18 @@
             // PEDIDOS
             // =================================================
 
-            const pedidos =
-                primeiroValor(
-                    d,
-                    [
-                        "pedidos",
-                        "totalPedidos",
-                        "total_pedidos"
-                    ]
-                );
-
-
             atualizar(
                 "pedidos",
-                numero(pedidos)
+                numero(
+                    primeiroValor(
+                        d,
+                        [
+                            "pedidos",
+                            "totalPedidos",
+                            "total_pedidos"
+                        ]
+                    )
+                )
             );
 
 
@@ -621,7 +708,6 @@
 
     // =====================================================
     // CARREGAR VENDAS
-    // GET /api/vendas
     // =====================================================
 
     async function carregarVendas() {
@@ -631,6 +717,13 @@
             console.log(
                 "[MOZ TECH] Vendas já estão carregando."
             );
+
+            return [];
+
+        }
+
+
+        if (!verificarCredenciais()) {
 
             return [];
 
@@ -650,16 +743,18 @@
 
             const resposta =
                 await fetch(
-                    API + "/vendas",
+                    "/api/vendas",
                     {
-                        method: "GET",
 
-                        headers: {
-                            "Accept":
-                                "application/json"
-                        },
+                        method:
+                            "GET",
 
-                        cache: "no-store"
+                        headers:
+                            headersAPI(),
+
+                        cache:
+                            "no-store"
+
                     }
                 );
 
@@ -976,6 +1071,17 @@
         );
 
 
+        if (!verificarCredenciais()) {
+
+            console.warn(
+                "[MOZ TECH] Atualização aguardando autenticação."
+            );
+
+            return;
+
+        }
+
+
         await Promise.allSettled([
 
             carregarDashboard(),
@@ -1095,7 +1201,7 @@
 
 
     // =====================================================
-    // EXPORTAR PARA WINDOW
+    // EXPORTAR
     // =====================================================
 
     window.carregarDashboard =
@@ -1138,19 +1244,6 @@
 
         mostrarCarregando();
 
-
-        carregarTudo()
-            .catch(
-                function (erro) {
-
-                    console.error(
-                        "[MOZ TECH] Erro inicial:",
-                        erro
-                    );
-
-                }
-            );
-
     }
 
 
@@ -1177,22 +1270,6 @@
         iniciarDashboard();
 
     }
-
-
-    // =====================================================
-    // ATUALIZAÇÃO AUTOMÁTICA
-    // =====================================================
-
-    setInterval(
-        function () {
-
-            carregarDashboard();
-
-            carregarVendas();
-
-        },
-        5000
-    );
 
 
 })();
