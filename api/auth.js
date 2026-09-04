@@ -16,23 +16,38 @@ const {
 
 let firebaseApp;
 
-if (getApps().length === 0) {
+try {
 
-    firebaseApp =
-        initializeApp({
+    if (getApps().length === 0) {
 
-            databaseURL:
-                "https://macvendas-default-rtdb.firebaseio.com"
+        firebaseApp =
+            initializeApp({
 
-        });
+                databaseURL:
+                    "https://macvendas-default-rtdb.firebaseio.com"
+
+            });
+
+    }
+    else {
+
+        firebaseApp =
+            getApps()[0];
+
+    }
 
 }
-else {
+catch (erro) {
 
-    firebaseApp =
-        getApps()[0];
+    console.error(
+        "[FIREBASE] Erro ao inicializar Firebase Admin:",
+        erro
+    );
+
+    throw erro;
 
 }
+
 
 const database =
     getDatabase(firebaseApp);
@@ -51,22 +66,47 @@ async function autenticarAPI(
     try {
 
         // =================================================
-        // RECEBER HEADERS
+        // UID
         // =================================================
 
         const uid =
             String(
-                req.headers["x-uid"] || ""
-            ).trim();
-
-        const apiKey =
-            String(
-                req.headers["x-api-key"] || ""
+                req.headers["x-uid"] ||
+                req.headers["uid"] ||
+                ""
             ).trim();
 
 
         // =================================================
-        // VERIFICAR PRESENÇA
+        // API KEY
+        // =================================================
+
+        const apiKey =
+            String(
+                req.headers["x-api-key"] ||
+                req.headers["apikey"] ||
+                ""
+            ).trim();
+
+
+        console.log(
+            "[AUTH API] Tentativa:",
+            {
+                uid:
+                    uid
+                        ? "OK"
+                        : "AUSENTE",
+
+                apiKey:
+                    apiKey
+                        ? "OK"
+                        : "AUSENTE"
+            }
+        );
+
+
+        // =================================================
+        // VERIFICAR UID
         // =================================================
 
         if (!uid) {
@@ -82,6 +122,10 @@ async function autenticarAPI(
 
         }
 
+
+        // =================================================
+        // VERIFICAR API KEY
+        // =================================================
 
         if (!apiKey) {
 
@@ -104,11 +148,23 @@ async function autenticarAPI(
 
         const snapshot =
             await database
-                .ref("users/" + uid)
+                .ref(
+                    "users/" +
+                    uid
+                )
                 .once("value");
 
 
+        // =================================================
+        // USUÁRIO NÃO EXISTE
+        // =================================================
+
         if (!snapshot.exists()) {
+
+            console.warn(
+                "[AUTH API] Usuário não encontrado:",
+                uid
+            );
 
             return res.status(401).json({
 
@@ -132,18 +188,24 @@ async function autenticarAPI(
 
         const apiKeyFirebase =
             String(
-                dados.apiKey || ""
+                dados.apiKey ||
+                ""
             ).trim();
 
 
         // =================================================
-        // COMPARAR
+        // COMPARAR API KEY
         // =================================================
 
         if (
             !apiKeyFirebase ||
             apiKeyFirebase !== apiKey
         ) {
+
+            console.warn(
+                "[AUTH API] API Key inválida para:",
+                uid
+            );
 
             return res.status(401).json({
 
@@ -172,19 +234,37 @@ async function autenticarAPI(
         };
 
 
+        console.log(
+            "[AUTH API] Autenticado:",
+            uid
+        );
+
+
         // =================================================
         // CONTINUAR
         // =================================================
 
-        next();
+        return next();
 
     }
     catch (erro) {
 
         console.error(
-            "[AUTH API] Erro:",
+            "========================================"
+        );
+
+        console.error(
+            "[AUTH API] ERRO"
+        );
+
+        console.error(
             erro
         );
+
+        console.error(
+            "========================================"
+        );
+
 
         return res.status(500).json({
 
