@@ -11,11 +11,19 @@ async function autenticarAPI(req, res, next) {
 
     try {
 
+        // =================================================
+        // OBTER UID
+        // =================================================
+
         const uid =
             req.body?.uid ||
             req.query?.uid ||
             req.headers["x-uid"];
 
+
+        // =================================================
+        // OBTER API KEY
+        // =================================================
 
         const apiKey =
             req.body?.apiKey ||
@@ -24,7 +32,7 @@ async function autenticarAPI(req, res, next) {
 
 
         // =================================================
-        // VERIFICAR SE RECEBEU
+        // VERIFICAR CREDENCIAIS
         // =================================================
 
         if (!uid || !apiKey) {
@@ -42,18 +50,53 @@ async function autenticarAPI(req, res, next) {
 
 
         // =================================================
-        // BUSCAR USUÁRIO
+        // LIMPAR VALORES
+        // =================================================
+
+        const uidLimpo =
+            String(uid).trim();
+
+        const apiKeyLimpa =
+            String(apiKey).trim();
+
+
+        if (
+            !uidLimpo ||
+            !apiKeyLimpa
+        ) {
+
+            return res.status(401).json({
+
+                success: false,
+
+                error:
+                    "UID e API Key são obrigatórios."
+
+            });
+
+        }
+
+
+        // =================================================
+        // BUSCAR USUÁRIO NO FIREBASE
         // =================================================
 
         const snapshot =
             await db
                 .ref(
-                    "users/" + uid
+                    "users/" +
+                    uidLimpo
                 )
                 .once("value");
 
 
-        if (!snapshot.exists()) {
+        // =================================================
+        // USUÁRIO NÃO EXISTE
+        // =================================================
+
+        if (
+            !snapshot.exists()
+        ) {
 
             return res.status(401).json({
 
@@ -76,11 +119,39 @@ async function autenticarAPI(req, res, next) {
 
 
         // =================================================
-        // VALIDAR API KEY
+        // API KEY DO FIREBASE
+        // =================================================
+
+        const apiKeyFirebase =
+            String(
+                usuario.apiKey ||
+                ""
+            ).trim();
+
+
+        // =================================================
+        // VERIFICAR API KEY
         // =================================================
 
         if (
-            usuario.apiKey !== apiKey
+            !apiKeyFirebase
+        ) {
+
+            return res.status(401).json({
+
+                success: false,
+
+                error:
+                    "Este usuário não possui uma API Key configurada."
+
+            });
+
+        }
+
+
+        if (
+            apiKeyFirebase !==
+            apiKeyLimpa
         ) {
 
             return res.status(401).json({
@@ -102,7 +173,7 @@ async function autenticarAPI(req, res, next) {
         req.usuario = {
 
             uid:
-                uid,
+                uidLimpo,
 
             ...usuario
 
@@ -113,13 +184,13 @@ async function autenticarAPI(req, res, next) {
         // CONTINUAR
         // =================================================
 
-        next();
+        return next();
 
     }
     catch (erro) {
 
         console.error(
-            "[API AUTH]",
+            "[API AUTH] Erro:",
             erro
         );
 
@@ -137,6 +208,10 @@ async function autenticarAPI(req, res, next) {
 
 }
 
+
+// =====================================================
+// EXPORTAR
+// =====================================================
 
 module.exports =
     autenticarAPI;
