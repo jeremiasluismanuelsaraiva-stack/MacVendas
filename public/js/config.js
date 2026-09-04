@@ -12,7 +12,8 @@
     // CONFIGURAÇÃO DA API
     // =====================================================
 
-    const CONFIG_API = "/api";
+    const API_CONFIG =
+        window.location.origin;
 
 
     // =====================================================
@@ -86,9 +87,15 @@
 
         try {
 
+            console.log(
+                "[CONFIG] GET:",
+                API_CONFIG + "/api/configuracoes"
+            );
+
+
             const resposta =
                 await fetch(
-                    CONFIG_API + "/configuracoes",
+                    API_CONFIG + "/api/configuracoes",
                     {
                         method: "GET",
 
@@ -104,7 +111,24 @@
 
             if (!resposta.ok) {
 
+                let erroApi = {};
+
+                try {
+
+                    erroApi =
+                        await resposta.json();
+
+                }
+                catch (_) {
+
+                    erroApi = {};
+
+                }
+
+
                 throw new Error(
+                    erroApi.error ||
+                    erroApi.message ||
                     "Erro HTTP: " +
                     resposta.status
                 );
@@ -114,6 +138,12 @@
 
             const json =
                 await resposta.json();
+
+
+            console.log(
+                "[CONFIG] Resposta:",
+                json
+            );
 
 
             if (!json.success) {
@@ -128,26 +158,32 @@
             }
 
 
-            const configuracoes =
-                json.configuracoes || [];
+            // =================================================
+            // A API RETORNA:
+            //
+            // {
+            //     success: true,
+            //     configuracao: {...}
+            // }
+            //
+            // =================================================
+
+            const cfg =
+                json.configuracao || {};
 
 
             if (
-                !Array.isArray(configuracoes) ||
-                configuracoes.length === 0
+                !cfg ||
+                typeof cfg !== "object"
             ) {
 
                 console.warn(
-                    "[CONFIG] Nenhuma configuração encontrada."
+                    "[CONFIG] Configuração inválida."
                 );
 
                 return;
 
             }
-
-
-            const cfg =
-                configuracoes[0];
 
 
             // =================================================
@@ -235,7 +271,7 @@
             if (vendaGB) {
 
                 vendaGB.value =
-                    cfg.vendaGB ?? 0;
+                    cfg.vendaGB ?? 28;
 
             }
 
@@ -253,13 +289,20 @@
             if (custoGB) {
 
                 custoGB.value =
-                    cfg.custoGB ?? 0;
+                    cfg.custoGB ?? 21;
 
             }
 
 
             // =================================================
             // USSD
+            // =================================================
+            //
+            // O backend atual remove "ussd".
+            //
+            // Se o campo existir, não vamos tentar
+            // substituir por um valor vindo da API.
+            //
             // =================================================
 
             const ussd =
@@ -268,10 +311,13 @@
                 );
 
 
-            if (ussd) {
+            if (
+                ussd &&
+                !ussd.value
+            ) {
 
                 ussd.value =
-                    cfg.ussd || "*162#";
+                    "*162#";
 
             }
 
@@ -389,12 +435,6 @@
                 ),
 
 
-            ussd:
-                document.getElementById(
-                    "ussd"
-                )?.value?.trim() || "*162#",
-
-
             tema:
                 document.getElementById(
                     "tema"
@@ -420,62 +460,17 @@
         try {
 
             // =================================================
-            // BUSCAR CONFIGURAÇÃO ATUAL
-            // =================================================
-
-            const resposta =
-                await fetch(
-                    CONFIG_API + "/configuracoes",
-                    {
-                        method: "GET",
-
-                        headers: {
-                            "Accept":
-                                "application/json"
-                        },
-
-                        cache: "no-store"
-                    }
-                );
-
-
-            if (!resposta.ok) {
-
-                throw new Error(
-                    "Erro HTTP: " +
-                    resposta.status
-                );
-
-            }
-
-
-            const json =
-                await resposta.json();
-
-
-            let id = "";
-
-
-            if (
-                json.success &&
-                Array.isArray(
-                    json.configuracoes
-                ) &&
-                json.configuracoes.length > 0
-            ) {
-
-                id =
-                    json.configuracoes[0].id;
-
-            }
-
-
-            // =================================================
-            // PEGAR DADOS
+            // PEGAR DADOS DO FORMULÁRIO
             // =================================================
 
             const dados =
                 obterDadosConfiguracoes();
+
+
+            console.log(
+                "[CONFIG] Dados para guardar:",
+                dados
+            );
 
 
             // =================================================
@@ -487,78 +482,48 @@
             );
 
 
-            let salvarResposta;
-
-
             // =================================================
-            // ATUALIZAR
+            // ATUALIZAR CONFIGURAÇÕES
             // =================================================
-
-            if (id) {
-
-                salvarResposta =
-                    await fetch(
-                        CONFIG_API +
-                        "/configuracoes/" +
-                        encodeURIComponent(id),
-                        {
-
-                            method: "PUT",
-
-                            headers: {
-
-                                "Content-Type":
-                                    "application/json",
-
-                                "Accept":
-                                    "application/json"
-
-                            },
-
-                            body:
-                                JSON.stringify(
-                                    dados
-                                )
-
-                        }
-                    );
-
-            }
-
-
-            // =================================================
-            // CRIAR
+            //
+            // O backend possui:
+            //
+            // PUT /api/configuracoes/
+            //
+            // Não existe necessidade de ID.
+            //
             // =================================================
 
-            else {
+            console.log(
+                "[CONFIG] PUT:",
+                API_CONFIG + "/api/configuracoes"
+            );
 
-                salvarResposta =
-                    await fetch(
-                        CONFIG_API +
-                        "/configuracoes",
-                        {
 
-                            method: "POST",
+            const salvarResposta =
+                await fetch(
+                    API_CONFIG + "/api/configuracoes",
+                    {
 
-                            headers: {
+                        method: "PUT",
 
-                                "Content-Type":
-                                    "application/json",
+                        headers: {
 
-                                "Accept":
-                                    "application/json"
+                            "Content-Type":
+                                "application/json",
 
-                            },
+                            "Accept":
+                                "application/json"
 
-                            body:
-                                JSON.stringify(
-                                    dados
-                                )
+                        },
 
-                        }
-                    );
+                        body:
+                            JSON.stringify(
+                                dados
+                            )
 
-            }
+                    }
+                );
 
 
             // =================================================
@@ -586,6 +551,28 @@
                 throw new Error(
                     erroApi.error ||
                     erroApi.message ||
+                    "Erro HTTP: " +
+                    salvarResposta.status
+                );
+
+            }
+
+
+            const json =
+                await salvarResposta.json();
+
+
+            console.log(
+                "[CONFIG] Resposta ao guardar:",
+                json
+            );
+
+
+            if (!json.success) {
+
+                throw new Error(
+                    json.error ||
+                    json.message ||
                     "Erro ao guardar configurações."
                 );
 
@@ -603,7 +590,7 @@
 
 
             // =================================================
-            // RECARREGAR
+            // RECARREGAR CONFIGURAÇÕES
             // =================================================
 
             await carregarConfiguracoes();
@@ -619,6 +606,7 @@
 
 
             alert(
+                erro.message ||
                 "Erro ao guardar as configurações."
             );
 
