@@ -96,14 +96,25 @@ const auth =
 
 
 // =====================================================
-// DATABASE
+// REALTIME DATABASE
 // =====================================================
 
 const database =
-    getDatabase(
-        app,
-        "https://macvendas-default-rtdb.firebaseio.com"
-    );
+    getDatabase(app);
+
+
+// =====================================================
+// LOG INICIAL
+// =====================================================
+
+console.log(
+    "[FIREBASE] Firebase inicializado."
+);
+
+console.log(
+    "[FIREBASE] Database:",
+    "https://macvendas-default-rtdb.firebaseio.com"
+);
 
 
 // =====================================================
@@ -206,7 +217,13 @@ function traduzirErroFirebase(error) {
             "A configuração do Firebase está incorreta.",
 
         "auth/app-not-authorized":
-            "Este domínio não está autorizado no Firebase."
+            "Este domínio não está autorizado no Firebase.",
+
+        "PERMISSION_DENIED":
+            "O Firebase bloqueou o acesso ao Realtime Database. Verifique as regras de segurança.",
+
+        "NETWORK_ERROR":
+            "Não foi possível conectar ao Realtime Database."
 
     };
 
@@ -268,6 +285,11 @@ async function criarDadosUsuario(
             snapshot.val() || {};
 
 
+        console.log(
+            "[FIREBASE] Usuário já existe."
+        );
+
+
         if (dados.apiKey) {
 
             console.log(
@@ -290,7 +312,8 @@ async function criarDadosUsuario(
         await update(
             usuarioRef,
             {
-                apiKey: apiKey
+                apiKey:
+                    apiKey
             }
         );
 
@@ -467,7 +490,8 @@ async function registerUser(
                 await updateProfile(
                     user,
                     {
-                        displayName: name
+                        displayName:
+                            name
                     }
                 );
 
@@ -513,7 +537,7 @@ async function registerUser(
                 success: false,
 
                 message:
-                    "Conta criada no Firebase Authentication, mas não foi possível criar os dados no Realtime Database. Verifique a configuração do Database."
+                    "Conta criada no Authentication, mas não foi possível criar os dados no Realtime Database."
 
             };
 
@@ -638,7 +662,10 @@ async function loginUser(
         String(password || "");
 
 
-    if (!email || !password) {
+    if (
+        !email ||
+        !password
+    ) {
 
         return {
 
@@ -685,9 +712,13 @@ async function loginUser(
         // VERIFICAR EMAIL
         // =============================================
 
-        if (!user.emailVerified) {
+        if (
+            !user.emailVerified
+        ) {
 
-            await signOut(auth);
+            await signOut(
+                auth
+            );
 
 
             return {
@@ -721,8 +752,7 @@ async function loginUser(
 
 
             console.log(
-                "[FIREBASE] 4. Dados obtidos:",
-                dados
+                "[FIREBASE] 4. Dados obtidos."
             );
 
         }
@@ -734,7 +764,9 @@ async function loginUser(
             );
 
 
-            await signOut(auth);
+            await signOut(
+                auth
+            );
 
 
             return {
@@ -742,7 +774,7 @@ async function loginUser(
                 success: false,
 
                 message:
-                    "Login Auth realizado, mas não foi possível acessar os dados do usuário no Realtime Database. Verifique se o Realtime Database está criado e se a URL está correta."
+                    "O login foi realizado, mas não foi possível acessar o Realtime Database. Verifique as regras de segurança."
 
             };
 
@@ -759,7 +791,9 @@ async function loginUser(
 
         if (!apiKey) {
 
-            await signOut(auth);
+            await signOut(
+                auth
+            );
 
 
             return {
@@ -1047,7 +1081,9 @@ async function googleLogin() {
             );
 
 
-            await signOut(auth);
+            await signOut(
+                auth
+            );
 
 
             return {
@@ -1184,6 +1220,10 @@ async function obterDadosUsuario() {
 
     if (!user) {
 
+        console.warn(
+            "[FIREBASE] Nenhum usuário autenticado."
+        );
+
         return null;
 
     }
@@ -1268,8 +1308,7 @@ async function obterDadosUsuario() {
 
 
     console.log(
-        "[FIREBASE] Dados encontrados:",
-        dados
+        "[FIREBASE] Dados encontrados."
     );
 
 
