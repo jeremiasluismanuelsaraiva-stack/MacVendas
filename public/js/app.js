@@ -704,26 +704,6 @@
     // =====================================================
     // CREDENCIAIS DA API — FIREBASE
     // =====================================================
-    //
-    // NÃO busca mais:
-    //
-    // /configuracoes
-    //
-    // As credenciais vêm diretamente do firebase.js.
-    //
-    // firebase.js descobre:
-    //
-    // auth.currentUser.uid
-    //
-    // depois busca:
-    //
-    // users/{UID}
-    //
-    // e pega:
-    //
-    // apiKey
-    //
-    // =====================================================
 
     async function carregarCredenciaisTutorial() {
 
@@ -744,10 +724,6 @@
         }
 
 
-        // =================================================
-        // CARREGANDO
-        // =================================================
-
         if (uidElemento) {
 
             uidElemento.textContent =
@@ -766,10 +742,6 @@
 
         try {
 
-            // =================================================
-            // VERIFICAR FIREBASE.JS
-            // =================================================
-
             if (
                 typeof window.obterDadosUsuario !==
                 "function"
@@ -781,10 +753,6 @@
 
             }
 
-
-            // =================================================
-            // BUSCAR DADOS DIRETAMENTE DO FIREBASE
-            // =================================================
 
             const dados =
                 await window.obterDadosUsuario();
@@ -799,29 +767,17 @@
             }
 
 
-            // =================================================
-            // UID
-            // =================================================
-
             const uid =
                 String(
                     dados.uid || ""
                 ).trim();
 
 
-            // =================================================
-            // API KEY
-            // =================================================
-
             const apiKey =
                 String(
                     dados.apiKey || ""
                 ).trim();
 
-
-            // =================================================
-            // MOSTRAR UID
-            // =================================================
 
             if (uidElemento) {
 
@@ -832,10 +788,6 @@
             }
 
 
-            // =================================================
-            // MOSTRAR API KEY
-            // =================================================
-
             if (apiKeyElemento) {
 
                 apiKeyElemento.textContent =
@@ -845,9 +797,27 @@
             }
 
 
-            // =================================================
-            // GUARDAR NA MEMÓRIA
-            // =================================================
+            // =============================================
+            // DEFINIR CREDENCIAIS NO API.JS
+            // =============================================
+
+            if (
+                window.MOZ_API &&
+                typeof window.MOZ_API.definirCredenciais ===
+                "function"
+            ) {
+
+                window.MOZ_API.definirCredenciais(
+                    uid,
+                    apiKey
+                );
+
+            }
+
+
+            // =============================================
+            // MEMÓRIA GLOBAL
+            // =============================================
 
             window.MOZ_CREDENCIAIS_API = {
 
@@ -860,9 +830,9 @@
             };
 
 
-            // =================================================
-            // LOCAL STORAGE
-            // =================================================
+            // =============================================
+            // COMPATIBILIDADE
+            // =============================================
 
             if (uid) {
 
@@ -947,10 +917,6 @@
 
             try {
 
-                // =============================================
-                // BUSCAR DIRETAMENTE DO FIREBASE
-                // =============================================
-
                 if (
                     typeof window.obterDadosUsuario !==
                     "function"
@@ -984,10 +950,6 @@
                 }
 
 
-                // =============================================
-                // ATUALIZAR MEMÓRIA
-                // =============================================
-
                 window.MOZ_CREDENCIAIS_API = {
 
                     ...(window.MOZ_CREDENCIAIS_API || {}),
@@ -998,9 +960,19 @@
                 };
 
 
-                // =============================================
-                // COPIAR
-                // =============================================
+                if (
+                    window.MOZ_API &&
+                    typeof window.MOZ_API.definirCredenciais ===
+                    "function"
+                ) {
+
+                    window.MOZ_API.definirCredenciais(
+                        uid,
+                        window.MOZ_CREDENCIAIS_API?.apiKey || ""
+                    );
+
+                }
+
 
                 await navigator.clipboard.writeText(
                     uid
@@ -1038,10 +1010,6 @@
 
             try {
 
-                // =============================================
-                // BUSCAR DIRETAMENTE DO FIREBASE
-                // =============================================
-
                 if (
                     typeof window.obterDadosUsuario !==
                     "function"
@@ -1075,10 +1043,6 @@
                 }
 
 
-                // =============================================
-                // ATUALIZAR MEMÓRIA
-                // =============================================
-
                 window.MOZ_CREDENCIAIS_API = {
 
                     ...(window.MOZ_CREDENCIAIS_API || {}),
@@ -1089,9 +1053,19 @@
                 };
 
 
-                // =============================================
-                // COPIAR
-                // =============================================
+                if (
+                    window.MOZ_API &&
+                    typeof window.MOZ_API.definirCredenciais ===
+                    "function"
+                ) {
+
+                    window.MOZ_API.definirCredenciais(
+                        window.MOZ_CREDENCIAIS_API?.uid || "",
+                        apiKey
+                    );
+
+                }
+
 
                 await navigator.clipboard.writeText(
                     apiKey
@@ -1149,10 +1123,6 @@
             }
 
 
-            // =================================================
-            // ESCONDER TODOS
-            // =================================================
-
             Object.values(paineis)
                 .forEach(function (id) {
 
@@ -1169,10 +1139,6 @@
 
                 });
 
-
-            // =================================================
-            // ABRIR PAINEL
-            // =================================================
 
             const painel =
                 el(painelId);
@@ -1193,10 +1159,6 @@
             painel.style.display =
                 "block";
 
-
-            // =================================================
-            // MENU ATIVO
-            // =================================================
 
             document
                 .querySelectorAll(
@@ -1228,10 +1190,6 @@
             }
 
 
-            // =================================================
-            // CARREGAR CONTEÚDO
-            // =================================================
-
             try {
 
                 await carregarPainel(
@@ -1248,10 +1206,6 @@
 
             }
 
-
-            // =================================================
-            // FECHAR MENU NO MOBILE
-            // =================================================
 
             if (
                 window.innerWidth <= 768
@@ -1591,23 +1545,11 @@
         );
 
 
-        // =================================================
-        // TEMA LOCAL
-        // =================================================
-
         carregarTemaLocal();
 
 
-        // =================================================
-        // ESTADO
-        // =================================================
-
         estadoInicial();
 
-
-        // =================================================
-        // MENU
-        // =================================================
 
         inicializarMenu();
 
@@ -1618,6 +1560,32 @@
         inicializarESC();
 
         inicializarSeletorTema();
+
+
+        // =================================================
+        // CARREGAR CREDENCIAIS PRIMEIRO
+        // =================================================
+
+        try {
+
+            if (
+                typeof window.obterDadosUsuario ===
+                "function"
+            ) {
+
+                await carregarCredenciaisTutorial();
+
+            }
+
+        }
+        catch (erro) {
+
+            console.warn(
+                "[MOZ TECH] Credenciais:",
+                erro
+            );
+
+        }
 
 
         // =================================================
