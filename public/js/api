@@ -3,11 +3,11 @@
 // =====================================================
 // MOZ TECH
 // API CLIENT
+// public/js/api.js
 // =====================================================
 
 
-const API_BASE_URL =
-    "/api";
+const API_BASE_URL = "/api";
 
 
 // =====================================================
@@ -15,33 +15,23 @@ const API_BASE_URL =
 // =====================================================
 
 let MOZ_UID =
-    localStorage.getItem(
-        "moz_uid"
-    ) || "";
-
+    localStorage.getItem("moz_uid") || "";
 
 let MOZ_API_KEY =
-    localStorage.getItem(
-        "moz_api_key"
-    ) || "";
+    localStorage.getItem("moz_api_key") || "";
 
 
 // =====================================================
 // DEFINIR CREDENCIAIS
 // =====================================================
 
-function definirCredenciais(
-    uid,
-    apiKey
-) {
+function definirCredenciais(uid, apiKey) {
 
     MOZ_UID =
-        String(uid || "")
-            .trim();
+        String(uid || "").trim();
 
     MOZ_API_KEY =
-        String(apiKey || "")
-            .trim();
+        String(apiKey || "").trim();
 
 
     if (MOZ_UID) {
@@ -64,17 +54,11 @@ function definirCredenciais(
     }
 
 
-    // ---------------------------------------------
-    // GLOBAL
-    // ---------------------------------------------
-
     window.MOZ_CREDENCIAIS_API = {
 
-        uid:
-            MOZ_UID,
+        uid: MOZ_UID,
 
-        apiKey:
-            MOZ_API_KEY
+        apiKey: MOZ_API_KEY
 
     };
 
@@ -94,13 +78,25 @@ function obterCredenciais() {
 
     return {
 
-        uid:
-            MOZ_UID,
+        uid: MOZ_UID,
 
-        apiKey:
-            MOZ_API_KEY
+        apiKey: MOZ_API_KEY
 
     };
+
+}
+
+
+// =====================================================
+// ATUALIZAR CREDENCIAIS DO FIREBASE
+// =====================================================
+
+function atualizarCredenciais(uid, apiKey) {
+
+    definirCredenciais(
+        uid,
+        apiKey
+    );
 
 }
 
@@ -109,9 +105,7 @@ function obterCredenciais() {
 // PROCESSAR RESPOSTA
 // =====================================================
 
-async function processarResposta(
-    resposta
-) {
+async function processarResposta(resposta) {
 
     let dados = null;
 
@@ -134,8 +128,7 @@ async function processarResposta(
         const mensagem =
             dados?.error ||
             dados?.message ||
-            "Erro HTTP " +
-            resposta.status;
+            "Erro HTTP " + resposta.status;
 
 
         throw new Error(
@@ -154,9 +147,7 @@ async function processarResposta(
 // HEADERS
 // =====================================================
 
-function criarHeaders(
-    incluirJSON = false
-) {
+function criarHeaders(incluirJSON = false) {
 
     const headers = {
 
@@ -177,7 +168,7 @@ function criarHeaders(
 
 
     // =================================================
-    // ENVIAR CREDENCIAIS
+    // UID
     // =================================================
 
     if (MOZ_UID) {
@@ -187,6 +178,10 @@ function criarHeaders(
 
     }
 
+
+    // =================================================
+    // API KEY
+    // =================================================
 
     if (MOZ_API_KEY) {
 
@@ -202,17 +197,50 @@ function criarHeaders(
 
 
 // =====================================================
+// CONSTRUIR URL
+// =====================================================
+
+function construirURL(endpoint) {
+
+    endpoint =
+        String(endpoint || "")
+            .trim();
+
+
+    if (!endpoint) {
+
+        throw new Error(
+            "Endpoint da API não informado."
+        );
+
+    }
+
+
+    if (!endpoint.startsWith("/")) {
+
+        endpoint =
+            "/" + endpoint;
+
+    }
+
+
+    return (
+        API_BASE_URL +
+        endpoint
+    );
+
+}
+
+
+// =====================================================
 // GET
 // =====================================================
 
-async function apiGet(
-    endpoint
-) {
+async function apiGet(endpoint) {
 
     const resposta =
         await fetch(
-            API_BASE_URL +
-            endpoint,
+            construirURL(endpoint),
             {
 
                 method:
@@ -254,10 +282,6 @@ async function apiPost(
     };
 
 
-    // =================================================
-    // ADICIONAR CREDENCIAIS
-    // =================================================
-
     if (
         MOZ_UID &&
         !corpo.uid
@@ -282,8 +306,7 @@ async function apiPost(
 
     const resposta =
         await fetch(
-            API_BASE_URL +
-            endpoint,
+            construirURL(endpoint),
             {
 
                 method:
@@ -351,8 +374,7 @@ async function apiPut(
 
     const resposta =
         await fetch(
-            API_BASE_URL +
-            endpoint,
+            construirURL(endpoint),
             {
 
                 method:
@@ -384,26 +406,69 @@ async function apiPut(
 // DELETE
 // =====================================================
 
-async function apiDelete(
-    endpoint
-) {
+async function apiDelete(endpoint, dados = {}) {
+
+    const corpo = {
+
+        ...dados
+
+    };
+
+
+    if (
+        MOZ_UID &&
+        !corpo.uid
+    ) {
+
+        corpo.uid =
+            MOZ_UID;
+
+    }
+
+
+    if (
+        MOZ_API_KEY &&
+        !corpo.apiKey
+    ) {
+
+        corpo.apiKey =
+            MOZ_API_KEY;
+
+    }
+
+
+    const opcoes = {
+
+        method:
+            "DELETE",
+
+        headers:
+            criarHeaders(
+                Object.keys(corpo).length > 0
+            ),
+
+        credentials:
+            "include"
+
+    };
+
+
+    if (
+        Object.keys(corpo).length > 0
+    ) {
+
+        opcoes.body =
+            JSON.stringify(
+                corpo
+            );
+
+    }
+
 
     const resposta =
         await fetch(
-            API_BASE_URL +
-            endpoint,
-            {
-
-                method:
-                    "DELETE",
-
-                headers:
-                    criarHeaders(false),
-
-                credentials:
-                    "include"
-
-            }
+            construirURL(endpoint),
+            opcoes
         );
 
 
@@ -435,6 +500,9 @@ window.MOZ_API = {
     definirCredenciais:
         definirCredenciais,
 
+    atualizarCredenciais:
+        atualizarCredenciais,
+
     obterCredenciais:
         obterCredenciais
 
@@ -459,7 +527,7 @@ window.apiDelete =
 
 
 // =====================================================
-// INICIALIZAR GLOBAL
+// CREDENCIAIS GLOBAIS
 // =====================================================
 
 window.MOZ_CREDENCIAIS_API = {
@@ -472,6 +540,10 @@ window.MOZ_CREDENCIAIS_API = {
 
 };
 
+
+// =====================================================
+// LOG
+// =====================================================
 
 console.log(
     "[MOZ API] API carregada:",
