@@ -1,109 +1,233 @@
 "use strict";
 
+// =====================================================
+// MOZ TECH - API CLIENT
+// =====================================================
+
 const API_BASE_URL = "/api";
+
+
+// =====================================================
+// FUNÇÃO AUXILIAR
+// =====================================================
+
+async function processarResposta(resposta) {
+
+    let dados = null;
+
+    try {
+
+        dados = await resposta.json();
+
+    }
+    catch (erro) {
+
+        dados = null;
+
+    }
+
+
+    if (!resposta.ok) {
+
+        const mensagem =
+            dados?.error ||
+            dados?.message ||
+            "Erro HTTP " + resposta.status;
+
+        throw new Error(mensagem);
+
+    }
+
+
+    return dados;
+
+}
+
+
+// =====================================================
+// GET
+// =====================================================
 
 async function apiGet(endpoint) {
 
-    const resposta = await fetch(
-        API_BASE_URL + endpoint,
-        {
-            method: "GET",
-            headers: {
-                "Accept": "application/json"
-            },
-            cache: "no-store"
-        }
-    );
+    const resposta =
+        await fetch(
+            API_BASE_URL + endpoint,
+            {
+                method: "GET",
 
-    if (!resposta.ok) {
-        throw new Error(
-            "Erro HTTP " + resposta.status
-        );
-    }
+                headers: {
+                    "Accept":
+                        "application/json"
+                },
 
-    return await resposta.json();
-}
+                credentials:
+                    "include",
 
-
-async function apiPost(endpoint, dados) {
-
-    const resposta = await fetch(
-        API_BASE_URL + endpoint,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            body: JSON.stringify(dados)
-        }
-    );
-
-    if (!resposta.ok) {
-        throw new Error(
-            "Erro HTTP " + resposta.status
-        );
-    }
-
-    return await resposta.json();
-}
-
-
-async function apiPut(endpoint, dados) {
-
-    const resposta = await fetch(
-        API_BASE_URL + endpoint,
-        {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            body: JSON.stringify(dados)
-        }
-    );
-
-    if (!resposta.ok) {
-        throw new Error(
-            "Erro HTTP " + resposta.status
-        );
-    }
-
-    return await resposta.json();
-}
-
-
-async function apiDelete(endpoint) {
-
-    const resposta = await fetch(
-        API_BASE_URL + endpoint,
-        {
-            method: "DELETE",
-            headers: {
-                "Accept": "application/json"
+                cache:
+                    "no-store"
             }
-        }
+        );
+
+
+    return await processarResposta(
+        resposta
     );
 
-    if (!resposta.ok) {
-        throw new Error(
-            "Erro HTTP " + resposta.status
-        );
-    }
-
-    return await resposta.json();
 }
 
+
+// =====================================================
+// POST
+// =====================================================
+
+async function apiPost(
+    endpoint,
+    dados = {}
+) {
+
+    const resposta =
+        await fetch(
+            API_BASE_URL + endpoint,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json",
+
+                    "Accept":
+                        "application/json"
+                },
+
+                credentials:
+                    "include",
+
+                body:
+                    JSON.stringify(dados)
+            }
+        );
+
+
+    return await processarResposta(
+        resposta
+    );
+
+}
+
+
+// =====================================================
+// PUT
+// =====================================================
+
+async function apiPut(
+    endpoint,
+    dados = {}
+) {
+
+    const resposta =
+        await fetch(
+            API_BASE_URL + endpoint,
+            {
+                method: "PUT",
+
+                headers: {
+                    "Content-Type":
+                        "application/json",
+
+                    "Accept":
+                        "application/json"
+                },
+
+                credentials:
+                    "include",
+
+                body:
+                    JSON.stringify(dados)
+            }
+        );
+
+
+    return await processarResposta(
+        resposta
+    );
+
+}
+
+
+// =====================================================
+// DELETE
+// =====================================================
+
+async function apiDelete(
+    endpoint
+) {
+
+    const resposta =
+        await fetch(
+            API_BASE_URL + endpoint,
+            {
+                method: "DELETE",
+
+                headers: {
+                    "Accept":
+                        "application/json"
+                },
+
+                credentials:
+                    "include"
+            }
+        );
+
+
+    return await processarResposta(
+        resposta
+    );
+
+}
+
+
+// =====================================================
+// API GLOBAL
+// =====================================================
 
 window.MOZ_API = {
 
-    get: apiGet,
-    post: apiPost,
-    put: apiPut,
-    delete: apiDelete
+    get:
+        apiGet,
+
+    post:
+        apiPost,
+
+    put:
+        apiPut,
+
+    delete:
+        apiDelete
 
 };
 
+
+// =====================================================
+// COMPATIBILIDADE
+// =====================================================
+
+window.apiGet =
+    apiGet;
+
+window.apiPost =
+    apiPost;
+
+window.apiPut =
+    apiPut;
+
+window.apiDelete =
+    apiDelete;
+
+
+// =====================================================
+// LOG
+// =====================================================
 
 console.log(
     "[MOZ API] API carregada:",
