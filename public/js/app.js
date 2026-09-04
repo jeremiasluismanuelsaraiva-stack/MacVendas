@@ -4,7 +4,7 @@
 // SISTEMA DE PAINÉIS
 // + MENU MOBILE
 // + TEMA GLOBAL
-// + CREDENCIAIS DA API
+// + CREDENCIAIS VINDAS DO FIREBASE
 // =====================================================
 
 (function () {
@@ -185,9 +185,6 @@
                 "[MOZ TECH] Não foi possível carregar tema da API:",
                 erro.message
             );
-
-            // IMPORTANTE:
-            // erro de API NÃO impede o sistema de funcionar
 
         }
 
@@ -705,7 +702,27 @@
 
 
     // =====================================================
-    // CREDENCIAIS DA API
+    // CREDENCIAIS DA API — FIREBASE
+    // =====================================================
+    //
+    // NÃO busca mais:
+    //
+    // /configuracoes
+    //
+    // As credenciais vêm diretamente do firebase.js.
+    //
+    // firebase.js descobre:
+    //
+    // auth.currentUser.uid
+    //
+    // depois busca:
+    //
+    // users/{UID}
+    //
+    // e pega:
+    //
+    // apiKey
+    //
     // =====================================================
 
     async function carregarCredenciaisTutorial() {
@@ -727,6 +744,10 @@
         }
 
 
+        // =================================================
+        // CARREGANDO
+        // =================================================
+
         if (uidElemento) {
 
             uidElemento.textContent =
@@ -745,73 +766,62 @@
 
         try {
 
+            // =================================================
+            // VERIFICAR FIREBASE.JS
+            // =================================================
+
             if (
-                !window.MOZ_API ||
-                typeof window.MOZ_API.get !== "function"
+                typeof window.obterDadosUsuario !==
+                "function"
             ) {
 
                 throw new Error(
-                    "MOZ_API não disponível."
+                    "firebase.js não foi carregado."
                 );
 
             }
 
 
-            const json =
-                await window.MOZ_API.get(
-                    "/configuracoes"
-                );
+            // =================================================
+            // BUSCAR DADOS DIRETAMENTE DO FIREBASE
+            // =================================================
+
+            const dados =
+                await window.obterDadosUsuario();
 
 
-            console.log(
-                "[MOZ TECH] Configurações:",
-                json
-            );
-
-
-            if (
-                !json ||
-                json.success !== true
-            ) {
+            if (!dados) {
 
                 throw new Error(
-                    json?.error ||
-                    "Resposta inválida da API."
+                    "Nenhum usuário autenticado."
                 );
 
             }
 
 
-            const configuracao =
-                json.configuracao ||
-                json.config ||
-                json.data;
-
-
-            if (!configuracao) {
-
-                throw new Error(
-                    "Configuração não encontrada."
-                );
-
-            }
-
+            // =================================================
+            // UID
+            // =================================================
 
             const uid =
-                configuracao.uid ||
-                configuracao.UID ||
-                configuracao.userId ||
-                configuracao.user_id ||
-                "";
+                String(
+                    dados.uid || ""
+                ).trim();
 
+
+            // =================================================
+            // API KEY
+            // =================================================
 
             const apiKey =
-                configuracao.apiKey ||
-                configuracao.apikey ||
-                configuracao.api_key ||
-                configuracao.API_KEY ||
-                "";
+                String(
+                    dados.apiKey || ""
+                ).trim();
 
+
+            // =================================================
+            // MOSTRAR UID
+            // =================================================
 
             if (uidElemento) {
 
@@ -822,6 +832,10 @@
             }
 
 
+            // =================================================
+            // MOSTRAR API KEY
+            // =================================================
+
             if (apiKeyElemento) {
 
                 apiKeyElemento.textContent =
@@ -830,6 +844,10 @@
 
             }
 
+
+            // =================================================
+            // GUARDAR NA MEMÓRIA
+            // =================================================
 
             window.MOZ_CREDENCIAIS_API = {
 
@@ -842,15 +860,49 @@
             };
 
 
+            // =================================================
+            // LOCAL STORAGE
+            // =================================================
+
+            if (uid) {
+
+                localStorage.setItem(
+                    "uid",
+                    uid
+                );
+
+            }
+
+
+            if (apiKey) {
+
+                localStorage.setItem(
+                    "apiKey",
+                    apiKey
+                );
+
+            }
+
+
             console.log(
-                "[MOZ TECH] Credenciais carregadas."
+                "[MOZ TECH] Credenciais obtidas diretamente do Firebase."
+            );
+
+            console.log(
+                "[MOZ TECH] UID:",
+                uid
+            );
+
+            console.log(
+                "[MOZ TECH] API Key encontrada:",
+                !!apiKey
             );
 
         }
         catch (erro) {
 
             console.error(
-                "[MOZ TECH] Erro credenciais:",
+                "[MOZ TECH] Erro ao buscar credenciais do Firebase:",
                 erro
             );
 
@@ -870,6 +922,17 @@
 
             }
 
+
+            window.MOZ_CREDENCIAIS_API = {
+
+                uid:
+                    "",
+
+                apiKey:
+                    ""
+
+            };
+
         }
 
     }
@@ -884,17 +947,30 @@
 
             try {
 
+                // =============================================
+                // BUSCAR DIRETAMENTE DO FIREBASE
+                // =============================================
+
                 if (
-                    !window.MOZ_CREDENCIAIS_API?.uid
+                    typeof window.obterDadosUsuario !==
+                    "function"
                 ) {
 
-                    await carregarCredenciaisTutorial();
+                    throw new Error(
+                        "firebase.js não foi carregado."
+                    );
 
                 }
 
 
+                const dados =
+                    await window.obterDadosUsuario();
+
+
                 const uid =
-                    window.MOZ_CREDENCIAIS_API?.uid;
+                    String(
+                        dados?.uid || ""
+                    ).trim();
 
 
                 if (!uid) {
@@ -907,6 +983,24 @@
 
                 }
 
+
+                // =============================================
+                // ATUALIZAR MEMÓRIA
+                // =============================================
+
+                window.MOZ_CREDENCIAIS_API = {
+
+                    ...(window.MOZ_CREDENCIAIS_API || {}),
+
+                    uid:
+                        uid
+
+                };
+
+
+                // =============================================
+                // COPIAR
+                // =============================================
 
                 await navigator.clipboard.writeText(
                     uid
@@ -944,17 +1038,30 @@
 
             try {
 
+                // =============================================
+                // BUSCAR DIRETAMENTE DO FIREBASE
+                // =============================================
+
                 if (
-                    !window.MOZ_CREDENCIAIS_API?.apiKey
+                    typeof window.obterDadosUsuario !==
+                    "function"
                 ) {
 
-                    await carregarCredenciaisTutorial();
+                    throw new Error(
+                        "firebase.js não foi carregado."
+                    );
 
                 }
 
 
+                const dados =
+                    await window.obterDadosUsuario();
+
+
                 const apiKey =
-                    window.MOZ_CREDENCIAIS_API?.apiKey;
+                    String(
+                        dados?.apiKey || ""
+                    ).trim();
 
 
                 if (!apiKey) {
@@ -967,6 +1074,24 @@
 
                 }
 
+
+                // =============================================
+                // ATUALIZAR MEMÓRIA
+                // =============================================
+
+                window.MOZ_CREDENCIAIS_API = {
+
+                    ...(window.MOZ_CREDENCIAIS_API || {}),
+
+                    apiKey:
+                        apiKey
+
+                };
+
+
+                // =============================================
+                // COPIAR
+                // =============================================
 
                 await navigator.clipboard.writeText(
                     apiKey
@@ -1205,10 +1330,6 @@
 
                     }
 
-
-                    // NÃO esperar aqui.
-                    // Assim um erro/carregamento de outro
-                    // sistema não bloqueia os botões.
 
                     window.showPanel(
                         panel
@@ -1501,10 +1622,6 @@
 
         // =================================================
         // TEMA API
-        // =================================================
-        //
-        // NÃO deixar erro da API parar o sistema.
-        //
         // =================================================
 
         carregarTemaAPI()
