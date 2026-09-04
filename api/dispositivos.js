@@ -1,11 +1,20 @@
+// =====================================================
+// MOZ TECH
+// API DE DISPOSITIVOS
+// =====================================================
+
+"use strict";
+
 const express = require("express");
+
 const router = express.Router();
 
-const { db } = require("../firebase-admin");
+const { db } = require("./firebase-admin");
+
 
 // =====================================================
 // LISTAR DISPOSITIVOS
-// GET /dispositivos
+// GET /api/dispositivos
 // =====================================================
 
 router.get("/", (req, res) => {
@@ -16,7 +25,7 @@ router.get("/", (req, res) => {
             db.ler("dispositivos") || [];
 
 
-        res.json({
+        return res.json({
 
             success: true,
 
@@ -31,17 +40,18 @@ router.get("/", (req, res) => {
     catch (err) {
 
         console.error(
-            "Erro ao listar dispositivos:",
+            "[API DISPOSITIVOS] Erro ao listar:",
             err
         );
 
 
-        res.status(500).json({
+        return res.status(500).json({
 
             success: false,
 
             error:
-                err.message
+                err.message ||
+                "Erro ao listar dispositivos."
 
         });
 
@@ -52,7 +62,7 @@ router.get("/", (req, res) => {
 
 // =====================================================
 // BUSCAR DISPOSITIVO
-// GET /dispositivos/:id
+// GET /api/dispositivos/:id
 // =====================================================
 
 router.get("/:id", (req, res) => {
@@ -63,11 +73,16 @@ router.get("/:id", (req, res) => {
             db.ler("dispositivos") || [];
 
 
+        const id =
+            String(
+                req.params.id
+            );
+
+
         const dispositivo =
             dispositivos.find(
                 d =>
-                    String(d.id) ===
-                    String(req.params.id)
+                    String(d.id) === id
             );
 
 
@@ -85,7 +100,7 @@ router.get("/:id", (req, res) => {
         }
 
 
-        res.json({
+        return res.json({
 
             success: true,
 
@@ -97,17 +112,18 @@ router.get("/:id", (req, res) => {
     catch (err) {
 
         console.error(
-            "Erro ao buscar dispositivo:",
+            "[API DISPOSITIVOS] Erro ao buscar:",
             err
         );
 
 
-        res.status(500).json({
+        return res.status(500).json({
 
             success: false,
 
             error:
-                err.message
+                err.message ||
+                "Erro ao buscar dispositivo."
 
         });
 
@@ -118,7 +134,7 @@ router.get("/:id", (req, res) => {
 
 // =====================================================
 // CADASTRAR DISPOSITIVO
-// POST /dispositivos
+// POST /api/dispositivos
 // =====================================================
 
 router.post("/", (req, res) => {
@@ -138,61 +154,48 @@ router.post("/", (req, res) => {
             id:
                 Date.now().toString(),
 
-
             nome:
                 req.body.nome ||
                 "",
-
 
             modelo:
                 req.body.modelo ||
                 "",
 
-
             numero:
                 req.body.numero ||
                 "",
-
 
             imei:
                 req.body.imei ||
                 "",
 
-
             android:
                 req.body.android ||
                 "",
-
 
             versao:
                 req.body.versao ||
                 "",
 
-
             status:
                 req.body.status ||
                 "OFFLINE",
 
-
             bateria:
                 Number(
-                    req.body.bateria ||
-                    0
+                    req.body.bateria || 0
                 ),
-
 
             ip:
                 req.body.ip ||
                 "",
 
-
             ultimaConexao:
                 agora,
 
-
             ultimaAtividade:
                 agora,
-
 
             createdAt:
                 agora
@@ -211,9 +214,12 @@ router.post("/", (req, res) => {
         );
 
 
-        res.json({
+        return res.status(201).json({
 
             success: true,
+
+            message:
+                "Dispositivo cadastrado com sucesso.",
 
             dispositivo
 
@@ -223,17 +229,18 @@ router.post("/", (req, res) => {
     catch (err) {
 
         console.error(
-            "Erro ao cadastrar dispositivo:",
+            "[API DISPOSITIVOS] Erro ao cadastrar:",
             err
         );
 
 
-        res.status(500).json({
+        return res.status(500).json({
 
             success: false,
 
             error:
-                err.message
+                err.message ||
+                "Erro ao cadastrar dispositivo."
 
         });
 
@@ -244,7 +251,7 @@ router.post("/", (req, res) => {
 
 // =====================================================
 // ATUALIZAR DISPOSITIVO
-// PUT /dispositivos/:id
+// PUT /api/dispositivos/:id
 // =====================================================
 
 router.put("/:id", (req, res) => {
@@ -255,11 +262,16 @@ router.put("/:id", (req, res) => {
             db.ler("dispositivos") || [];
 
 
+        const id =
+            String(
+                req.params.id
+            );
+
+
         const indice =
             dispositivos.findIndex(
                 d =>
-                    String(d.id) ===
-                    String(req.params.id)
+                    String(d.id) === id
             );
 
 
@@ -281,11 +293,19 @@ router.put("/:id", (req, res) => {
             dispositivos[indice];
 
 
+        const agora =
+            new Date().toISOString();
+
+
         const atualizado = {
 
             ...atual,
 
             ...req.body,
+
+
+            id:
+                atual.id,
 
 
             bateria:
@@ -297,11 +317,11 @@ router.put("/:id", (req, res) => {
 
 
             ultimaConexao:
-                new Date().toISOString(),
+                agora,
 
 
             ultimaAtividade:
-                new Date().toISOString()
+                agora
 
         };
 
@@ -316,9 +336,12 @@ router.put("/:id", (req, res) => {
         );
 
 
-        res.json({
+        return res.json({
 
             success: true,
+
+            message:
+                "Dispositivo atualizado com sucesso.",
 
             dispositivo:
                 atualizado
@@ -329,17 +352,141 @@ router.put("/:id", (req, res) => {
     catch (err) {
 
         console.error(
-            "Erro ao atualizar dispositivo:",
+            "[API DISPOSITIVOS] Erro ao atualizar:",
             err
         );
 
 
-        res.status(500).json({
+        return res.status(500).json({
 
             success: false,
 
             error:
-                err.message
+                err.message ||
+                "Erro ao atualizar dispositivo."
+
+        });
+
+    }
+
+});
+
+
+// =====================================================
+// ATUALIZAR STATUS
+// PUT /api/dispositivos/:id/status
+// =====================================================
+
+router.put("/:id/status", (req, res) => {
+
+    try {
+
+        const dispositivos =
+            db.ler("dispositivos") || [];
+
+
+        const id =
+            String(
+                req.params.id
+            );
+
+
+        const indice =
+            dispositivos.findIndex(
+                d =>
+                    String(d.id) === id
+            );
+
+
+        if (indice === -1) {
+
+            return res.status(404).json({
+
+                success: false,
+
+                error:
+                    "Dispositivo não encontrado."
+
+            });
+
+        }
+
+
+        const agora =
+            new Date().toISOString();
+
+
+        const atual =
+            dispositivos[indice];
+
+
+        const atualizado = {
+
+            ...atual,
+
+            status:
+                req.body.status ||
+                atual.status,
+
+            bateria:
+                req.body.bateria !== undefined
+                    ? Number(
+                        req.body.bateria
+                    )
+                    : atual.bateria,
+
+            ip:
+                req.body.ip !== undefined
+                    ? req.body.ip
+                    : atual.ip,
+
+            ultimaConexao:
+                agora,
+
+            ultimaAtividade:
+                agora
+
+        };
+
+
+        dispositivos[indice] =
+            atualizado;
+
+
+        db.salvar(
+            "dispositivos",
+            dispositivos
+        );
+
+
+        return res.json({
+
+            success: true,
+
+            message:
+                "Status atualizado com sucesso.",
+
+            dispositivo:
+                atualizado
+
+        });
+
+    }
+    catch (err) {
+
+        console.error(
+            "[API DISPOSITIVOS] Erro ao atualizar status:",
+            err
+        );
+
+
+        return res.status(500).json({
+
+            success: false,
+
+            error:
+                err.message ||
+                "Erro ao atualizar status."
 
         });
 
@@ -350,7 +497,7 @@ router.put("/:id", (req, res) => {
 
 // =====================================================
 // REMOVER DISPOSITIVO
-// DELETE /dispositivos/:id
+// DELETE /api/dispositivos/:id
 // =====================================================
 
 router.delete("/:id", (req, res) => {
@@ -370,8 +517,7 @@ router.delete("/:id", (req, res) => {
         const existe =
             dispositivos.some(
                 d =>
-                    String(d.id) ===
-                    id
+                    String(d.id) === id
             );
 
 
@@ -392,8 +538,7 @@ router.delete("/:id", (req, res) => {
         const novosDispositivos =
             dispositivos.filter(
                 d =>
-                    String(d.id) !==
-                    id
+                    String(d.id) !== id
             );
 
 
@@ -403,7 +548,7 @@ router.delete("/:id", (req, res) => {
         );
 
 
-        res.json({
+        return res.json({
 
             success: true,
 
@@ -418,17 +563,18 @@ router.delete("/:id", (req, res) => {
     catch (err) {
 
         console.error(
-            "Erro ao remover dispositivo:",
+            "[API DISPOSITIVOS] Erro ao remover:",
             err
         );
 
 
-        res.status(500).json({
+        return res.status(500).json({
 
             success: false,
 
             error:
-                err.message
+                err.message ||
+                "Erro ao remover dispositivo."
 
         });
 
@@ -436,5 +582,9 @@ router.delete("/:id", (req, res) => {
 
 });
 
+
+// =====================================================
+// EXPORTAR
+// =====================================================
 
 module.exports = router;
