@@ -1,23 +1,125 @@
 "use strict";
 
 // =====================================================
-// MOZ TECH - API CLIENT
+// MOZ TECH
+// API CLIENT
 // =====================================================
 
-const API_BASE_URL = "/api";
+
+const API_BASE_URL =
+    "/api";
 
 
 // =====================================================
-// FUNÇÃO AUXILIAR
+// CREDENCIAIS
 // =====================================================
 
-async function processarResposta(resposta) {
+let MOZ_UID =
+    localStorage.getItem(
+        "moz_uid"
+    ) || "";
+
+
+let MOZ_API_KEY =
+    localStorage.getItem(
+        "moz_api_key"
+    ) || "";
+
+
+// =====================================================
+// DEFINIR CREDENCIAIS
+// =====================================================
+
+function definirCredenciais(
+    uid,
+    apiKey
+) {
+
+    MOZ_UID =
+        String(uid || "")
+            .trim();
+
+    MOZ_API_KEY =
+        String(apiKey || "")
+            .trim();
+
+
+    if (MOZ_UID) {
+
+        localStorage.setItem(
+            "moz_uid",
+            MOZ_UID
+        );
+
+    }
+
+
+    if (MOZ_API_KEY) {
+
+        localStorage.setItem(
+            "moz_api_key",
+            MOZ_API_KEY
+        );
+
+    }
+
+
+    // ---------------------------------------------
+    // GLOBAL
+    // ---------------------------------------------
+
+    window.MOZ_CREDENCIAIS_API = {
+
+        uid:
+            MOZ_UID,
+
+        apiKey:
+            MOZ_API_KEY
+
+    };
+
+
+    console.log(
+        "[MOZ API] Credenciais definidas."
+    );
+
+}
+
+
+// =====================================================
+// OBTER CREDENCIAIS
+// =====================================================
+
+function obterCredenciais() {
+
+    return {
+
+        uid:
+            MOZ_UID,
+
+        apiKey:
+            MOZ_API_KEY
+
+    };
+
+}
+
+
+// =====================================================
+// PROCESSAR RESPOSTA
+// =====================================================
+
+async function processarResposta(
+    resposta
+) {
 
     let dados = null;
 
+
     try {
 
-        dados = await resposta.json();
+        dados =
+            await resposta.json();
 
     }
     catch (erro) {
@@ -32,9 +134,13 @@ async function processarResposta(resposta) {
         const mensagem =
             dados?.error ||
             dados?.message ||
-            "Erro HTTP " + resposta.status;
+            "Erro HTTP " +
+            resposta.status;
 
-        throw new Error(mensagem);
+
+        throw new Error(
+            mensagem
+        );
 
     }
 
@@ -45,27 +151,82 @@ async function processarResposta(resposta) {
 
 
 // =====================================================
+// HEADERS
+// =====================================================
+
+function criarHeaders(
+    incluirJSON = false
+) {
+
+    const headers = {
+
+        "Accept":
+            "application/json"
+
+    };
+
+
+    if (incluirJSON) {
+
+        headers[
+            "Content-Type"
+        ] =
+            "application/json";
+
+    }
+
+
+    // =================================================
+    // ENVIAR CREDENCIAIS
+    // =================================================
+
+    if (MOZ_UID) {
+
+        headers["x-uid"] =
+            MOZ_UID;
+
+    }
+
+
+    if (MOZ_API_KEY) {
+
+        headers["x-api-key"] =
+            MOZ_API_KEY;
+
+    }
+
+
+    return headers;
+
+}
+
+
+// =====================================================
 // GET
 // =====================================================
 
-async function apiGet(endpoint) {
+async function apiGet(
+    endpoint
+) {
 
     const resposta =
         await fetch(
-            API_BASE_URL + endpoint,
+            API_BASE_URL +
+            endpoint,
             {
-                method: "GET",
 
-                headers: {
-                    "Accept":
-                        "application/json"
-                },
+                method:
+                    "GET",
+
+                headers:
+                    criarHeaders(false),
 
                 credentials:
                     "include",
 
                 cache:
                     "no-store"
+
             }
         );
 
@@ -86,25 +247,59 @@ async function apiPost(
     dados = {}
 ) {
 
+    const corpo = {
+
+        ...dados
+
+    };
+
+
+    // =================================================
+    // ADICIONAR CREDENCIAIS
+    // =================================================
+
+    if (
+        MOZ_UID &&
+        !corpo.uid
+    ) {
+
+        corpo.uid =
+            MOZ_UID;
+
+    }
+
+
+    if (
+        MOZ_API_KEY &&
+        !corpo.apiKey
+    ) {
+
+        corpo.apiKey =
+            MOZ_API_KEY;
+
+    }
+
+
     const resposta =
         await fetch(
-            API_BASE_URL + endpoint,
+            API_BASE_URL +
+            endpoint,
             {
-                method: "POST",
 
-                headers: {
-                    "Content-Type":
-                        "application/json",
+                method:
+                    "POST",
 
-                    "Accept":
-                        "application/json"
-                },
+                headers:
+                    criarHeaders(true),
 
                 credentials:
                     "include",
 
                 body:
-                    JSON.stringify(dados)
+                    JSON.stringify(
+                        corpo
+                    )
+
             }
         );
 
@@ -125,25 +320,55 @@ async function apiPut(
     dados = {}
 ) {
 
+    const corpo = {
+
+        ...dados
+
+    };
+
+
+    if (
+        MOZ_UID &&
+        !corpo.uid
+    ) {
+
+        corpo.uid =
+            MOZ_UID;
+
+    }
+
+
+    if (
+        MOZ_API_KEY &&
+        !corpo.apiKey
+    ) {
+
+        corpo.apiKey =
+            MOZ_API_KEY;
+
+    }
+
+
     const resposta =
         await fetch(
-            API_BASE_URL + endpoint,
+            API_BASE_URL +
+            endpoint,
             {
-                method: "PUT",
 
-                headers: {
-                    "Content-Type":
-                        "application/json",
+                method:
+                    "PUT",
 
-                    "Accept":
-                        "application/json"
-                },
+                headers:
+                    criarHeaders(true),
 
                 credentials:
                     "include",
 
                 body:
-                    JSON.stringify(dados)
+                    JSON.stringify(
+                        corpo
+                    )
+
             }
         );
 
@@ -165,17 +390,19 @@ async function apiDelete(
 
     const resposta =
         await fetch(
-            API_BASE_URL + endpoint,
+            API_BASE_URL +
+            endpoint,
             {
-                method: "DELETE",
 
-                headers: {
-                    "Accept":
-                        "application/json"
-                },
+                method:
+                    "DELETE",
+
+                headers:
+                    criarHeaders(false),
 
                 credentials:
                     "include"
+
             }
         );
 
@@ -203,7 +430,13 @@ window.MOZ_API = {
         apiPut,
 
     delete:
-        apiDelete
+        apiDelete,
+
+    definirCredenciais:
+        definirCredenciais,
+
+    obterCredenciais:
+        obterCredenciais
 
 };
 
@@ -226,8 +459,19 @@ window.apiDelete =
 
 
 // =====================================================
-// LOG
+// INICIALIZAR GLOBAL
 // =====================================================
+
+window.MOZ_CREDENCIAIS_API = {
+
+    uid:
+        MOZ_UID,
+
+    apiKey:
+        MOZ_API_KEY
+
+};
+
 
 console.log(
     "[MOZ API] API carregada:",
