@@ -4,8 +4,20 @@ const { db } = require("./firebase-admin");
 
 
 // =====================================================
-// AUTENTICAR API
+// MOZ TECH
+// AUTENTICAÇÃO DA API
 // =====================================================
+//
+// Existem 2 formas de autenticação:
+//
+// 1. API externa:
+//    uid + apiKey
+//
+// 2. Painel:
+//    uid + apiKey enviados pelo frontend
+//
+// =====================================================
+
 
 async function autenticarAPI(req, res, next) {
 
@@ -50,53 +62,16 @@ async function autenticarAPI(req, res, next) {
 
 
         // =================================================
-        // LIMPAR VALORES
-        // =================================================
-
-        const uidLimpo =
-            String(uid).trim();
-
-        const apiKeyLimpa =
-            String(apiKey).trim();
-
-
-        if (
-            !uidLimpo ||
-            !apiKeyLimpa
-        ) {
-
-            return res.status(401).json({
-
-                success: false,
-
-                error:
-                    "UID e API Key são obrigatórios."
-
-            });
-
-        }
-
-
-        // =================================================
-        // BUSCAR USUÁRIO NO FIREBASE
+        // BUSCAR USUÁRIO
         // =================================================
 
         const snapshot =
             await db
-                .ref(
-                    "users/" +
-                    uidLimpo
-                )
+                .ref("users/" + uid)
                 .once("value");
 
 
-        // =================================================
-        // USUÁRIO NÃO EXISTE
-        // =================================================
-
-        if (
-            !snapshot.exists()
-        ) {
+        if (!snapshot.exists()) {
 
             return res.status(401).json({
 
@@ -119,39 +94,12 @@ async function autenticarAPI(req, res, next) {
 
 
         // =================================================
-        // API KEY DO FIREBASE
-        // =================================================
-
-        const apiKeyFirebase =
-            String(
-                usuario.apiKey ||
-                ""
-            ).trim();
-
-
-        // =================================================
-        // VERIFICAR API KEY
+        // VALIDAR API KEY
         // =================================================
 
         if (
-            !apiKeyFirebase
-        ) {
-
-            return res.status(401).json({
-
-                success: false,
-
-                error:
-                    "Este usuário não possui uma API Key configurada."
-
-            });
-
-        }
-
-
-        if (
-            apiKeyFirebase !==
-            apiKeyLimpa
+            !usuario.apiKey ||
+            usuario.apiKey !== apiKey
         ) {
 
             return res.status(401).json({
@@ -167,13 +115,13 @@ async function autenticarAPI(req, res, next) {
 
 
         // =================================================
-        // GUARDAR USUÁRIO NA REQUEST
+        // GUARDAR USUÁRIO
         // =================================================
 
         req.usuario = {
 
             uid:
-                uidLimpo,
+                uid,
 
             ...usuario
 
@@ -190,7 +138,7 @@ async function autenticarAPI(req, res, next) {
     catch (erro) {
 
         console.error(
-            "[API AUTH] Erro:",
+            "[API AUTH]",
             erro
         );
 
