@@ -1,6 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 
+const autenticarAPI =
+    require("./auth");
+
 const app = express();
 
 
@@ -17,6 +20,65 @@ app.use(express.json({
 app.use(express.urlencoded({
     extended: true
 }));
+
+
+// =====================================================
+// TESTE DA API
+// =====================================================
+
+app.get("/", (req, res) => {
+
+    res.json({
+
+        success: true,
+
+        nome: "MOZ TECH API",
+
+        versao: "1.0.0",
+
+        status: "Online"
+
+    });
+
+});
+
+
+// =====================================================
+// TESTE /API
+// =====================================================
+
+app.get("/api", (req, res) => {
+
+    res.json({
+
+        success: true,
+
+        nome: "MOZ TECH API",
+
+        versao: "1.0.0",
+
+        status: "Online"
+
+    });
+
+});
+
+
+// =====================================================
+// AUTENTICAÇÃO
+// =====================================================
+//
+// A partir daqui todas as rotas precisam de:
+//
+// x-uid
+// x-api-key
+//
+// =====================================================
+
+app.use(
+    "/api",
+    autenticarAPI
+);
 
 
 // =====================================================
@@ -70,81 +132,6 @@ app.use(
 
 
 // =====================================================
-// TESTE DA API
-// GET /
-// =====================================================
-
-app.get("/", (req, res) => {
-
-    res.json({
-
-        success: true,
-
-        nome: "MOZ TECH API",
-
-        versao: "1.0.0",
-
-        status: "Online"
-
-    });
-
-});
-
-
-// =====================================================
-// TESTE DA API
-// GET /api
-// =====================================================
-
-app.get("/api", (req, res) => {
-
-    res.json({
-
-        success: true,
-
-        nome: "MOZ TECH API",
-
-        versao: "1.0.0",
-
-        status: "Online",
-
-        rotas: {
-
-            dashboard:
-                "/api/dashboard",
-
-            vendas:
-                "/api/vendas",
-
-            clientes:
-                "/api/clientes",
-
-            pedidos:
-                "/api/pedidos",
-
-            dispositivos:
-                "/api/dispositivos",
-
-            pacotes:
-                "/api/pacotes",
-
-            grupos:
-                "/api/grupos",
-
-            configuracoes:
-                "/api/configuracoes",
-
-            relatorios:
-                "/api/relatorios"
-
-        }
-
-    });
-
-});
-
-
-// =====================================================
 // 404
 // =====================================================
 
@@ -190,9 +177,5 @@ app.use((err, req, res, next) => {
 
 });
 
-
-// =====================================================
-// EXPORTAR
-// =====================================================
 
 module.exports = app;
