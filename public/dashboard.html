@@ -33,6 +33,10 @@
     >
 
 
+    <!-- =====================================================
+         ESTILOS DO DASHBOARD
+    ====================================================== -->
+
     <style>
 
         /* =====================================================
@@ -1154,6 +1158,10 @@
         </div>
 
 
+        <!-- =================================================
+             MENU
+        ================================================== -->
+
         <nav class="sidebar-menu">
 
 
@@ -1349,7 +1357,6 @@
             id="panelDashboard"
             class="panel"
         >
-
 
             <div class="dashboard-header">
 
@@ -1832,6 +1839,7 @@
                             type="button"
                             class="copy-btn"
                             id="copyTutorialUidBtn"
+                            onclick="copiarUID()"
                         >
                             Copiar UID
                         </button>
@@ -1841,6 +1849,7 @@
                             type="button"
                             class="copy-btn"
                             id="copyTutorialApiKeyBtn"
+                            onclick="copiarApiKey()"
                         >
                             Copiar API Key
                         </button>
@@ -1933,19 +1942,29 @@
 
 
 <!-- =========================================================
+     SCRIPTS
+========================================================== -->
 
 <script src="/js/firebase.js"></script>
+
 <script src="/js/api.js"></script>
+
 <script src="/js/app.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script src="/js/dashboard.js"></script>
+
 <script src="/js/charts.js"></script>
 
 <script src="/js/crm.js"></script>
+
 <script src="/js/pacotes.js"></script>
+
 <script src="/js/pedidos.js"></script>
+
 <script src="/js/dispositivos.js"></script>
+
 <script src="/js/config.js"></script>
 
 
@@ -1960,14 +1979,24 @@
     "use strict";
 
 
+    /* =====================================================
+       APLICAR TEMA
+    ====================================================== */
+
     function aplicarTemaVisual(tema) {
+
+        tema =
+            String(tema || "dark")
+                .toLowerCase()
+                .trim();
+
 
         let temaFinal = tema;
 
 
-        /* -----------------------------------------------
+        /* =================================================
            TEMA AUTOMÁTICO
-        ------------------------------------------------ */
+        ================================================== */
 
         if (tema === "system") {
 
@@ -1985,9 +2014,23 @@
         }
 
 
-        /* -----------------------------------------------
-           APLICAR
-        ------------------------------------------------ */
+        /* =================================================
+           GARANTIR TEMA VÁLIDO
+        ================================================== */
+
+        if (
+            temaFinal !== "dark" &&
+            temaFinal !== "light"
+        ) {
+
+            temaFinal = "dark";
+
+        }
+
+
+        /* =================================================
+           APLICAR NO HTML
+        ================================================== */
 
         document.documentElement.setAttribute(
             "data-theme",
@@ -1995,20 +2038,28 @@
         );
 
 
-        document.body.classList.remove(
-            "theme-dark",
-            "theme-light"
-        );
+        /* =================================================
+           APLICAR NO BODY
+        ================================================== */
+
+        if (document.body) {
+
+            document.body.classList.remove(
+                "theme-dark",
+                "theme-light"
+            );
 
 
-        document.body.classList.add(
-            "theme-" + temaFinal
-        );
+            document.body.classList.add(
+                "theme-" + temaFinal
+            );
+
+        }
 
 
-        /* -----------------------------------------------
+        /* =================================================
            GUARDAR ESCOLHA
-        ------------------------------------------------ */
+        ================================================== */
 
         localStorage.setItem(
             "tema",
@@ -2016,9 +2067,9 @@
         );
 
 
-        /* -----------------------------------------------
+        /* =================================================
            ATUALIZAR BOTÕES
-        ------------------------------------------------ */
+        ================================================== */
 
         document
             .querySelectorAll(
@@ -2047,6 +2098,10 @@
     }
 
 
+    /* =====================================================
+       CARREGAR TEMA
+    ====================================================== */
+
     function carregarTema() {
 
         const temaSalvo =
@@ -2061,6 +2116,10 @@
     }
 
 
+    /* =====================================================
+       INICIAR TEMA
+    ====================================================== */
+
     function iniciarTema() {
 
         document
@@ -2071,7 +2130,12 @@
 
                 botao.addEventListener(
                     "click",
-                    function () {
+                    function (event) {
+
+                        event.preventDefault();
+
+                        event.stopPropagation();
+
 
                         const tema =
                             botao.dataset.themeChoice;
@@ -2090,10 +2154,9 @@
         carregarTema();
 
 
-        /* -----------------------------------------------
-           ATUALIZAR AUTOMÁTICO
-           CASO ESTEJA EM "AUTO"
-        ------------------------------------------------ */
+        /* =================================================
+           MONITORAR SISTEMA
+        ================================================== */
 
         const media =
             window.matchMedia(
@@ -2124,6 +2187,10 @@
 
     }
 
+
+    /* =====================================================
+       DOM READY
+    ====================================================== */
 
     if (
         document.readyState ===
