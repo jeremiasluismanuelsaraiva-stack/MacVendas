@@ -12,7 +12,138 @@ const autenticarAPI =
 
 
 // =====================================================
-// DASHBOARD
+// MOZ TECH
+// API DO DASHBOARD
+// GET /api/dashboard
+// =====================================================
+
+
+// =====================================================
+// FUNÇÃO AUXILIAR
+// =====================================================
+
+function numero(valor) {
+
+    if (
+        valor === undefined ||
+        valor === null ||
+        valor === ""
+    ) {
+
+        return 0;
+
+    }
+
+    const n =
+        Number(valor);
+
+    return Number.isFinite(n)
+        ? n
+        : 0;
+
+}
+
+
+// =====================================================
+// TRANSFORMAR DADOS EM ARRAY
+// =====================================================
+
+function paraArray(dados) {
+
+    if (!dados) {
+
+        return [];
+
+    }
+
+
+    if (
+        Array.isArray(dados)
+    ) {
+
+        return dados.filter(
+            item => item !== null
+        );
+
+    }
+
+
+    if (
+        typeof dados === "object"
+    ) {
+
+        return Object.values(
+            dados
+        ).filter(
+            item => item !== null
+        );
+
+    }
+
+
+    return [];
+
+}
+
+
+// =====================================================
+// OBTER DATA DA VENDA
+// =====================================================
+
+function obterData(venda) {
+
+    return (
+        venda?.createdAt ||
+        venda?.criadoEm ||
+        venda?.data ||
+        venda?.dataVenda ||
+        null
+    );
+
+}
+
+
+// =====================================================
+// VERIFICAR SE É HOJE
+// =====================================================
+
+function vendaEhHoje(venda) {
+
+    const dataVenda =
+        obterData(venda);
+
+
+    if (!dataVenda) {
+
+        return false;
+
+    }
+
+
+    const data =
+        String(
+            dataVenda
+        ).slice(
+            0,
+            10
+        );
+
+
+    const hoje =
+        new Date()
+            .toISOString()
+            .slice(
+                0,
+                10
+            );
+
+
+    return data === hoje;
+
+}
+
+
+// =====================================================
 // GET /api/dashboard
 // =====================================================
 
@@ -24,366 +155,541 @@ router.get(
         try {
 
             // =================================================
-            // UID DO USUÁRIO AUTENTICADO
+            // UID
             // =================================================
 
             const uid =
-                req.usuario.uid;
+                req.usuario?.uid;
+
+
+            if (!uid) {
+
+                return res.status(401).json({
+
+                    success: false,
+
+                    error:
+                        "Usuário não autenticado."
+
+                });
+
+            }
+
+
+            console.log(
+                "[DASHBOARD] Carregando dados para:",
+                uid
+            );
 
 
             // =================================================
-            // BUSCAR DADOS DO USUÁRIO
+            // REFERÊNCIAS
             // =================================================
 
-            const [
-                vendasSnapshot,
-                clientesSnapshot,
-                pedidosSnapshot,
-                dispositivosSnapshot
-            ] = await Promise.all([
-
-                db
-                    .ref("vendas/" + uid)
-                    .once("value"),
-
-                db
-                    .ref("clientes/" + uid)
-                    .once("value"),
-
-                db
-                    .ref("pedidos/" + uid)
-                    .once("value"),
-
-                db
-                    .ref("dispositivos/" + uid)
-                    .once("value")
-
-            ]);
+            const vendasRef =
+                db.ref(
+                    "vendas/" +
+                    uid
+                );
 
 
-            // =================================================
-            // DADOS
-            // =================================================
+            const clientesRef =
+                db.ref(
+                    "clientes/" +
+                    uid
+                );
 
-            const vendasDados =
-                vendasSnapshot.val() || {};
 
-            const clientesDados =
-                clientesSnapshot.val() || {};
+            const pedidosRef =
+                db.ref(
+                    "pedidos/" +
+                    uid
+                );
 
-            const pedidosDados =
-                pedidosSnapshot.val() || {};
 
-            const dispositivosDados =
-                dispositivosSnapshot.val() || {};
+            const dispositivosRef =
+                db.ref(
+                    "dispositivos/" +
+                    uid
+                );
 
 
             // =================================================
-            // TRANSFORMAR EM ARRAYS
+            // BUSCAR DADOS
+            // =================================================
+
+            const resultado =
+                await Promise.allSettled([
+
+                    vendasRef
+                        .once("value"),
+
+                    clientesRef
+                        .once("value"),
+
+                    pedidosRef
+                        .once("value"),
+
+                    dispositivosRef
+                        .once("value")
+
+                ]);
+
+
+            // =================================================
+            // VERIFICAR VENDAS
+            // =================================================
+
+            let vendasDados = {};
+
+            if (
+                resultado[0].status ===
+                "fulfilled"
+            ) {
+
+                vendasDados =
+                    resultado[0]
+                        .value
+                        .val() || {};
+
+            }
+            else {
+
+                console.error(
+                    "[DASHBOARD] Erro vendas:",
+                    resultado[0].reason
+                );
+
+            }
+
+
+            // =================================================
+            // CLIENTES
+            // =================================================
+
+            let clientesDados = {};
+
+            if (
+                resultado[1].status ===
+                "fulfilled"
+            ) {
+
+                clientesDados =
+                    resultado[1]
+                        .value
+                        .val() || {};
+
+            }
+            else {
+
+                console.error(
+                    "[DASHBOARD] Erro clientes:",
+                    resultado[1].reason
+                );
+
+            }
+
+
+            // =================================================
+            // PEDIDOS
+            // =================================================
+
+            let pedidosDados = {};
+
+            if (
+                resultado[2].status ===
+                "fulfilled"
+            ) {
+
+                pedidosDados =
+                    resultado[2]
+                        .value
+                        .val() || {};
+
+            }
+            else {
+
+                console.error(
+                    "[DASHBOARD] Erro pedidos:",
+                    resultado[2].reason
+                );
+
+            }
+
+
+            // =================================================
+            // DISPOSITIVOS
+            // =================================================
+
+            let dispositivosDados = {};
+
+            if (
+                resultado[3].status ===
+                "fulfilled"
+            ) {
+
+                dispositivosDados =
+                    resultado[3]
+                        .value
+                        .val() || {};
+
+            }
+            else {
+
+                console.error(
+                    "[DASHBOARD] Erro dispositivos:",
+                    resultado[3].reason
+                );
+
+            }
+
+
+            // =================================================
+            // ARRAYS
             // =================================================
 
             const listaVendas =
-                Array.isArray(vendasDados)
-                    ? vendasDados
-                    : Object.values(vendasDados);
+                paraArray(
+                    vendasDados
+                );
+
 
             const listaClientes =
-                Array.isArray(clientesDados)
-                    ? clientesDados
-                    : Object.values(clientesDados);
+                paraArray(
+                    clientesDados
+                );
+
 
             const listaPedidos =
-                Array.isArray(pedidosDados)
-                    ? pedidosDados
-                    : Object.values(pedidosDados);
+                paraArray(
+                    pedidosDados
+                );
+
 
             const listaDispositivos =
-                Array.isArray(dispositivosDados)
-                    ? dispositivosDados
-                    : Object.values(dispositivosDados);
+                paraArray(
+                    dispositivosDados
+                );
 
 
             // =================================================
             // TOTAIS
             // =================================================
 
-            let faturamento = 0;
-
-            let custo = 0;
-
-            let lucro = 0;
-
-            let totalGB = 0;
-
-            let totalMB = 0;
-
-            let vendasHoje = 0;
+            let faturamento =
+                0;
 
 
-            // =================================================
-            // DATA DE HOJE
-            // =================================================
+            let custo =
+                0;
 
-            const hoje =
-                new Date()
-                    .toISOString()
-                    .slice(0, 10);
+
+            let lucro =
+                0;
+
+
+            let totalGB =
+                0;
+
+
+            let totalMB =
+                0;
+
+
+            let vendasHoje =
+                0;
 
 
             // =================================================
             // PROCESSAR VENDAS
             // =================================================
 
-            listaVendas.forEach(
-                venda => {
+            for (
+                const venda
+                of listaVendas
+            ) {
 
-                    if (!venda) {
+                if (
+                    !venda ||
+                    typeof venda !== "object"
+                ) {
 
-                        return;
-
-                    }
-
-
-                    // =========================================
-                    // VALOR
-                    // =========================================
-
-                    const valor =
-                        Number(
-                            venda.valor_venda ??
-                            venda.valor_pacote ??
-                            venda.valor ??
-                            venda.valorPacote ??
-                            venda.valorVenda ??
-                            0
-                        );
-
-
-                    // =========================================
-                    // CUSTO
-                    // =========================================
-
-                    const valorCusto =
-                        Number(
-                            venda.custo ??
-                            0
-                        );
-
-
-                    // =========================================
-                    // FATURAMENTO
-                    // =========================================
-
-                    if (
-                        Number.isFinite(valor)
-                    ) {
-
-                        faturamento +=
-                            valor;
-
-                    }
-
-
-                    // =========================================
-                    // CUSTO
-                    // =========================================
-
-                    if (
-                        Number.isFinite(valorCusto)
-                    ) {
-
-                        custo +=
-                            valorCusto;
-
-                    }
-
-
-                    // =========================================
-                    // LUCRO
-                    // =========================================
-
-                    if (
-                        venda.lucro !== undefined &&
-                        venda.lucro !== null &&
-                        venda.lucro !== ""
-                    ) {
-
-                        const lucroVenda =
-                            Number(
-                                venda.lucro
-                            );
-
-
-                        if (
-                            Number.isFinite(
-                                lucroVenda
-                            )
-                        ) {
-
-                            lucro +=
-                                lucroVenda;
-
-                        }
-
-                    }
-                    else {
-
-                        lucro +=
-                            valor -
-                            valorCusto;
-
-                    }
-
-
-                    // =========================================
-                    // MB
-                    // =========================================
-
-                    const mb =
-                        Number(
-                            venda.mb ??
-                            0
-                        );
-
-
-                    if (
-                        Number.isFinite(mb)
-                    ) {
-
-                        totalMB +=
-                            mb;
-
-                    }
-
-
-                    // =========================================
-                    // GB
-                    // =========================================
-
-                    let gb =
-                        Number(
-                            venda.gb ??
-                            venda.gb_pacote ??
-                            venda.gbPacote ??
-                            0
-                        );
-
-
-                    if (
-                        gb === 0 &&
-                        mb > 0
-                    ) {
-
-                        gb =
-                            mb / 1024;
-
-                    }
-
-
-                    if (
-                        Number.isFinite(gb)
-                    ) {
-
-                        totalGB +=
-                            gb;
-
-                    }
-
-
-                    // =========================================
-                    // DATA DA VENDA
-                    // =========================================
-
-                    const dataVenda =
-                        venda.createdAt ||
-                        venda.criadoEm;
-
-
-                    if (dataVenda) {
-
-                        const data =
-                            String(
-                                dataVenda
-                            )
-                            .slice(
-                                0,
-                                10
-                            );
-
-
-                        if (
-                            data === hoje
-                        ) {
-
-                            vendasHoje++;
-
-                        }
-
-                    }
+                    continue;
 
                 }
-            );
+
+
+                // =============================================
+                // VALOR
+                // =============================================
+
+                const valor =
+                    numero(
+                        venda.valor_venda ??
+                        venda.valorVenda ??
+                        venda.valor_pacote ??
+                        venda.valorPacote ??
+                        venda.valor
+                    );
+
+
+                // =============================================
+                // CUSTO
+                // =============================================
+
+                const valorCusto =
+                    numero(
+                        venda.custo
+                    );
+
+
+                // =============================================
+                // FATURAMENTO
+                // =============================================
+
+                faturamento +=
+                    valor;
+
+
+                // =============================================
+                // CUSTO
+                // =============================================
+
+                custo +=
+                    valorCusto;
+
+
+                // =============================================
+                // LUCRO
+                // =============================================
+
+                if (
+                    venda.lucro !==
+                        undefined &&
+                    venda.lucro !==
+                        null &&
+                    venda.lucro !==
+                        ""
+                ) {
+
+                    const lucroVenda =
+                        numero(
+                            venda.lucro
+                        );
+
+
+                    lucro +=
+                        lucroVenda;
+
+                }
+                else {
+
+                    lucro +=
+                        valor -
+                        valorCusto;
+
+                }
+
+
+                // =============================================
+                // MB
+                // =============================================
+
+                const mb =
+                    numero(
+                        venda.mb
+                    );
+
+
+                totalMB +=
+                    mb;
+
+
+                // =============================================
+                // GB
+                // =============================================
+
+                let gb =
+                    numero(
+                        venda.gb
+                    );
+
+
+                if (
+                    gb <= 0
+                ) {
+
+                    gb =
+                        numero(
+                            venda.gbPacote ??
+                            venda.gb_pacote
+                        );
+
+                }
+
+
+                if (
+                    gb <= 0 &&
+                    mb > 0
+                ) {
+
+                    gb =
+                        mb /
+                        1024;
+
+                }
+
+
+                totalGB +=
+                    gb;
+
+
+                // =============================================
+                // VENDAS DE HOJE
+                // =============================================
+
+                if (
+                    vendaEhHoje(
+                        venda
+                    )
+                ) {
+
+                    vendasHoje++;
+
+                }
+
+            }
+
+
+            // =================================================
+            // ARREDONDAR
+            // =================================================
+
+            faturamento =
+                Number(
+                    faturamento.toFixed(2)
+                );
+
+
+            custo =
+                Number(
+                    custo.toFixed(2)
+                );
+
+
+            lucro =
+                Number(
+                    lucro.toFixed(2)
+                );
+
+
+            totalGB =
+                Number(
+                    totalGB.toFixed(2)
+                );
+
+
+            totalMB =
+                Number(
+                    totalMB.toFixed(2)
+                );
 
 
             // =================================================
             // RESPOSTA
             // =================================================
 
-            return res.json({
+            const resposta = {
 
                 success: true,
 
                 dashboard: {
 
-                    faturamento:
-                        Number(
-                            faturamento.toFixed(2)
-                        ),
+                    // =========================================
+                    // FINANCEIRO
+                    // =========================================
 
-                    custo:
-                        Number(
-                            custo.toFixed(2)
-                        ),
+                    faturamento,
 
-                    lucro:
-                        Number(
-                            lucro.toFixed(2)
-                        ),
+                    custo,
 
-                    totalGB:
-                        Number(
-                            totalGB.toFixed(2)
-                        ),
+                    lucro,
 
-                    totalMB:
-                        Number(
-                            totalMB.toFixed(2)
-                        ),
+
+                    // =========================================
+                    // INTERNET
+                    // =========================================
+
+                    totalGB,
+
+                    totalMB,
+
+
+                    // =========================================
+                    // VENDAS
+                    // =========================================
 
                     vendas:
                         listaVendas.length,
 
                     vendasHoje,
 
+
+                    // =========================================
+                    // CLIENTES
+                    // =========================================
+
                     clientes:
                         listaClientes.length,
 
+
+                    // =========================================
+                    // PEDIDOS
+                    // =========================================
+
                     pedidos:
                         listaPedidos.length,
+
+
+                    // =========================================
+                    // DISPOSITIVOS
+                    // =========================================
 
                     dispositivos:
                         listaDispositivos.length
 
                 }
 
-            });
+            };
+
+
+            console.log(
+                "[DASHBOARD] Dados enviados:",
+                resposta.dashboard
+            );
+
+
+            return res.json(
+                resposta
+            );
 
         }
         catch (err) {
 
             console.error(
-                "[DASHBOARD] Erro:",
+                "========================================"
+            );
+
+            console.error(
+                "[DASHBOARD] ERRO FATAL"
+            );
+
+            console.error(
                 err
+            );
+
+            console.error(
+                "========================================"
             );
 
 
@@ -407,4 +713,5 @@ router.get(
 // EXPORTAR
 // =====================================================
 
-module.exports = router;
+module.exports =
+    router;
