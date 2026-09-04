@@ -4,7 +4,8 @@
 // SISTEMA DE PAINÉIS
 // + MENU MOBILE
 // + TEMA GLOBAL
-// + CREDENCIAIS VINDAS DO FIREBASE
+// + CREDENCIAIS FIREBASE
+// + AUTENTICAÇÃO API
 // =====================================================
 
 (function () {
@@ -128,6 +129,208 @@
 
 
     // =====================================================
+    // GARANTIR CREDENCIAIS DA API
+    // =====================================================
+
+    async function garantirCredenciaisAPI() {
+
+        try {
+
+            // =================================================
+            // API JÁ TEM CREDENCIAIS
+            // =================================================
+
+            if (
+                window.MOZ_CREDENCIAIS_API &&
+                window.MOZ_CREDENCIAIS_API.uid &&
+                window.MOZ_CREDENCIAIS_API.apiKey
+            ) {
+
+                if (
+                    window.MOZ_API &&
+                    typeof window.MOZ_API.definirCredenciais ===
+                    "function"
+                ) {
+
+                    window.MOZ_API.definirCredenciais(
+
+                        window.MOZ_CREDENCIAIS_API.uid,
+
+                        window.MOZ_CREDENCIAIS_API.apiKey
+
+                    );
+
+                }
+
+
+                return true;
+
+            }
+
+
+            // =================================================
+            // VERIFICAR FIREBASE
+            // =================================================
+
+            if (
+                typeof window.obterDadosUsuario !==
+                "function"
+            ) {
+
+                console.warn(
+                    "[MOZ TECH] obterDadosUsuario() não está disponível."
+                );
+
+                return false;
+
+            }
+
+
+            // =================================================
+            // BUSCAR FIREBASE
+            // =================================================
+
+            const dados =
+                await window.obterDadosUsuario();
+
+
+            if (!dados) {
+
+                console.warn(
+                    "[MOZ TECH] Usuário não autenticado."
+                );
+
+                return false;
+
+            }
+
+
+            // =================================================
+            // UID
+            // =================================================
+
+            const uid =
+                String(
+                    dados.uid || ""
+                ).trim();
+
+
+            // =================================================
+            // API KEY
+            // =================================================
+
+            const apiKey =
+                String(
+                    dados.apiKey || ""
+                ).trim();
+
+
+            if (
+                !uid ||
+                !apiKey
+            ) {
+
+                console.warn(
+                    "[MOZ TECH] UID ou API Key não encontrado."
+                );
+
+                return false;
+
+            }
+
+
+            // =================================================
+            // DEFINIR CREDENCIAIS NA API
+            // =================================================
+
+            if (
+                window.MOZ_API &&
+                typeof window.MOZ_API.definirCredenciais ===
+                "function"
+            ) {
+
+                window.MOZ_API.definirCredenciais(
+                    uid,
+                    apiKey
+                );
+
+            }
+
+
+            // =================================================
+            // GLOBAL
+            // =================================================
+
+            window.MOZ_CREDENCIAIS_API = {
+
+                uid:
+                    uid,
+
+                apiKey:
+                    apiKey
+
+            };
+
+
+            // =================================================
+            // COMPATIBILIDADE LOCAL
+            // =================================================
+
+            localStorage.setItem(
+                "uid",
+                uid
+            );
+
+            localStorage.setItem(
+                "apiKey",
+                apiKey
+            );
+
+
+            localStorage.setItem(
+                "moz_uid",
+                uid
+            );
+
+            localStorage.setItem(
+                "moz_api_key",
+                apiKey
+            );
+
+
+            console.log(
+                "[MOZ TECH] Credenciais da API configuradas."
+            );
+
+            console.log(
+                "[MOZ TECH] UID:",
+                uid
+            );
+
+            console.log(
+                "[MOZ TECH] API Key:",
+                "OK"
+            );
+
+
+            return true;
+
+        }
+        catch (erro) {
+
+            console.error(
+                "[MOZ TECH] Erro ao garantir credenciais:",
+                erro
+            );
+
+            return false;
+
+        }
+
+    }
+
+
+    // =====================================================
     // TEMA API
     // =====================================================
 
@@ -135,15 +338,46 @@
 
         try {
 
-            if (
-                !window.MOZ_API ||
-                typeof window.MOZ_API.get !== "function"
-            ) {
+            // =================================================
+            // PRIMEIRO GARANTIR AUTENTICAÇÃO
+            // =================================================
+
+            const autenticado =
+                await garantirCredenciaisAPI();
+
+
+            if (!autenticado) {
+
+                console.warn(
+                    "[MOZ TECH] Tema API ignorado: API não autenticada."
+                );
 
                 return;
 
             }
 
+
+            // =================================================
+            // VERIFICAR API
+            // =================================================
+
+            if (
+                !window.MOZ_API ||
+                typeof window.MOZ_API.get !== "function"
+            ) {
+
+                console.warn(
+                    "[MOZ TECH] MOZ_API não está disponível."
+                );
+
+                return;
+
+            }
+
+
+            // =================================================
+            // BUSCAR CONFIGURAÇÃO
+            // =================================================
 
             const json =
                 await window.MOZ_API.get(
@@ -173,6 +407,10 @@
 
             }
 
+
+            // =================================================
+            // APLICAR TEMA
+            // =================================================
 
             aplicarTema(
                 configuracao.tema
@@ -742,6 +980,10 @@
 
         try {
 
+            // =================================================
+            // FIREBASE
+            // =================================================
+
             if (
                 typeof window.obterDadosUsuario !==
                 "function"
@@ -767,11 +1009,19 @@
             }
 
 
+            // =================================================
+            // UID
+            // =================================================
+
             const uid =
                 String(
                     dados.uid || ""
                 ).trim();
 
+
+            // =================================================
+            // API KEY
+            // =================================================
 
             const apiKey =
                 String(
@@ -779,27 +1029,27 @@
                 ).trim();
 
 
-            if (uidElemento) {
+            if (!uid) {
 
-                uidElemento.textContent =
-                    uid ||
-                    "UID não encontrado";
-
-            }
-
-
-            if (apiKeyElemento) {
-
-                apiKeyElemento.textContent =
-                    apiKey ||
-                    "API Key não encontrada";
+                throw new Error(
+                    "UID não encontrado."
+                );
 
             }
 
 
-            // =============================================
-            // DEFINIR CREDENCIAIS NO API.JS
-            // =============================================
+            if (!apiKey) {
+
+                throw new Error(
+                    "API Key não encontrada."
+                );
+
+            }
+
+
+            // =================================================
+            // CONFIGURAR API
+            // =================================================
 
             if (
                 window.MOZ_API &&
@@ -815,9 +1065,9 @@
             }
 
 
-            // =============================================
-            // MEMÓRIA GLOBAL
-            // =============================================
+            // =================================================
+            // GLOBAL
+            // =================================================
 
             window.MOZ_CREDENCIAIS_API = {
 
@@ -830,26 +1080,51 @@
             };
 
 
-            // =============================================
-            // COMPATIBILIDADE
-            // =============================================
+            // =================================================
+            // LOCAL STORAGE
+            // =================================================
 
-            if (uid) {
+            localStorage.setItem(
+                "uid",
+                uid
+            );
 
-                localStorage.setItem(
-                    "uid",
-                    uid
-                );
+            localStorage.setItem(
+                "apiKey",
+                apiKey
+            );
+
+            localStorage.setItem(
+                "moz_uid",
+                uid
+            );
+
+            localStorage.setItem(
+                "moz_api_key",
+                apiKey
+            );
+
+
+            // =================================================
+            // MOSTRAR UID
+            // =================================================
+
+            if (uidElemento) {
+
+                uidElemento.textContent =
+                    uid;
 
             }
 
 
-            if (apiKey) {
+            // =================================================
+            // MOSTRAR API KEY
+            // =================================================
 
-                localStorage.setItem(
-                    "apiKey",
-                    apiKey
-                );
+            if (apiKeyElemento) {
+
+                apiKeyElemento.textContent =
+                    apiKey;
 
             }
 
@@ -865,7 +1140,7 @@
 
             console.log(
                 "[MOZ TECH] API Key encontrada:",
-                !!apiKey
+                true
             );
 
         }
@@ -966,9 +1241,15 @@
                     "function"
                 ) {
 
+                    const atual =
+                        window.MOZ_CREDENCIAIS_API;
+
                     window.MOZ_API.definirCredenciais(
+
                         uid,
-                        window.MOZ_CREDENCIAIS_API?.apiKey || ""
+
+                        atual.apiKey || ""
+
                     );
 
                 }
@@ -1043,9 +1324,18 @@
                 }
 
 
+                const uid =
+                    String(
+                        dados?.uid || ""
+                    ).trim();
+
+
                 window.MOZ_CREDENCIAIS_API = {
 
                     ...(window.MOZ_CREDENCIAIS_API || {}),
+
+                    uid:
+                        uid,
 
                     apiKey:
                         apiKey
@@ -1060,8 +1350,11 @@
                 ) {
 
                     window.MOZ_API.definirCredenciais(
-                        window.MOZ_CREDENCIAIS_API?.uid || "",
+
+                        uid,
+
                         apiKey
+
                     );
 
                 }
@@ -1123,6 +1416,10 @@
             }
 
 
+            // =================================================
+            // ESCONDER TODOS
+            // =================================================
+
             Object.values(paineis)
                 .forEach(function (id) {
 
@@ -1139,6 +1436,10 @@
 
                 });
 
+
+            // =================================================
+            // ABRIR PAINEL
+            // =================================================
 
             const painel =
                 el(painelId);
@@ -1159,6 +1460,10 @@
             painel.style.display =
                 "block";
 
+
+            // =================================================
+            // MENU ATIVO
+            // =================================================
 
             document
                 .querySelectorAll(
@@ -1190,6 +1495,10 @@
             }
 
 
+            // =================================================
+            // CARREGAR CONTEÚDO
+            // =================================================
+
             try {
 
                 await carregarPainel(
@@ -1206,6 +1515,10 @@
 
             }
 
+
+            // =================================================
+            // FECHAR MENU MOBILE
+            // =================================================
 
             if (
                 window.innerWidth <= 768
@@ -1545,11 +1858,23 @@
         );
 
 
+        // =================================================
+        // TEMA LOCAL
+        // =================================================
+
         carregarTemaLocal();
 
 
+        // =================================================
+        // ESTADO
+        // =================================================
+
         estadoInicial();
 
+
+        // =================================================
+        // MENU
+        // =================================================
 
         inicializarMenu();
 
@@ -1563,44 +1888,17 @@
 
 
         // =================================================
-        // CARREGAR CREDENCIAIS PRIMEIRO
+        // CREDENCIAIS
         // =================================================
 
-        try {
-
-            if (
-                typeof window.obterDadosUsuario ===
-                "function"
-            ) {
-
-                await carregarCredenciaisTutorial();
-
-            }
-
-        }
-        catch (erro) {
-
-            console.warn(
-                "[MOZ TECH] Credenciais:",
-                erro
-            );
-
-        }
+        await garantirCredenciaisAPI();
 
 
         // =================================================
         // TEMA API
         // =================================================
 
-        carregarTemaAPI()
-            .catch(function (erro) {
-
-                console.warn(
-                    "[MOZ TECH] Tema API:",
-                    erro
-                );
-
-            });
+        await carregarTemaAPI();
 
 
         // =================================================
@@ -1644,6 +1942,10 @@
 
     window.carregarTemaAPI =
         carregarTemaAPI;
+
+
+    window.garantirCredenciaisAPI =
+        garantirCredenciaisAPI;
 
 
     window.abrirMenuMobile =
