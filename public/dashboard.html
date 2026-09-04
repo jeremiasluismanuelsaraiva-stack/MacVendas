@@ -12,39 +12,19 @@
 
     <title>MOZ TECH - Dashboard</title>
 
-
-    <!-- =====================================================
-         FONT AWESOME
-    ====================================================== -->
-
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     >
-
-
-    <!-- =====================================================
-         CSS PRINCIPAL
-    ====================================================== -->
 
     <link
         rel="stylesheet"
         href="/css/style.css"
     >
 
-
-    <!-- =====================================================
-         ESTILOS DO DASHBOARD
-    ====================================================== -->
-
     <style>
 
-        /* =====================================================
-           VARIÁVEIS DO TEMA
-        ====================================================== */
-
         :root {
-
             --bg-primary: #f5f7fb;
             --bg-secondary: #ffffff;
 
@@ -60,16 +40,9 @@
 
             --card-shadow:
                 0 4px 18px rgba(0, 0, 0, 0.06);
-
         }
 
-
-        /* =====================================================
-           TEMA DARK
-        ====================================================== */
-
         html[data-theme="dark"] {
-
             --bg-primary: #0f172a;
             --bg-secondary: #1e293b;
 
@@ -85,16 +58,9 @@
 
             --card-shadow:
                 0 4px 18px rgba(0, 0, 0, 0.25);
-
         }
 
-
-        /* =====================================================
-           TEMA LIGHT
-        ====================================================== */
-
         html[data-theme="light"] {
-
             --bg-primary: #f5f7fb;
             --bg-secondary: #ffffff;
 
@@ -110,76 +76,44 @@
 
             --card-shadow:
                 0 4px 18px rgba(0, 0, 0, 0.06);
-
         }
-
-
-        /* =====================================================
-           ESTRUTURA
-        ====================================================== */
 
         html,
         body {
-
             width: 100%;
             min-height: 100%;
-
             margin: 0;
             padding: 0;
-
         }
 
-
         body {
-
-            background:
-                var(--bg-primary);
-
-            color:
-                var(--text-primary);
-
+            background: var(--bg-primary);
+            color: var(--text-primary);
             overflow-x: hidden;
 
             transition:
                 background 0.25s ease,
                 color 0.25s ease;
-
         }
-
 
         *,
         *::before,
         *::after {
-
             box-sizing: border-box;
-
         }
-
 
         .app-container {
-
             min-height: 100vh;
-
             display: flex;
-
             position: relative;
-
         }
 
-
-        /* =====================================================
-           SIDEBAR
-        ====================================================== */
-
         .sidebar {
-
             width: 260px;
             min-width: 260px;
-
             min-height: 100vh;
 
-            background:
-                var(--bg-secondary);
+            background: var(--bg-secondary);
 
             border-right:
                 1px solid
@@ -199,168 +133,99 @@
                 transform 0.3s ease,
                 background 0.25s ease,
                 border-color 0.25s ease;
-
         }
 
-
-        /* =====================================================
-           CONTEÚDO
-        ====================================================== */
-
         .main-content {
-
             width: 100%;
-
             margin-left: 260px;
-
             min-height: 100vh;
-
             padding: 25px;
 
             transition:
                 margin-left 0.3s ease;
-
         }
 
-
-        /* =====================================================
-           LOGO
-        ====================================================== */
-
         .sidebar-header {
-
             padding: 25px 20px;
 
             border-bottom:
                 1px solid
                 var(--border-color);
-
         }
-
 
         .sidebar-header h2 {
-
             margin: 0;
-
-            color:
-                var(--text-primary);
-
+            color: var(--text-primary);
             font-size: 22px;
-
         }
-
 
         .sidebar-header h2 i {
-
-            color:
-                var(--accent-color);
-
+            color: var(--accent-color);
         }
-
 
         .sidebar-header p {
-
             margin: 5px 0 0;
-
-            color:
-                var(--text-secondary);
-
+            color: var(--text-secondary);
             font-size: 13px;
-
         }
-
-
-        /* =====================================================
-           MENU
-        ====================================================== */
 
         .sidebar-menu {
-
             padding: 15px 10px;
-
         }
 
-
         .menu-item {
-
             width: 100%;
 
             display: flex;
-
             align-items: center;
 
             gap: 12px;
 
             padding: 13px 15px;
-
             margin-bottom: 5px;
 
             border: 0;
-
             border-radius: 10px;
 
             background: transparent;
-
-            color:
-                var(--text-primary);
+            color: var(--text-primary);
 
             text-decoration: none;
 
             cursor: pointer;
 
             font-size: 14px;
-
             text-align: left;
 
             transition:
                 background 0.2s,
                 color 0.2s,
                 transform 0.2s;
-
         }
-
 
         .menu-item:hover {
-
             background:
                 rgba(59, 130, 246, 0.10);
-
         }
-
 
         .menu-item:active {
-
             transform:
                 scale(0.98);
-
         }
 
-
         .menu-item.active {
-
             background:
                 var(--accent-color);
 
             color: #fff;
-
         }
-
 
         .menu-item i {
-
             width: 20px;
-
             text-align: center;
-
         }
 
-
-        /* =====================================================
-           TEMA
-        ====================================================== */
-
         .theme-box {
-
             margin:
                 15px 10px 20px;
 
@@ -374,44 +239,32 @@
 
             background:
                 var(--bg-primary);
-
         }
 
-
         .theme-title {
-
             display: flex;
-
             align-items: center;
-
             gap: 8px;
 
             margin-bottom: 10px;
 
             font-size: 12px;
-
             font-weight: 600;
 
             color:
                 var(--text-secondary);
-
         }
 
-
         .theme-options {
-
             display: grid;
 
             grid-template-columns:
                 repeat(3, 1fr);
 
             gap: 6px;
-
         }
 
-
         .theme-btn {
-
             border:
                 1px solid
                 var(--border-color);
@@ -432,23 +285,17 @@
 
             transition:
                 0.2s;
-
         }
 
-
         .theme-btn:hover {
-
             border-color:
                 var(--accent-color);
 
             color:
                 var(--accent-color);
-
         }
 
-
         .theme-btn.active {
-
             background:
                 var(--accent-color);
 
@@ -456,25 +303,14 @@
                 var(--accent-color);
 
             color: #fff;
-
         }
-
 
         .theme-btn i {
-
             display: block;
-
             margin-bottom: 4px;
-
         }
 
-
-        /* =====================================================
-           BOTÃO MOBILE
-        ====================================================== */
-
         .menu-toggle {
-
             display: none;
 
             position: fixed;
@@ -486,7 +322,6 @@
             height: 45px;
 
             border: none;
-
             border-radius: 10px;
 
             background:
@@ -501,30 +336,19 @@
             font-size: 20px;
 
             align-items: center;
-
             justify-content: center;
 
             box-shadow:
                 0 4px 15px
                 rgba(0, 0, 0, 0.15);
-
         }
-
 
         .menu-toggle:hover {
-
             background:
                 var(--accent-hover);
-
         }
 
-
-        /* =====================================================
-           OVERLAY
-        ====================================================== */
-
         .menu-overlay {
-
             display: none;
 
             position: fixed;
@@ -535,85 +359,54 @@
                 rgba(0, 0, 0, 0.55);
 
             z-index: 999;
-
         }
-
 
         .menu-overlay.active {
-
             display: block;
-
         }
 
-
-        /* =====================================================
-           TOPO
-        ====================================================== */
-
         .dashboard-header {
-
             display: flex;
 
             align-items: center;
-
             justify-content: space-between;
 
             gap: 15px;
 
             margin-bottom: 25px;
-
         }
 
-
         .dashboard-title h1 {
-
             margin: 0;
 
             font-size: 28px;
 
             color:
                 var(--text-primary);
-
         }
 
-
         .dashboard-title p {
-
             margin: 5px 0 0;
 
             color:
                 var(--text-secondary);
-
         }
 
-
         .dashboard-title small {
-
             display: block;
 
             margin-top: 5px;
 
             color:
                 var(--text-secondary);
-
         }
-
 
         .header-actions {
-
             display: flex;
-
             gap: 10px;
-
         }
 
-
-        /* =====================================================
-           BOTÃO ATUALIZAR
-        ====================================================== */
-
         .refresh-btn {
-
             border:
                 1px solid
                 var(--border-color);
@@ -633,36 +426,22 @@
             font-weight: 600;
 
             transition: 0.2s;
-
         }
 
-
         .refresh-btn:hover {
-
             border-color:
                 var(--accent-color);
 
             color:
                 var(--accent-color);
-
         }
-
 
         .refresh-btn:disabled {
-
             opacity: 0.6;
-
             cursor: wait;
-
         }
 
-
-        /* =====================================================
-           CARDS
-        ====================================================== */
-
         .stats-grid {
-
             display: grid;
 
             grid-template-columns:
@@ -674,12 +453,9 @@
             gap: 15px;
 
             margin-bottom: 25px;
-
         }
 
-
         .stat-card {
-
             background:
                 var(--bg-secondary);
 
@@ -698,20 +474,14 @@
                 background 0.25s ease,
                 border-color 0.25s ease,
                 transform 0.2s ease;
-
         }
-
 
         .stat-card:hover {
-
             transform:
                 translateY(-2px);
-
         }
 
-
         .stat-card .stat-icon {
-
             width: 42px;
             height: 42px;
 
@@ -720,7 +490,6 @@
             display: flex;
 
             align-items: center;
-
             justify-content: center;
 
             background:
@@ -730,12 +499,9 @@
                 var(--accent-color);
 
             margin-bottom: 12px;
-
         }
 
-
         .stat-card h3 {
-
             margin: 0;
 
             font-size: 13px;
@@ -744,12 +510,9 @@
                 var(--text-secondary);
 
             font-weight: 500;
-
         }
 
-
         .stat-card .stat-value {
-
             margin-top: 6px;
 
             font-size: 24px;
@@ -758,16 +521,9 @@
 
             color:
                 var(--text-primary);
-
         }
 
-
-        /* =====================================================
-           SEÇÕES
-        ====================================================== */
-
         .section {
-
             background:
                 var(--bg-secondary);
 
@@ -783,65 +539,40 @@
 
             box-shadow:
                 var(--card-shadow);
-
         }
-
 
         .section h2 {
-
             color:
                 var(--text-primary);
-
         }
 
-
         .section-header {
-
             display: flex;
 
             align-items: center;
-
             justify-content: space-between;
 
             margin-bottom: 15px;
-
         }
 
-
         .section-header h2 {
-
             margin: 0;
 
             font-size: 19px;
-
         }
-
-
-        /* =====================================================
-           TABELA
-        ====================================================== */
 
         .table-container {
-
             width: 100%;
-
             overflow-x: auto;
-
         }
-
 
         table {
-
             width: 100%;
-
             border-collapse: collapse;
-
         }
-
 
         th,
         td {
-
             padding: 12px;
 
             border-bottom:
@@ -854,26 +585,16 @@
 
             color:
                 var(--text-primary);
-
         }
 
-
         th {
-
             color:
                 var(--text-secondary);
 
             font-weight: 600;
-
         }
 
-
-        /* =====================================================
-           STATUS
-        ====================================================== */
-
         .status {
-
             display: inline-block;
 
             padding: 5px 9px;
@@ -881,38 +602,21 @@
             border-radius: 20px;
 
             font-size: 12px;
-
         }
 
-
         .status.ok {
-
             background:
                 rgba(0, 204, 102, 0.12);
 
             color:
                 var(--success);
-
         }
-
-
-        /* =====================================================
-           PAINÉIS
-        ====================================================== */
 
         .panel {
-
             width: 100%;
-
         }
 
-
-        /* =====================================================
-           TUTORIAL
-        ====================================================== */
-
         .tutorial-content pre {
-
             background:
                 #111827;
 
@@ -926,12 +630,9 @@
             overflow-x: auto;
 
             font-size: 13px;
-
         }
 
-
         .credential-box {
-
             display: grid;
 
             grid-template-columns:
@@ -943,12 +644,9 @@
             gap: 10px;
 
             margin-bottom: 25px;
-
         }
 
-
         .credential-item {
-
             padding: 15px;
 
             border:
@@ -959,36 +657,27 @@
 
             background:
                 var(--bg-primary);
-
         }
 
-
         .credential-label {
-
             font-size: 11px;
 
             color:
                 var(--text-secondary);
 
             margin-bottom: 5px;
-
         }
 
-
         .credential-value {
-
             word-break: break-all;
 
             font-weight: 600;
 
             color:
                 var(--text-primary);
-
         }
 
-
         .copy-btn {
-
             border: none;
 
             border-radius: 10px;
@@ -1001,113 +690,70 @@
             color: #fff;
 
             cursor: pointer;
-
         }
-
 
         .copy-btn:hover {
-
             background:
                 var(--accent-hover);
-
         }
-
-
-        /* =====================================================
-           MOBILE
-        ====================================================== */
 
         @media (max-width: 768px) {
 
             .menu-toggle {
-
                 display: flex;
-
             }
-
 
             .sidebar {
-
                 transform:
                     translateX(-100%);
-
             }
-
 
             .sidebar.open {
-
                 transform:
                     translateX(0);
-
             }
 
-
             .main-content {
-
                 margin-left: 0;
 
                 padding:
                     75px 15px 20px;
-
             }
 
-
             .dashboard-header {
-
                 flex-direction: column;
 
                 align-items: flex-start;
-
             }
-
 
             .header-actions {
-
                 width: 100%;
-
             }
-
 
             .refresh-btn {
-
                 width: 100%;
-
             }
-
 
             .stats-grid {
-
                 grid-template-columns:
                     repeat(2, 1fr);
-
             }
-
         }
-
 
         @media (max-width: 450px) {
 
             .stats-grid {
-
                 grid-template-columns: 1fr;
-
             }
-
         }
 
     </style>
 
 </head>
 
-
 <body>
 
 <div class="app-container">
-
-
-    <!-- =====================================================
-         BOTÃO MOBILE
-    ====================================================== -->
 
     <button
         type="button"
@@ -1121,20 +767,10 @@
 
     </button>
 
-
-    <!-- =====================================================
-         OVERLAY
-    ====================================================== -->
-
     <div
         id="menuOverlay"
         class="menu-overlay"
     ></div>
-
-
-    <!-- =====================================================
-         SIDEBAR
-    ====================================================== -->
 
     <aside
         class="sidebar"
@@ -1157,13 +793,7 @@
 
         </div>
 
-
-        <!-- =================================================
-             MENU
-        ================================================== -->
-
         <nav class="sidebar-menu">
-
 
             <button
                 type="button"
@@ -1179,7 +809,6 @@
 
             </button>
 
-
             <button
                 type="button"
                 class="menu-item"
@@ -1193,7 +822,6 @@
                 </span>
 
             </button>
-
 
             <button
                 type="button"
@@ -1209,7 +837,6 @@
 
             </button>
 
-
             <button
                 type="button"
                 class="menu-item"
@@ -1223,7 +850,6 @@
                 </span>
 
             </button>
-
 
             <button
                 type="button"
@@ -1239,7 +865,6 @@
 
             </button>
 
-
             <button
                 type="button"
                 class="menu-item"
@@ -1253,7 +878,6 @@
                 </span>
 
             </button>
-
 
             <button
                 type="button"
@@ -1269,13 +893,7 @@
 
             </button>
 
-
         </nav>
-
-
-        <!-- =================================================
-             SELETOR DE TEMA
-        ================================================== -->
 
         <div class="theme-box">
 
@@ -1289,9 +907,7 @@
 
             </div>
 
-
             <div class="theme-options">
-
 
                 <button
                     type="button"
@@ -1306,7 +922,6 @@
 
                 </button>
 
-
                 <button
                     type="button"
                     class="theme-btn"
@@ -1319,7 +934,6 @@
                     Escuro
 
                 </button>
-
 
                 <button
                     type="button"
@@ -1334,24 +948,13 @@
 
                 </button>
 
-
             </div>
 
         </div>
 
     </aside>
 
-
-    <!-- =====================================================
-         CONTEÚDO
-    ====================================================== -->
-
     <main class="main-content">
-
-
-        <!-- =================================================
-             DASHBOARD
-        ================================================== -->
 
         <div
             id="panelDashboard"
@@ -1359,7 +962,6 @@
         >
 
             <div class="dashboard-header">
-
 
                 <div class="dashboard-title">
 
@@ -1376,7 +978,6 @@
                     </small>
 
                 </div>
-
 
                 <div class="header-actions">
 
@@ -1396,13 +997,7 @@
 
             </div>
 
-
-            <!-- =================================================
-                 ESTATÍSTICAS
-            ================================================== -->
-
             <div class="stats-grid">
-
 
                 <div class="stat-card">
 
@@ -1425,7 +1020,6 @@
 
                 </div>
 
-
                 <div class="stat-card">
 
                     <div class="stat-icon">
@@ -1446,7 +1040,6 @@
                     </div>
 
                 </div>
-
 
                 <div class="stat-card">
 
@@ -1469,7 +1062,6 @@
 
                 </div>
 
-
                 <div class="stat-card">
 
                     <div class="stat-icon">
@@ -1490,7 +1082,6 @@
                     </div>
 
                 </div>
-
 
                 <div class="stat-card">
 
@@ -1513,7 +1104,6 @@
 
                 </div>
 
-
                 <div class="stat-card">
 
                     <div class="stat-icon">
@@ -1534,7 +1124,6 @@
                     </div>
 
                 </div>
-
 
                 <div class="stat-card">
 
@@ -1557,7 +1146,6 @@
 
                 </div>
 
-
                 <div class="stat-card">
 
                     <div class="stat-icon">
@@ -1579,13 +1167,7 @@
 
                 </div>
 
-
             </div>
-
-
-            <!-- =================================================
-                 ÚLTIMAS VENDAS
-            ================================================== -->
 
             <div class="section">
 
@@ -1596,7 +1178,6 @@
                     </h2>
 
                 </div>
-
 
                 <div class="table-container">
 
@@ -1626,7 +1207,6 @@
 
                         </thead>
 
-
                         <tbody id="lista">
 
                             <tr>
@@ -1651,13 +1231,7 @@
 
             </div>
 
-
         </div>
-
-
-        <!-- =================================================
-             CRM
-        ================================================== -->
 
         <div
             id="panelCRM"
@@ -1683,11 +1257,6 @@
 
         </div>
 
-
-        <!-- =================================================
-             PACOTES
-        ================================================== -->
-
         <div
             id="panelPacotes"
             class="panel"
@@ -1711,11 +1280,6 @@
             </div>
 
         </div>
-
-
-        <!-- =================================================
-             PEDIDOS
-        ================================================== -->
 
         <div
             id="panelPedidos"
@@ -1741,11 +1305,6 @@
 
         </div>
 
-
-        <!-- =================================================
-             DISPOSITIVOS
-        ================================================== -->
-
         <div
             id="panelDispositivos"
             class="panel"
@@ -1770,11 +1329,6 @@
 
         </div>
 
-
-        <!-- =================================================
-             TUTORIAL
-        ================================================== -->
-
         <div
             id="panelTutorial"
             class="panel"
@@ -1791,17 +1345,13 @@
 
                 </h2>
 
-
                 <div class="tutorial-content">
-
 
                     <h3>
                         Suas Credenciais de API
                     </h3>
 
-
                     <div class="credential-box">
-
 
                         <div class="credential-item">
 
@@ -1818,7 +1368,6 @@
 
                         </div>
 
-
                         <div class="credential-item">
 
                             <div class="credential-label">
@@ -1834,34 +1383,27 @@
 
                         </div>
 
-
                         <button
                             type="button"
                             class="copy-btn"
                             id="copyTutorialUidBtn"
-                            onclick="copiarUID()"
                         >
                             Copiar UID
                         </button>
-
 
                         <button
                             type="button"
                             class="copy-btn"
                             id="copyTutorialApiKeyBtn"
-                            onclick="copiarApiKey()"
                         >
                             Copiar API Key
                         </button>
 
-
                     </div>
-
 
                     <h3>
                         Adicionar Venda Normal
                     </h3>
-
 
                     <pre>fetch('/api/vendas', {
     method: 'POST',
@@ -1877,11 +1419,9 @@
     })
 })</pre>
 
-
                     <h3>
                         Adicionar Pacote Semanal
                     </h3>
-
 
                     <pre>fetch('/api/vendas', {
     method: 'POST',
@@ -1899,17 +1439,11 @@
     })
 })</pre>
 
-
                 </div>
 
             </div>
 
         </div>
-
-
-        <!-- =================================================
-             CONFIGURAÇÕES
-        ================================================== -->
 
         <div
             id="panelConfig"
@@ -1935,15 +1469,9 @@
 
         </div>
 
-
     </main>
 
 </div>
-
-
-<!-- =========================================================
-     SCRIPTS
-========================================================== -->
 
 <script src="/js/firebase.js"></script>
 
@@ -1967,21 +1495,11 @@
 
 <script src="/js/config.js"></script>
 
-
-<!-- =========================================================
-     CONTROLE DO TEMA
-========================================================== -->
-
 <script>
 
 (function () {
 
     "use strict";
-
-
-    /* =====================================================
-       APLICAR TEMA
-    ====================================================== */
 
     function aplicarTemaVisual(tema) {
 
@@ -1990,13 +1508,7 @@
                 .toLowerCase()
                 .trim();
 
-
         let temaFinal = tema;
-
-
-        /* =================================================
-           TEMA AUTOMÁTICO
-        ================================================== */
 
         if (tema === "system") {
 
@@ -2005,18 +1517,11 @@
                     "(prefers-color-scheme: dark)"
                 ).matches;
 
-
             temaFinal =
                 prefereDark
                     ? "dark"
                     : "light";
-
         }
-
-
-        /* =================================================
-           GARANTIR TEMA VÁLIDO
-        ================================================== */
 
         if (
             temaFinal !== "dark" &&
@@ -2027,20 +1532,10 @@
 
         }
 
-
-        /* =================================================
-           APLICAR NO HTML
-        ================================================== */
-
         document.documentElement.setAttribute(
             "data-theme",
             temaFinal
         );
-
-
-        /* =================================================
-           APLICAR NO BODY
-        ================================================== */
 
         if (document.body) {
 
@@ -2049,27 +1544,16 @@
                 "theme-light"
             );
 
-
             document.body.classList.add(
                 "theme-" + temaFinal
             );
 
         }
 
-
-        /* =================================================
-           GUARDAR ESCOLHA
-        ================================================== */
-
         localStorage.setItem(
             "tema",
             tema
         );
-
-
-        /* =================================================
-           ATUALIZAR BOTÕES
-        ================================================== */
 
         document
             .querySelectorAll(
@@ -2080,7 +1564,6 @@
                 botao.classList.remove(
                     "active"
                 );
-
 
                 if (
                     botao.dataset.themeChoice ===
@@ -2097,28 +1580,17 @@
 
     }
 
-
-    /* =====================================================
-       CARREGAR TEMA
-    ====================================================== */
-
     function carregarTema() {
 
         const temaSalvo =
             localStorage.getItem("tema") ||
             "dark";
 
-
         aplicarTemaVisual(
             temaSalvo
         );
 
     }
-
-
-    /* =====================================================
-       INICIAR TEMA
-    ====================================================== */
 
     function iniciarTema() {
 
@@ -2136,10 +1608,8 @@
 
                         event.stopPropagation();
 
-
                         const tema =
                             botao.dataset.themeChoice;
-
 
                         aplicarTemaVisual(
                             tema
@@ -2150,19 +1620,12 @@
 
             });
 
-
         carregarTema();
-
-
-        /* =================================================
-           MONITORAR SISTEMA
-        ================================================== */
 
         const media =
             window.matchMedia(
                 "(prefers-color-scheme: dark)"
             );
-
 
         media.addEventListener(
             "change",
@@ -2170,7 +1633,6 @@
 
                 const temaSalvo =
                     localStorage.getItem("tema");
-
 
                 if (
                     temaSalvo === "system"
@@ -2186,11 +1648,6 @@
         );
 
     }
-
-
-    /* =====================================================
-       DOM READY
-    ====================================================== */
 
     if (
         document.readyState ===
@@ -2215,7 +1672,6 @@
 })();
 
 </script>
-
 
 </body>
 
