@@ -1,381 +1,982 @@
+"use strict";
+
+// =====================================================
+// MACVENDAS
+// API DE PACOTES - FIREBASE
+// =====================================================
+
 const express = require("express");
+
 const router = express.Router();
 
-const { db } = require("../firebase-admin");
+const { db } =
+    require("./firebase-admin");
+
+const autenticarAPI =
+    require("./auth");
+
 
 // =====================================================
-// LISTAR PACOTES
-// GET /pacotes
+// FUNÇÕES AUXILIARES
 // =====================================================
 
-router.get("/", (req, res) => {
+function numeroValor(valor) {
 
-    try {
+    if (
+        valor === undefined ||
+        valor === null ||
+        valor === ""
+    ) {
 
-        const pacotes =
-            db.ler("pacotes") || [];
-
-        res.json({
-            success: true,
-            total: pacotes.length,
-            pacotes
-        });
-
-    } catch (err) {
-
-        console.error(
-            "Erro ao listar pacotes:",
-            err
-        );
-
-        res.status(500).json({
-            success: false,
-            error: err.message
-        });
+        return 0;
 
     }
 
-});
+    const n =
+        Number(valor);
+
+    return Number.isFinite(n)
+        ? n
+        : 0;
+
+}
+
+
+function booleanValor(valor, padrao = true) {
+
+    if (
+        valor === undefined ||
+        valor === null ||
+        valor === ""
+    ) {
+
+        return padrao;
+
+    }
+
+
+    if (
+        typeof valor === "boolean"
+    ) {
+
+        return valor;
+
+    }
+
+
+    if (
+        typeof valor === "string"
+    ) {
+
+        return (
+            valor.toLowerCase() === "true" ||
+            valor === "1" ||
+            valor.toLowerCase() === "sim"
+        );
+
+    }
+
+
+    return Boolean(valor);
+
+}
+
+
+function agora() {
+
+    return new Date()
+        .toISOString();
+
+}
+
+
+// =====================================================
+// LISTAR PACOTES
+// GET /api/pacotes
+// =====================================================
+
+router.get(
+    "/",
+    autenticarAPI,
+    async (req, res) => {
+
+        try {
+
+            const uid =
+                req.usuario.uid;
+
+
+            // =============================================
+            // BUSCAR PACOTES DO USUÁRIO
+            // =============================================
+
+            const snapshot =
+                await db
+                    .ref(
+                        "pacotes/" + uid
+                    )
+                    .once("value");
+
+
+            const dados =
+                snapshot.val() || {};
+
+
+            // =============================================
+            // TRANSFORMAR EM ARRAY
+            // =============================================
+
+            const pacotes =
+                Object.entries(dados)
+                    .map(
+                        ([id, pacote]) => ({
+
+                            id,
+
+                            ...pacote
+
+                        })
+                    )
+                    .reverse();
+
+
+            // =============================================
+            // RESPOSTA
+            // =============================================
+
+            return res.json({
+
+                success: true,
+
+                total:
+                    pacotes.length,
+
+                pacotes
+
+            });
+
+        }
+        catch (err) {
+
+            console.error(
+                "[API PACOTES] Erro ao listar:",
+                err
+            );
+
+
+            return res.status(500).json({
+
+                success: false,
+
+                error:
+                    err.message ||
+                    "Erro ao listar pacotes."
+
+            });
+
+        }
+
+    }
+);
 
 
 // =====================================================
 // BUSCAR PACOTE
-// GET /pacotes/:id
+// GET /api/pacotes/:id
 // =====================================================
 
-router.get("/:id", (req, res) => {
+router.get(
+    "/:id",
+    autenticarAPI,
+    async (req, res) => {
 
-    try {
+        try {
 
-        const pacotes =
-            db.ler("pacotes") || [];
+            const uid =
+                req.usuario.uid;
 
-        const pacote =
-            pacotes.find(
-                p =>
-                    String(p.id) ===
-                    String(req.params.id)
+
+            const id =
+                String(
+                    req.params.id
+                );
+
+
+            // =============================================
+            // REFERÊNCIA
+            // =============================================
+
+            const pacoteRef =
+                db
+                    .ref(
+                        "pacotes/" +
+                        uid +
+                        "/" +
+                        id
+                    );
+
+
+            const snapshot =
+                await pacoteRef
+                    .once("value");
+
+
+            // =============================================
+            // VERIFICAR
+            // =============================================
+
+            if (
+                !snapshot.exists()
+            ) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    error:
+                        "Pacote não encontrado."
+
+                });
+
+            }
+
+
+            // =============================================
+            // DADOS
+            // =============================================
+
+            const pacote =
+                snapshot.val();
+
+
+            return res.json({
+
+                success: true,
+
+                pacote: {
+
+                    id,
+
+                    ...pacote
+
+                }
+
+            });
+
+        }
+        catch (err) {
+
+            console.error(
+                "[API PACOTES] Erro ao buscar:",
+                err
             );
 
-        if (!pacote) {
 
-            return res.status(404).json({
+            return res.status(500).json({
+
                 success: false,
-                error: "Pacote não encontrado."
+
+                error:
+                    err.message ||
+                    "Erro ao buscar pacote."
+
             });
 
         }
 
-        res.json({
-            success: true,
-            pacote
-        });
-
-    } catch (err) {
-
-        console.error(
-            "Erro ao buscar pacote:",
-            err
-        );
-
-        res.status(500).json({
-            success: false,
-            error: err.message
-        });
-
     }
-
-});
+);
 
 
 // =====================================================
 // ADICIONAR PACOTE
-// POST /pacotes
+// POST /api/pacotes
 // =====================================================
 
-router.post("/", (req, res) => {
+router.post(
+    "/",
+    autenticarAPI,
+    async (req, res) => {
 
-    try {
+        try {
 
-        const pacotes =
-            db.ler("pacotes") || [];
+            const uid =
+                req.usuario.uid;
 
 
-        const gb =
-            Number(
-                req.body.gb || 0
+            // =============================================
+            // DADOS RECEBIDOS
+            // =============================================
+
+            const nome =
+                req.body.nome ||
+                "";
+
+
+            const tipo =
+                req.body.tipo ||
+                "NORMAL";
+
+
+            const gbRecebido =
+                numeroValor(
+                    req.body.gb
+                );
+
+
+            const mbRecebido =
+                numeroValor(
+                    req.body.mb
+                );
+
+
+            const valor =
+                numeroValor(
+                    req.body.valor
+                );
+
+
+            const vantagem =
+                req.body.vantagem ||
+                "";
+
+
+            const descricao =
+                req.body.descricao ||
+                "";
+
+
+            const ativo =
+                booleanValor(
+                    req.body.ativo,
+                    true
+                );
+
+
+            // =============================================
+            // CALCULAR GB / MB
+            // =============================================
+
+            let gb =
+                gbRecebido;
+
+
+            let mb =
+                mbRecebido;
+
+
+            if (
+                gb > 0
+            ) {
+
+                mb =
+                    gb * 1024;
+
+            }
+            else if (
+                mb > 0
+            ) {
+
+                gb =
+                    mb / 1024;
+
+            }
+
+
+            // =============================================
+            // VALIDAR
+            // =============================================
+
+            if (
+                !nome
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Nome do pacote é obrigatório."
+
+                });
+
+            }
+
+
+            if (
+                gb <= 0 &&
+                mb <= 0
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "GB ou MB do pacote é obrigatório."
+
+                });
+
+            }
+
+
+            // =============================================
+            // CRIAR REFERÊNCIA
+            // =============================================
+
+            const pacoteRef =
+                db
+                    .ref(
+                        "pacotes/" +
+                        uid
+                    )
+                    .push();
+
+
+            const id =
+                pacoteRef.key;
+
+
+            // =============================================
+            // CRIAR PACOTE
+            // =============================================
+
+            const pacote = {
+
+                id,
+
+                uid,
+
+                nome,
+
+                tipo,
+
+                gb,
+
+                mb,
+
+                valor,
+
+                vantagem,
+
+                descricao,
+
+                ativo,
+
+                createdAt:
+                    agora(),
+
+                criadoEm:
+                    agora()
+
+            };
+
+
+            // =============================================
+            // GUARDAR
+            // =============================================
+
+            await pacoteRef.set(
+                pacote
             );
 
 
-        const pacote = {
+            // =============================================
+            // RESPOSTA
+            // =============================================
 
-            id:
-                Date.now().toString(),
+            return res.status(201).json({
 
-            nome:
-                req.body.nome || "",
+                success: true,
 
-            tipo:
-                req.body.tipo || "NORMAL",
+                message:
+                    "Pacote adicionado com sucesso.",
 
-            gb,
+                pacote
 
-            mb:
-                gb * 1024,
+            });
 
-            valor:
-                Number(
-                    req.body.valor || 0
-                ),
+        }
+        catch (err) {
 
-            vantagem:
-                req.body.vantagem || "",
-
-            descricao:
-                req.body.descricao || "",
-
-            ativo:
-                req.body.ativo !== undefined
-                    ? Boolean(req.body.ativo)
-                    : true,
-
-            createdAt:
-                new Date().toISOString()
-
-        };
+            console.error(
+                "[API PACOTES] Erro ao adicionar:",
+                err
+            );
 
 
-        pacotes.unshift(
-            pacote
-        );
+            return res.status(500).json({
 
+                success: false,
 
-        db.salvar(
-            "pacotes",
-            pacotes
-        );
+                error:
+                    err.message ||
+                    "Erro ao adicionar pacote."
 
+            });
 
-        res.json({
-            success: true,
-            pacote
-        });
-
-    } catch (err) {
-
-        console.error(
-            "Erro ao adicionar pacote:",
-            err
-        );
-
-        res.status(500).json({
-            success: false,
-            error: err.message
-        });
+        }
 
     }
-
-});
+);
 
 
 // =====================================================
 // EDITAR PACOTE
-// PUT /pacotes/:id
+// PUT /api/pacotes/:id
 // =====================================================
 
-router.put("/:id", (req, res) => {
+router.put(
+    "/:id",
+    autenticarAPI,
+    async (req, res) => {
 
-    try {
+        try {
 
-        const pacotes =
-            db.ler("pacotes") || [];
+            const uid =
+                req.usuario.uid;
 
 
-        const index =
-            pacotes.findIndex(
-                p =>
-                    String(p.id) ===
-                    String(req.params.id)
+            const id =
+                String(
+                    req.params.id
+                );
+
+
+            // =============================================
+            // REFERÊNCIA
+            // =============================================
+
+            const pacoteRef =
+                db
+                    .ref(
+                        "pacotes/" +
+                        uid +
+                        "/" +
+                        id
+                    );
+
+
+            const snapshot =
+                await pacoteRef
+                    .once("value");
+
+
+            // =============================================
+            // VERIFICAR
+            // =============================================
+
+            if (
+                !snapshot.exists()
+            ) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    error:
+                        "Pacote não encontrado."
+
+                });
+
+            }
+
+
+            // =============================================
+            // PACOTE ATUAL
+            // =============================================
+
+            const atual =
+                snapshot.val() || {};
+
+
+            // =============================================
+            // DADOS RECEBIDOS
+            // =============================================
+
+            const atualizado = {
+
+                ...atual,
+
+                ...req.body,
+
+                id,
+
+                uid
+
+            };
+
+
+            // =============================================
+            // SINCRONIZAR GB / MB
+            // =============================================
+
+            if (
+                req.body.gb !== undefined
+            ) {
+
+                atualizado.gb =
+                    numeroValor(
+                        req.body.gb
+                    );
+
+
+                atualizado.mb =
+                    atualizado.gb *
+                    1024;
+
+            }
+            else if (
+                req.body.mb !== undefined
+            ) {
+
+                atualizado.mb =
+                    numeroValor(
+                        req.body.mb
+                    );
+
+
+                atualizado.gb =
+                    atualizado.mb /
+                    1024;
+
+            }
+            else {
+
+                atualizado.gb =
+                    numeroValor(
+                        atualizado.gb
+                    );
+
+
+                atualizado.mb =
+                    numeroValor(
+                        atualizado.mb
+                    );
+
+            }
+
+
+            // =============================================
+            // VALOR
+            // =============================================
+
+            if (
+                req.body.valor !== undefined
+            ) {
+
+                atualizado.valor =
+                    numeroValor(
+                        req.body.valor
+                    );
+
+            }
+            else {
+
+                atualizado.valor =
+                    numeroValor(
+                        atualizado.valor
+                    );
+
+            }
+
+
+            // =============================================
+            // ATIVO
+            // =============================================
+
+            if (
+                req.body.ativo !== undefined
+            ) {
+
+                atualizado.ativo =
+                    booleanValor(
+                        req.body.ativo,
+                        true
+                    );
+
+            }
+
+
+            // =============================================
+            // DATA
+            // =============================================
+
+            atualizado.atualizado =
+                agora();
+
+
+            // =============================================
+            // GUARDAR
+            // =============================================
+
+            await pacoteRef.update(
+                atualizado
             );
 
 
-        if (index === -1) {
+            // =============================================
+            // RESPOSTA
+            // =============================================
 
-            return res.status(404).json({
+            return res.json({
+
+                success: true,
+
+                message:
+                    "Pacote atualizado com sucesso.",
+
+                pacote:
+                    atualizado
+
+            });
+
+        }
+        catch (err) {
+
+            console.error(
+                "[API PACOTES] Erro ao editar:",
+                err
+            );
+
+
+            return res.status(500).json({
+
                 success: false,
-                error: "Pacote não encontrado."
+
+                error:
+                    err.message ||
+                    "Erro ao editar pacote."
+
             });
 
         }
 
-
-        const atual =
-            pacotes[index];
-
-
-        const atualizado = {
-
-            ...atual,
-
-            ...req.body
-
-        };
+    }
+);
 
 
-        // ==========================================
-        // SINCRONIZAR GB / MB
-        // ==========================================
+// =====================================================
+// ATIVAR / DESATIVAR PACOTE
+// PATCH /api/pacotes/:id/status
+// =====================================================
 
-        if (
-            req.body.gb !== undefined
-        ) {
+router.patch(
+    "/:id/status",
+    autenticarAPI,
+    async (req, res) => {
 
-            atualizado.gb =
-                Number(
-                    req.body.gb
+        try {
+
+            const uid =
+                req.usuario.uid;
+
+
+            const id =
+                String(
+                    req.params.id
                 );
 
-            atualizado.mb =
-                atualizado.gb * 1024;
 
-        }
-        else if (
-            req.body.mb !== undefined
-        ) {
-
-            atualizado.mb =
-                Number(
-                    req.body.mb
+            const ativo =
+                booleanValor(
+                    req.body.ativo,
+                    true
                 );
 
-            atualizado.gb =
-                atualizado.mb / 1024;
+
+            const pacoteRef =
+                db
+                    .ref(
+                        "pacotes/" +
+                        uid +
+                        "/" +
+                        id
+                    );
+
+
+            const snapshot =
+                await pacoteRef
+                    .once("value");
+
+
+            if (
+                !snapshot.exists()
+            ) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    error:
+                        "Pacote não encontrado."
+
+                });
+
+            }
+
+
+            await pacoteRef.update({
+
+                ativo,
+
+                atualizado:
+                    agora()
+
+            });
+
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    ativo
+                        ? "Pacote ativado."
+                        : "Pacote desativado.",
+
+                id,
+
+                ativo
+
+            });
 
         }
+        catch (err) {
+
+            console.error(
+                "[API PACOTES] Erro ao alterar status:",
+                err
+            );
 
 
-        // ==========================================
-        // GARANTIR VALOR NUMÉRICO
-        // ==========================================
+            return res.status(500).json({
 
-        if (
-            req.body.valor !== undefined
-        ) {
+                success: false,
 
-            atualizado.valor =
-                Number(
-                    req.body.valor
-                );
+                error:
+                    err.message ||
+                    "Erro ao alterar status do pacote."
+
+            });
 
         }
-
-
-        atualizado.atualizado =
-            new Date().toISOString();
-
-
-        pacotes[index] =
-            atualizado;
-
-
-        db.salvar(
-            "pacotes",
-            pacotes
-        );
-
-
-        res.json({
-            success: true,
-            pacote: atualizado
-        });
-
-    } catch (err) {
-
-        console.error(
-            "Erro ao editar pacote:",
-            err
-        );
-
-        res.status(500).json({
-            success: false,
-            error: err.message
-        });
 
     }
-
-});
+);
 
 
 // =====================================================
 // REMOVER PACOTE
-// DELETE /pacotes/:id
+// DELETE /api/pacotes/:id
 // =====================================================
 
-router.delete("/:id", (req, res) => {
+router.delete(
+    "/:id",
+    autenticarAPI,
+    async (req, res) => {
 
-    try {
+        try {
 
-        const pacotes =
-            db.ler("pacotes") || [];
+            const uid =
+                req.usuario.uid;
 
 
-        const id =
-            String(
-                req.params.id
+            const id =
+                String(
+                    req.params.id
+                );
+
+
+            // =============================================
+            // REFERÊNCIA
+            // =============================================
+
+            const pacoteRef =
+                db
+                    .ref(
+                        "pacotes/" +
+                        uid +
+                        "/" +
+                        id
+                    );
+
+
+            const snapshot =
+                await pacoteRef
+                    .once("value");
+
+
+            // =============================================
+            // VERIFICAR
+            // =============================================
+
+            if (
+                !snapshot.exists()
+            ) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    error:
+                        "Pacote não encontrado."
+
+                });
+
+            }
+
+
+            // =============================================
+            // APAGAR
+            // =============================================
+
+            await pacoteRef.remove();
+
+
+            // =============================================
+            // RESPOSTA
+            // =============================================
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    "Pacote removido.",
+
+                id
+
+            });
+
+        }
+        catch (err) {
+
+            console.error(
+                "[API PACOTES] Erro ao remover:",
+                err
             );
 
 
-        const existe =
-            pacotes.some(
-                pacote =>
-                    String(pacote.id) === id
-            );
+            return res.status(500).json({
 
-
-        if (!existe) {
-
-            return res.status(404).json({
                 success: false,
-                error: "Pacote não encontrado."
+
+                error:
+                    err.message ||
+                    "Erro ao remover pacote."
+
             });
 
         }
 
-
-        const novosPacotes =
-            pacotes.filter(
-                pacote =>
-                    String(pacote.id) !== id
-            );
-
-
-        db.salvar(
-            "pacotes",
-            novosPacotes
-        );
-
-
-        res.json({
-            success: true,
-            mensagem: "Pacote removido.",
-            id
-        });
-
-    } catch (err) {
-
-        console.error(
-            "Erro ao remover pacote:",
-            err
-        );
-
-        res.status(500).json({
-            success: false,
-            error: err.message
-        });
-
     }
+);
 
-});
 
+// =====================================================
+// EXPORTAR
+// =====================================================
 
-module.exports = router;
+module.exports =
+    router;
