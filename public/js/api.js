@@ -1,12 +1,29 @@
 "use strict";
 
+/*
+=====================================================
+ MOZ TECH
+ API.JS
+ CREDENCIAIS + API + USUARIO
+=====================================================
+
+ PRIORIDADE DAS CREDENCIAIS:
+
+ 1. Firebase
+ 2. localStorage (fallback)
+
+ O UID principal vem do Firebase.
+ A API Key continua sendo usada para autenticar
+ as chamadas à API.
+=====================================================
+*/
+
 
 // =====================================================
-// CONFIGURAÇÃO
+// CONFIGURAÇÃO DA API
 // =====================================================
 
-const API_URL =
-    window.location.origin + "/api";
+const API_URL = window.location.origin + "/api";
 
 
 // =====================================================
@@ -14,37 +31,18 @@ const API_URL =
 // =====================================================
 
 let usuarioAPI = {
-
     uid: "",
     apiKey: "",
     fullName: "",
     email: ""
-
 };
 
 
 // =====================================================
-// ELEMENTOS
+// OBTER CREDENCIAIS DO LOCALSTORAGE
 // =====================================================
 
-const elementoNome =
-    document.getElementById("nomeUsuario");
-
-const elementoEmail =
-    document.getElementById("emailUsuario");
-
-const elementoUID =
-    document.getElementById("uidUsuario");
-
-const elementoAPIKey =
-    document.getElementById("apiKeyUsuario");
-
-
-// =====================================================
-// OBTER CREDENCIAIS
-// =====================================================
-
-function obterCredenciais() {
+function obterCredenciaisLocalStorage() {
 
     const uid =
         localStorage.getItem("uid") ||
@@ -57,14 +55,376 @@ function obterCredenciais() {
         "";
 
     return {
+        uid,
+        apiKey
+    };
+}
 
-        uid:
-            String(uid).trim(),
 
-        apiKey:
-            String(apiKey).trim()
+// =====================================================
+// SALVAR CREDENCIAIS
+// =====================================================
+
+function salvarCredenciais(uid, apiKey) {
+
+    if (uid) {
+
+        localStorage.setItem("uid", uid);
+        localStorage.setItem("userUID", uid);
+
+    }
+
+    if (apiKey) {
+
+        localStorage.setItem("apiKey", apiKey);
+        localStorage.setItem("api_key", apiKey);
+
+    }
+
+}
+
+
+// =====================================================
+// OBTER DADOS DO FIREBASE
+// =====================================================
+
+async function obterDadosFirebase() {
+
+    try {
+
+        // -------------------------------------------------
+        // Se firebase.js ainda não carregou
+        // -------------------------------------------------
+
+        if (typeof window.obterDadosUsuario !== "function") {
+
+            console.warn(
+                "[API] obterDadosUsuario() ainda não disponível."
+            );
+
+            return null;
+        }
+
+
+        // -------------------------------------------------
+        // Primeira tentativa
+        // -------------------------------------------------
+
+        let dados = await window.obterDadosUsuario();
+
+
+        if (dados && dados.uid) {
+
+            return dados;
+
+        }
+
+
+        // -------------------------------------------------
+        // Firebase Auth pode ainda estar restaurando
+        // a sessão.
+        //
+        // Esperamos o onAuthState.
+        // -------------------------------------------------
+
+        if (typeof window.onAuthState === "function") {
+
+            console.log(
+                "[API] Aguardando restauração da sessão Firebase..."
+            );
+
+
+            dados = await new Promise((resolve) => {
+
+                let finalizado = false;
+
+
+                const terminar = async (usuario) => {
+
+                    if (finalizado) {
+                        return;
+                    }
+
+                    finalizado = true;
+
+
+                    try {
+
+                        if (!usuario) {
+
+                            resolve(null);
+                            return;
+
+                        }
+
+
+                        // Depois que o Auth confirmou o usuário,
+                        // buscamos os dados completos.
+
+                        const dadosUsuario =
+                            await window.obterDadosUsuario();
+
+                        resolve(dadosUsuario || null);
+
+                    } catch (erro) {
+
+                        console.error(
+                            "[API] Erro ao obter dados Firebase:",
+                            erro
+                        );
+
+                        resolve(null);
+                    }
+
+                };
+
+
+                try {
+
+                    window.onAuthState(async (usuario) => {
+
+                        await terminar(usuario);
+
+                    });
+
+                } catch (erro) {
+
+                    console.error(
+                        "[API] Erro no onAuthState:",
+                        erro
+                    );
+
+                    resolve(null);
+                }
+
+
+                // -------------------------------------------------
+                // Timeout de segurança
+                // -------------------------------------------------
+
+                setTimeout(() => {
+
+                    if (!finalizado) {
+
+                        finalizado = true;
+
+                        console.warn(
+                            "[API] Timeout aguardando Firebase Auth."
+                        );
+
+                        resolve(null);
+
+                    }
+
+                }, 10000);
+
+            });
+
+
+            if (dados && dados.uid) {
+
+                return dados;
+
+            }
+
+        }
+
+
+    } catch (erro) {
+
+        console.error(
+            "[API] Erro ao obter credenciais Firebase:",
+            erro
+        );
+
+    }
+
+
+    return null;
+}
+
+
+// =====================================================
+// OBTER CREDENCIAIS
+// =====================================================
+
+async function obterCredenciais() {
+
+    /*
+    =====================================================
+    PRIMEIRO: FIREBASE
+    =====================================================
+    */
+
+    const dadosFirebase =
+        await obterDadosFirebase();
+
+
+    if (dadosFirebase && dadosFirebase.uid) {
+
+        const uid =
+            dadosFirebase.uid || "";
+
+
+        const apiKey =
+            dadosFirebase.apiKey ||
+            dadosFirebase.api_key ||
+            "";
+
+
+        if (uid) {
+
+            usuarioAPI.uid = uid;
+
+        }
+
+
+        if (apiKey) {
+
+            usuarioAPI.apiKey = apiKey;
+
+        }
+
+
+        // -------------------------------------------------
+        // Guardar para compatibilidade
+        // -------------------------------------------------
+
+        salvarCredenciais(
+            uid,
+            apiKey
+        );
+
+
+        console.log(
+            "[API] Credenciais obtidas pelo Firebase:",
+            {
+                uid: uid,
+                possuiApiKey: !!apiKey
+            }
+        );
+
+
+        return {
+
+            uid,
+            apiKey,
+
+            dadosFirebase
+
+        };
+
+    }
+
+
+    /*
+    =====================================================
+    FALLBACK: LOCALSTORAGE
+    =====================================================
+    */
+
+    console.warn(
+        "[API] Firebase não forneceu credenciais. " +
+        "Usando localStorage como fallback."
+    );
+
+
+    const local =
+        obterCredenciaisLocalStorage();
+
+
+    usuarioAPI.uid =
+        local.uid || "";
+
+
+    usuarioAPI.apiKey =
+        local.apiKey || "";
+
+
+    return {
+
+        uid: local.uid,
+        apiKey: local.apiKey,
+
+        dadosFirebase: null
 
     };
+
+}
+
+
+// =====================================================
+// HEADERS DA API
+// =====================================================
+
+async function obterHeadersAPI() {
+
+    const credenciais =
+        await obterCredenciais();
+
+
+    const headers = {
+
+        "Content-Type":
+            "application/json"
+
+    };
+
+
+    if (credenciais.uid) {
+
+        headers["x-uid"] =
+            credenciais.uid;
+
+    }
+
+
+    if (credenciais.apiKey) {
+
+        headers["x-api-key"] =
+            credenciais.apiKey;
+
+    }
+
+
+    return headers;
+
+}
+
+
+// =====================================================
+// VERIFICAR CREDENCIAIS
+// =====================================================
+
+async function verificarCredenciais() {
+
+    const credenciais =
+        await obterCredenciais();
+
+
+    if (!credenciais.uid) {
+
+        console.warn(
+            "[API] UID não encontrado."
+        );
+
+        return false;
+
+    }
+
+
+    if (!credenciais.apiKey) {
+
+        console.warn(
+            "[API] API Key não encontrada."
+        );
+
+        return false;
+
+    }
+
+
+    return true;
 
 }
 
@@ -77,130 +437,160 @@ async function carregarUsuario() {
 
     try {
 
-        console.log(
-            "[API] Carregando usuário..."
-        );
-
-
         const credenciais =
-            obterCredenciais();
+            await obterCredenciais();
 
 
-        if (
-            !credenciais.uid ||
-            !credenciais.apiKey
-        ) {
+        if (!credenciais.uid) {
 
             console.warn(
-                "[API] UID ou API Key não encontrados."
+                "[API] Nenhum UID disponível."
             );
 
-            return;
+            return null;
 
         }
 
 
-        usuarioAPI.uid =
-            credenciais.uid;
+        /*
+        =================================================
+        BUSCAR CONFIGURAÇÕES DA API
+        =================================================
+        */
 
-        usuarioAPI.apiKey =
-            credenciais.apiKey;
+        const headers =
+            await obterHeadersAPI();
 
-
-        // =================================================
-        // BUSCAR CONFIGURAÇÕES
-        // =================================================
 
         const resposta =
             await fetch(
                 API_URL + "/configuracoes",
                 {
-
                     method: "GET",
-
-                    headers: {
-
-                        "Accept":
-                            "application/json",
-
-                        "x-uid":
-                            usuarioAPI.uid,
-
-                        "x-api-key":
-                            usuarioAPI.apiKey
-
-                    },
-
-                    cache:
-                        "no-store"
-
+                    headers
                 }
             );
 
 
+        /*
+        =================================================
+        ERRO HTTP
+        =================================================
+        */
+
         if (!resposta.ok) {
 
-            throw new Error(
-                "Erro HTTP: " +
-                resposta.status
+            let erroTexto = "";
+
+            try {
+
+                erroTexto =
+                    await resposta.text();
+
+            } catch (_) {
+
+                erroTexto =
+                    "Erro desconhecido";
+
+            }
+
+
+            console.error(
+                "[API] Erro HTTP:",
+                resposta.status,
+                erroTexto
             );
+
+
+            return null;
 
         }
 
 
-        const json =
+        const dados =
             await resposta.json();
 
 
-        console.log(
-            "[API] Resposta:",
-            json
-        );
-
-
-        if (!json.success) {
-
-            throw new Error(
-                json.error ||
-                "Erro ao carregar usuário."
-            );
-
-        }
-
+        /*
+        =================================================
+        CONFIGURAÇÃO RETORNADA
+        =================================================
+        */
 
         const configuracao =
-            json.configuracao || {};
+            dados?.configuracao ||
+            dados?.data ||
+            dados ||
+            {};
 
 
-        // =================================================
-        // DADOS
-        // =================================================
+        /*
+        =================================================
+        NOME
+        =================================================
+        */
 
         usuarioAPI.fullName =
             configuracao.nomeEmpresa ||
+            configuracao.nome ||
+            configuracao.fullName ||
+            credenciais.dadosFirebase?.nome ||
+            credenciais.dadosFirebase?.displayName ||
             "";
+
+
+        /*
+        =================================================
+        EMAIL
+        =================================================
+        */
 
         usuarioAPI.email =
             configuracao.email ||
+            credenciais.dadosFirebase?.email ||
             "";
 
 
-        mostrarUsuario();
+        /*
+        =================================================
+        UID
+        =================================================
+        */
 
-        atualizarExemplos();
+        usuarioAPI.uid =
+            credenciais.uid;
+
+
+        /*
+        =================================================
+        API KEY
+        =================================================
+        */
+
+        usuarioAPI.apiKey =
+            credenciais.apiKey;
 
 
         console.log(
-            "[API] Usuário carregado."
+            "[API] Usuário carregado:",
+            {
+                uid: usuarioAPI.uid,
+                nome: usuarioAPI.fullName,
+                email: usuarioAPI.email
+            }
         );
 
-    }
-    catch (erro) {
+
+        return usuarioAPI;
+
+    } catch (erro) {
 
         console.error(
-            "[API] Erro:",
+            "[API] Erro ao carregar usuário:",
             erro
         );
+
+        return null;
 
     }
 
@@ -208,43 +598,217 @@ async function carregarUsuario() {
 
 
 // =====================================================
-// MOSTRAR USUÁRIO
+// REQUISIÇÃO GENÉRICA GET
 // =====================================================
 
-function mostrarUsuario() {
+async function apiGet(endpoint) {
 
-    if (elementoNome) {
+    try {
 
-        elementoNome.textContent =
-            usuarioAPI.fullName ||
-            "Usuário";
+        const headers =
+            await obterHeadersAPI();
+
+
+        const resposta =
+            await fetch(
+                API_URL + endpoint,
+                {
+                    method: "GET",
+                    headers
+                }
+            );
+
+
+        const dados =
+            await resposta.json();
+
+
+        if (!resposta.ok) {
+
+            throw new Error(
+                dados?.erro ||
+                dados?.message ||
+                `HTTP ${resposta.status}`
+            );
+
+        }
+
+
+        return dados;
+
+    } catch (erro) {
+
+        console.error(
+            "[API GET]",
+            endpoint,
+            erro
+        );
+
+        throw erro;
 
     }
 
+}
 
-    if (elementoEmail) {
 
-        elementoEmail.textContent =
-            usuarioAPI.email ||
-            "";
+// =====================================================
+// REQUISIÇÃO GENÉRICA POST
+// =====================================================
+
+async function apiPost(endpoint, dados = {}) {
+
+    try {
+
+        const headers =
+            await obterHeadersAPI();
+
+
+        const resposta =
+            await fetch(
+                API_URL + endpoint,
+                {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify(dados)
+                }
+            );
+
+
+        const resultado =
+            await resposta.json();
+
+
+        if (!resposta.ok) {
+
+            throw new Error(
+                resultado?.erro ||
+                resultado?.message ||
+                `HTTP ${resposta.status}`
+            );
+
+        }
+
+
+        return resultado;
+
+    } catch (erro) {
+
+        console.error(
+            "[API POST]",
+            endpoint,
+            erro
+        );
+
+        throw erro;
 
     }
 
+}
 
-    if (elementoUID) {
 
-        elementoUID.textContent =
-            usuarioAPI.uid ||
-            "Não disponível";
+// =====================================================
+// REQUISIÇÃO GENÉRICA PUT
+// =====================================================
+
+async function apiPut(endpoint, dados = {}) {
+
+    try {
+
+        const headers =
+            await obterHeadersAPI();
+
+
+        const resposta =
+            await fetch(
+                API_URL + endpoint,
+                {
+                    method: "PUT",
+                    headers,
+                    body: JSON.stringify(dados)
+                }
+            );
+
+
+        const resultado =
+            await resposta.json();
+
+
+        if (!resposta.ok) {
+
+            throw new Error(
+                resultado?.erro ||
+                resultado?.message ||
+                `HTTP ${resposta.status}`
+            );
+
+        }
+
+
+        return resultado;
+
+    } catch (erro) {
+
+        console.error(
+            "[API PUT]",
+            endpoint,
+            erro
+        );
+
+        throw erro;
 
     }
 
+}
 
-    if (elementoAPIKey) {
 
-        elementoAPIKey.textContent =
-            usuarioAPI.apiKey ||
-            "Não disponível";
+// =====================================================
+// REQUISIÇÃO GENÉRICA DELETE
+// =====================================================
+
+async function apiDelete(endpoint) {
+
+    try {
+
+        const headers =
+            await obterHeadersAPI();
+
+
+        const resposta =
+            await fetch(
+                API_URL + endpoint,
+                {
+                    method: "DELETE",
+                    headers
+                }
+            );
+
+
+        const resultado =
+            await resposta.json();
+
+
+        if (!resposta.ok) {
+
+            throw new Error(
+                resultado?.erro ||
+                resultado?.message ||
+                `HTTP ${resposta.status}`
+            );
+
+        }
+
+
+        return resultado;
+
+    } catch (erro) {
+
+        console.error(
+            "[API DELETE]",
+            endpoint,
+            erro
+        );
+
+        throw erro;
 
     }
 
@@ -257,10 +821,15 @@ function mostrarUsuario() {
 
 async function copiarUID() {
 
-    if (!usuarioAPI.uid) {
+    const uid =
+        usuarioAPI.uid ||
+        (await obterCredenciais()).uid;
 
-        alert(
-            "UID não disponível."
+
+    if (!uid) {
+
+        console.warn(
+            "[API] UID não disponível para copiar."
         );
 
         return;
@@ -270,17 +839,13 @@ async function copiarUID() {
 
     try {
 
-        await navigator.clipboard.writeText(
-            usuarioAPI.uid
+        await navigator.clipboard.writeText(uid);
+
+        console.log(
+            "[API] UID copiado."
         );
 
-
-        alert(
-            "UID copiado!"
-        );
-
-    }
-    catch (erro) {
+    } catch (erro) {
 
         console.error(
             "[API] Erro ao copiar UID:",
@@ -298,10 +863,15 @@ async function copiarUID() {
 
 async function copiarAPIKey() {
 
-    if (!usuarioAPI.apiKey) {
+    const apiKey =
+        usuarioAPI.apiKey ||
+        (await obterCredenciais()).apiKey;
 
-        alert(
-            "API Key não disponível."
+
+    if (!apiKey) {
+
+        console.warn(
+            "[API] API Key não disponível para copiar."
         );
 
         return;
@@ -311,17 +881,13 @@ async function copiarAPIKey() {
 
     try {
 
-        await navigator.clipboard.writeText(
-            usuarioAPI.apiKey
+        await navigator.clipboard.writeText(apiKey);
+
+        console.log(
+            "[API] API Key copiada."
         );
 
-
-        alert(
-            "API Key copiada!"
-        );
-
-    }
-    catch (erro) {
+    } catch (erro) {
 
         console.error(
             "[API] Erro ao copiar API Key:",
@@ -334,54 +900,16 @@ async function copiarAPIKey() {
 
 
 // =====================================================
-// ATUALIZAR EXEMPLOS
-// =====================================================
-
-function atualizarExemplos() {
-
-    const exemplos =
-        document.querySelectorAll(
-            "[data-api-example]"
-        );
-
-
-    exemplos.forEach(
-        function (elemento) {
-
-            let codigo =
-                elemento.textContent;
-
-
-            codigo =
-                codigo.replace(
-                    /SEU_UID/g,
-                    usuarioAPI.uid
-                );
-
-
-            codigo =
-                codigo.replace(
-                    /SUA_API_KEY/g,
-                    usuarioAPI.apiKey
-                );
-
-
-            elemento.textContent =
-                codigo;
-
-        }
-    );
-
-}
-
-
-// =====================================================
 // COPIAR CÓDIGO
 // =====================================================
 
-async function copiarCodigo(elemento) {
+async function copiarCodigo(codigo) {
 
-    if (!elemento) {
+    if (!codigo) {
+
+        console.warn(
+            "[API] Nenhum código para copiar."
+        );
 
         return;
 
@@ -391,16 +919,14 @@ async function copiarCodigo(elemento) {
     try {
 
         await navigator.clipboard.writeText(
-            elemento.textContent
+            String(codigo)
         );
 
-
-        alert(
-            "Código copiado!"
+        console.log(
+            "[API] Código copiado."
         );
 
-    }
-    catch (erro) {
+    } catch (erro) {
 
         console.error(
             "[API] Erro ao copiar código:",
@@ -413,130 +939,41 @@ async function copiarCodigo(elemento) {
 
 
 // =====================================================
-// INICIALIZAR EVENTOS
+// DISPONIBILIZAR GLOBALMENTE
 // =====================================================
 
-function inicializarEventos() {
+window.usuarioAPI =
+    usuarioAPI;
 
-    const btnUID =
-        document.getElementById(
-            "btnCopiarUID"
-        );
+window.obterCredenciais =
+    obterCredenciais;
 
+window.obterCredenciaisLocalStorage =
+    obterCredenciaisLocalStorage;
 
-    const btnAPIKey =
-        document.getElementById(
-            "btnCopiarAPIKey"
-        );
+window.obterDadosFirebase =
+    obterDadosFirebase;
 
+window.obterHeadersAPI =
+    obterHeadersAPI;
 
-    if (btnUID) {
+window.verificarCredenciais =
+    verificarCredenciais;
 
-        btnUID.addEventListener(
-            "click",
-            copiarUID
-        );
+window.carregarUsuario =
+    carregarUsuario;
 
-    }
+window.apiGet =
+    apiGet;
 
+window.apiPost =
+    apiPost;
 
-    if (btnAPIKey) {
+window.apiPut =
+    apiPut;
 
-        btnAPIKey.addEventListener(
-            "click",
-            copiarAPIKey
-        );
-
-    }
-
-
-    const botoesCodigo =
-        document.querySelectorAll(
-            "[data-copiar-codigo]"
-        );
-
-
-    botoesCodigo.forEach(
-        function (botao) {
-
-            botao.addEventListener(
-                "click",
-                function () {
-
-                    const id =
-                        botao.dataset.copiarCodigo;
-
-
-                    const bloco =
-                        document.getElementById(
-                            id
-                        );
-
-
-                    copiarCodigo(
-                        bloco
-                    );
-
-                }
-            );
-
-        }
-    );
-
-}
-
-
-// =====================================================
-// INICIALIZAÇÃO
-// =====================================================
-
-function inicializarAPI() {
-
-    console.log(
-        "[API] Inicializando..."
-    );
-
-
-    inicializarEventos();
-
-    carregarUsuario();
-
-
-    console.log(
-        "[API] Página API pronta."
-    );
-
-}
-
-
-// =====================================================
-// DOM READY
-// =====================================================
-
-if (
-    document.readyState ===
-    "loading"
-) {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        inicializarAPI,
-        {
-            once: true
-        }
-    );
-
-}
-else {
-
-    inicializarAPI();
-
-}
-
-
-// =====================================================
-// FUNÇÕES GLOBAIS
-// =====================================================
+window.apiDelete =
+    apiDelete;
 
 window.copiarUID =
     copiarUID;
@@ -546,3 +983,68 @@ window.copiarAPIKey =
 
 window.copiarCodigo =
     copiarCodigo;
+
+
+// =====================================================
+// INICIALIZAÇÃO
+// =====================================================
+
+(async function iniciarAPI() {
+
+    try {
+
+        console.log(
+            "[API] Inicializando sistema de credenciais..."
+        );
+
+
+        const credenciais =
+            await obterCredenciais();
+
+
+        if (credenciais.uid) {
+
+            console.log(
+                "[API] UID atual:",
+                credenciais.uid
+            );
+
+        } else {
+
+            console.warn(
+                "[API] Nenhum UID encontrado na inicialização."
+            );
+
+        }
+
+
+        /*
+        =================================================
+        NÃO fazemos a chamada /configuracoes
+        imediatamente se ainda não houver API Key.
+
+        Isso evita requisições inválidas enquanto
+        o Firebase ainda restaura a sessão.
+        =================================================
+        */
+
+        if (
+            credenciais.uid &&
+            credenciais.apiKey
+        ) {
+
+            await carregarUsuario();
+
+        }
+
+
+    } catch (erro) {
+
+        console.error(
+            "[API] Erro na inicialização:",
+            erro
+        );
+
+    }
+
+})();
