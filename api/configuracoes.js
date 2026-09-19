@@ -152,7 +152,6 @@ function configuracaoPadrao(uid, usuario) {
         // DATAS
         // =================================================
 
-
         criadoEm:
             agora(),
 
@@ -425,11 +424,13 @@ router.get(
             ) {
 
                 configuracao.terminal = {
+
                     ativo: false,
-                    api: "",
-                    endpoint: "",
-                    metodo: "POST",
+                    host: "",
+                    porta: 8080,
+                    protocolo: "wss",
                     token: ""
+
                 };
 
             }
@@ -438,19 +439,16 @@ router.get(
                 configuracao.terminal.ativo =
                     configuracao.terminal.ativo === true;
 
-                configuracao.terminal.api =
-                    String(configuracao.terminal.api || "").trim();
+                configuracao.terminal.host =
+                    String(configuracao.terminal.host || "").trim();
 
-                configuracao.terminal.endpoint =
-                    String(configuracao.terminal.endpoint || "").trim();
+                configuracao.terminal.porta =
+                    Number(configuracao.terminal.porta) || 8080;
 
-                const metodoTerminal =
-                    String(configuracao.terminal.metodo || "POST").toUpperCase();
-
-                configuracao.terminal.metodo =
-                    ["GET", "POST", "PUT", "PATCH", "DELETE"].includes(metodoTerminal)
-                        ? metodoTerminal
-                        : "POST";
+                configuracao.terminal.protocolo =
+                    configuracao.terminal.protocolo === "ws"
+                        ? "ws"
+                        : "wss";
 
                 configuracao.terminal.token =
                     String(configuracao.terminal.token || "").trim();
@@ -702,64 +700,49 @@ router.put(
 
                 // =================================================
                 // TERMINAL / SERVIDOR
-        // =================================================
+                // =================================================
 
-        terminal: {
+                terminal: {
 
-            ativo:
-                req.body.terminal?.ativo === true,
+                    ativo:
+                        req.body.terminal?.ativo === true,
 
-            api:
-                String(
-                    req.body.terminal?.api ??
-                    atual.terminal?.api ??
-                    ""
-                ).trim(),
+                    api:
+                        String(
+                            req.body.terminal?.api ??
+                            atual.terminal?.api ??
+                            ""
+                        ).trim(),
 
-            endpoint:
-                String(
-                    req.body.terminal?.endpoint ??
-                    atual.terminal?.endpoint ??
-                    ""
-                ).trim(),
+                    endpoint:
+                        String(
+                            req.body.terminal?.endpoint ??
+                            atual.terminal?.endpoint ??
+                            ""
+                        ).trim(),
 
-            metodo: (() => {
+                    metodo:
+                        ["GET", "POST", "PUT", "PATCH", "DELETE"].includes(
+                            String(req.body.terminal?.metodo || "").toUpperCase()
+                        )
+                            ? String(req.body.terminal.metodo).toUpperCase()
+                            : (atual.terminal?.metodo || "POST"),
 
-                const metodo =
-                    String(
-                        req.body.terminal?.metodo ??
-                        atual.terminal?.metodo ??
-                        "POST"
-                    ).toUpperCase();
+                    token:
+                        String(
+                            req.body.terminal?.token ??
+                            atual.terminal?.token ??
+                            ""
+                        ).trim()
 
-                return [
-                    "GET",
-                    "POST",
-                    "PUT",
-                    "PATCH",
-                    "DELETE"
-                ].includes(metodo)
-                    ? metodo
-                    : "POST";
-
-            })(),
-
-            token:
-                String(
-                    req.body.terminal?.token ??
-                    atual.terminal?.token ??
-                    ""
-                ).trim()
-
-        },
+                },
 
 
-        // =================================================
-        // DATAS
-        // =================================================
+                // =================================================
+                // DATAS
+                // =================================================
 
-
-        criadoEm:
+                criadoEm:
                     atual.criadoEm ||
                     agora(),
 
