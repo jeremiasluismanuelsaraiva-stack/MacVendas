@@ -1582,63 +1582,43 @@
                             <h3><i class="fas fa-terminal"></i> Configuração do Terminal</h3>
 
                             <div class="terminal-toggle-row">
-                                <div>
-                                    <strong>Terminal ativo</strong>
-                                    <small>Permite enviar requisições para a API configurada.</small>
-                                </div>
+    <div>
+        <strong>Terminal ativo</strong>
+        <small>Permite usar a API configurada abaixo.</small>
+    </div>
+    <label class="switch">
+        <input id="terminalAtivo" type="checkbox">
+        <span class="slider"></span>
+    </label>
+</div>
 
-                                <label class="switch">
-                                    <input id="terminalAtivo" type="checkbox">
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
+<div class="form-group">
+    <label for="terminalApi">API / Servidor</label>
+    <input id="terminalApi" type="text" placeholder="http://br1.bronxyshost.com:4234">
+</div>
 
-                            <div class="form-group">
-                                <label for="terminalApi">API / Servidor</label>
-                                <input
-                                    id="terminalApi"
-                                    type="url"
-                                    placeholder="http://br1.bronxyshost.com:4234"
-                                    autocomplete="off"
-                                >
-                            </div>
+<div class="form-group">
+    <label for="terminalEndpoint">Endpoint / Rota</label>
+    <input id="terminalEndpoint" type="text" placeholder="/...">
+</div>
 
-                            <div class="form-group">
-                                <label for="terminalEndpoint">Endpoint / Rota</label>
-                                <input
-                                    id="terminalEndpoint"
-                                    type="text"
-                                    placeholder="Ex.: /terminal ou /api/command"
-                                    autocomplete="off"
-                                >
-                            </div>
+<div class="form-group">
+    <label for="terminalMetodo">Método</label>
+    <select id="terminalMetodo">
+        <option value="GET">GET</option>
+        <option value="POST" selected>POST</option>
+        <option value="PUT">PUT</option>
+        <option value="PATCH">PATCH</option>
+        <option value="DELETE">DELETE</option>
+    </select>
+</div>
 
-                            <div class="form-group">
-                                <label for="terminalMetodo">Método HTTP</label>
-                                <select id="terminalMetodo">
-                                    <option value="POST">POST</option>
-                                    <option value="GET">GET</option>
-                                    <option value="PUT">PUT</option>
-                                    <option value="PATCH">PATCH</option>
-                                    <option value="DELETE">DELETE</option>
-                                </select>
-                            </div>
+<div class="form-group">
+    <label for="terminalToken">Token do Terminal</label>
+    <input id="terminalToken" type="password" autocomplete="new-password" placeholder="Opcional">
+</div>
 
-                            <div class="form-group">
-                                <label for="terminalToken">Token da API</label>
-                                <input
-                                    id="terminalToken"
-                                    type="password"
-                                    autocomplete="new-password"
-                                    placeholder="Opcional — deixe vazio se não for necessário"
-                                >
-                            </div>
-
-                            <p class="config-help">
-                                Define aqui a API que o terminal deve utilizar.
-                                O token é opcional. O endereço e a rota ficam guardados
-                                nas configurações da tua conta.
-                            </p>
+<p class="config-help">Define aqui a API e a rota do terminal. O token é opcional.</p>
                         </div>
 
                     </div>
@@ -1858,6 +1838,41 @@
 
 })();
 
+</script>
+
+
+<script>
+(function () {
+    function ligarMenu() {
+        document.querySelectorAll(".menu-item[data-panel]").forEach(function (botao) {
+            if (botao.dataset.mozFallback === "1") return;
+            botao.dataset.mozFallback = "1";
+            botao.addEventListener("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var painel = botao.getAttribute("data-panel");
+                if (typeof window.showPanel === "function") {
+                    window.showPanel(painel);
+                }
+            });
+        });
+
+        var salvar = document.getElementById("btnSalvarConfiguracoes");
+        if (salvar && !salvar.dataset.mozFallback) {
+            salvar.dataset.mozFallback = "1";
+            salvar.addEventListener("click", function () {
+                if (typeof window.salvarConfiguracoes === "function") {
+                    window.salvarConfiguracoes();
+                }
+            });
+        }
+    }
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", ligarMenu, {once:true});
+    } else {
+        ligarMenu();
+    }
+})();
 </script>
 
 </body>
