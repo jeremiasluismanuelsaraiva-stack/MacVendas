@@ -100,11 +100,6 @@
             return;
         }
 
-        if (dados.terminal.ativo && !dados.terminal.token) {
-            alert("Defina o Token do Terminal antes de ativá-lo.");
-            return;
-        }
-
         try {
             aplicarTema(dados.tema);
 
