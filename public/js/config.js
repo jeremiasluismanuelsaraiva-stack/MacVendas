@@ -47,7 +47,7 @@
             if (el("tema")) el("tema").value = cfg.tema === "light" ? "light" : "dark";
             if (el("idioma")) el("idioma").value = cfg.idioma || "pt";
 
-            if (el("terminalAtivo")) el("terminalAtivo").checked = terminal.ativo === true;
+            if (el("terminalAtivo")) el("terminalAtivo").checked = terminal.ativo === true || terminal.ativo === "true" || terminal.ativo === 1;
             if (el("terminalHost")) el("terminalHost").value = terminal.host || "";
             if (el("terminalPorta")) el("terminalPorta").value = terminal.porta || 8080;
             if (el("terminalProtocolo")) el("terminalProtocolo").value = terminal.protocolo === "ws" ? "ws" : "wss";
@@ -118,6 +118,10 @@
             }
 
             window.MOZ_TERMINAL_CONFIG = json.configuracao?.terminal || dados.terminal;
+
+            // Mantém a interface sincronizada com o valor realmente salvo no servidor.
+            const terminalSalvo = window.MOZ_TERMINAL_CONFIG || {};
+            if (el("terminalAtivo")) el("terminalAtivo").checked = terminalSalvo.ativo === true;
 
             if (typeof window.terminalAtualizarConfiguracao === "function") {
                 window.terminalAtualizarConfiguracao(window.MOZ_TERMINAL_CONFIG);
