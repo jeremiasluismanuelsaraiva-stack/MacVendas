@@ -65,8 +65,8 @@
 
         avisoDesativadoMostrado = false;
 
-        if (!configAtual.host || !configAtual.token) {
-            adicionarLinha("Configure Host e Token em Configurações → Terminal.", "error");
+        if (!configAtual.host) {
+            adicionarLinha("Configure o Host em Configurações → Terminal.", "error");
             return;
         }
 
@@ -90,7 +90,9 @@
 
         socket.addEventListener("open", function () {
             status("Conectando...", false);
-            socket.send(JSON.stringify({ type: "auth", token: configAtual.token }));
+            const mensagemAuth = { type: "auth" };
+            if (configAtual.token) mensagemAuth.token = configAtual.token;
+            socket.send(JSON.stringify(mensagemAuth));
         });
 
         socket.addEventListener("message", function (event) {
