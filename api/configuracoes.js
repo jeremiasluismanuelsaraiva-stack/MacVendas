@@ -125,6 +125,30 @@ function configuracaoPadrao(uid, usuario) {
 
 
         // =================================================
+        // TERMINAL / SERVIDOR
+        // =================================================
+
+        terminal: {
+
+            ativo:
+                false,
+
+            host:
+                "",
+
+            porta:
+                8080,
+
+            protocolo:
+                "wss",
+
+            token:
+                ""
+
+        },
+
+
+        // =================================================
         // DATAS
         // =================================================
 
@@ -391,6 +415,48 @@ router.get(
 
 
             // =================================================
+            // TERMINAL
+            // =================================================
+
+            if (
+                !configuracao.terminal ||
+                typeof configuracao.terminal !== "object"
+            ) {
+
+                configuracao.terminal = {
+
+                    ativo: false,
+                    host: "",
+                    porta: 8080,
+                    protocolo: "wss",
+                    token: ""
+
+                };
+
+            }
+            else {
+
+                configuracao.terminal.ativo =
+                    configuracao.terminal.ativo === true;
+
+                configuracao.terminal.host =
+                    String(configuracao.terminal.host || "").trim();
+
+                configuracao.terminal.porta =
+                    Number(configuracao.terminal.porta) || 8080;
+
+                configuracao.terminal.protocolo =
+                    configuracao.terminal.protocolo === "ws"
+                        ? "ws"
+                        : "wss";
+
+                configuracao.terminal.token =
+                    String(configuracao.terminal.token || "").trim();
+
+            }
+
+
+            // =================================================
             // DATA DE ATUALIZAÇÃO
             // =================================================
 
@@ -630,6 +696,44 @@ router.put(
                     req.body.idioma ??
                     atual.idioma ??
                     "pt",
+
+
+                // =================================================
+                // TERMINAL / SERVIDOR
+                // =================================================
+
+                terminal: {
+
+                    ativo:
+                        req.body.terminal?.ativo === true,
+
+                    host:
+                        String(
+                            req.body.terminal?.host ??
+                            atual.terminal?.host ??
+                            ""
+                        ).trim(),
+
+                    porta:
+                        Number(
+                            req.body.terminal?.porta ??
+                            atual.terminal?.porta ??
+                            8080
+                        ) || 8080,
+
+                    protocolo:
+                        req.body.terminal?.protocolo === "ws"
+                            ? "ws"
+                            : "wss",
+
+                    token:
+                        String(
+                            req.body.terminal?.token ??
+                            atual.terminal?.token ??
+                            ""
+                        ).trim()
+
+                },
 
 
                 // =================================================
