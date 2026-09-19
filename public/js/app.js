@@ -29,6 +29,8 @@
 
         dispositivos: "panelDispositivos",
 
+        terminal: "panelTerminal",
+
         tutorial: "panelTutorial",
 
         config: "panelConfig"
