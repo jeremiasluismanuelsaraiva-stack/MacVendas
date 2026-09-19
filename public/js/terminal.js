@@ -37,11 +37,14 @@
     }
 
     async function conectar() {
-        if (!config.api) {
-            try {
-                const r = await window.MOZ_API.get("/configuracoes");
-                if (r?.success) atualizarConfiguracao(r.configuracao?.terminal);
-            } catch {}
+        try {
+            const r = await window.MOZ_API.get("/configuracoes");
+            if (r?.success) {
+                atualizarConfiguracao(r.configuracao?.terminal || {});
+            }
+        } catch (e) {
+            linha("Não foi possível carregar a configuração do terminal.", "error");
+            return;
         }
 
         if (!config.ativo) return linha("Terminal está desativado nas Configurações.", "error");
@@ -67,6 +70,11 @@
         const command = input?.value?.trim();
         if (!command) return;
 
+        if (!config.ativo || !config.api) {
+            await conectar();
+            if (!config.ativo || !config.api) return;
+        }
+
         linha("$ " + command, "command");
 
         try {
@@ -76,13 +84,24 @@
                 body: { command }
             });
 
-            if (r?.success) linha(typeof r.resultado === "string" ? r.resultado : JSON.stringify(r.resultado, null, 2), "normal");
-            else linha(r?.erro || JSON.stringify(r), "error");
+            if (r?.success) {
+                linha(
+                    typeof r.resultado === "string"
+                        ? r.resultado
+                        : JSON.stringify(r.resultado, null, 2),
+                    "normal"
+                );
+            } else {
+                linha(r?.erro || JSON.stringify(r), "error");
+            }
         } catch (e) {
             linha("Erro: " + (e.message || e), "error");
         }
 
-        if (input) input.value = "";
+        if (input) {
+            input.value = "";
+            input.focus();
+        }
     }
 
     function limpar() {
@@ -97,11 +116,14 @@
         el("btnTerminalExecutar")?.addEventListener("click", executar);
         el("btnTerminalLimpar")?.addEventListener("click", limpar);
         el("terminalCommand")?.addEventListener("keydown", e => {
-            if (e.key === "Enter") executar();
+            if (e.key === "Enter") {
+                e.preventDefault();
+                executar();
+            }
         });
     }
 
     if (document.readyState === "loading")
-        document.addEventListener("DOMContentLoaded", init, {once:true});
+        document.addEventListener("DOMContentLoaded", init, { once: true });
     else init();
 })();
