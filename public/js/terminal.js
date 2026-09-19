@@ -6,6 +6,7 @@
 
     let socket = null;
     let configAtual = {};
+    let avisoDesativadoMostrado = false;
 
     const el = id => document.getElementById(id);
 
@@ -54,10 +55,15 @@
 
     function conectarTerminal() {
         if (!configAtual || configAtual.ativo !== true) {
-            adicionarLinha("Terminal está desativado nas Configurações.", "error");
+            if (!avisoDesativadoMostrado) {
+                adicionarLinha("Terminal está desativado nas Configurações.", "error");
+                avisoDesativadoMostrado = true;
+            }
             status("Desativado", false);
             return;
         }
+
+        avisoDesativadoMostrado = false;
 
         if (!configAtual.host || !configAtual.token) {
             adicionarLinha("Configure Host e Token em Configurações → Terminal.", "error");
@@ -170,8 +176,9 @@
     }
 
     function atualizarConfiguracao(cfg) {
+        avisoDesativadoMostrado = false;
         configAtual = {
-            ativo: cfg?.ativo === true,
+            ativo: cfg?.ativo === true || cfg?.ativo === "true" || cfg?.ativo === 1,
             host: String(cfg?.host || "").trim(),
             porta: Number(cfg?.porta || 8080),
             protocolo: cfg?.protocolo === "ws" ? "ws" : "wss",
@@ -179,6 +186,22 @@
         };
         atualizarHostInfo();
         if (configAtual.ativo !== true && socket) fecharSocket("Desativado");
+    }
+
+    async function carregarConfiguracaoTerminalDireta() {
+        if (configAtual.host || configAtual.ativo === true) return;
+
+        try {
+            if (!window.MOZ_API || typeof window.MOZ_API.get !== "function") return;
+
+            const json = await window.MOZ_API.get("/configuracoes");
+            if (!json || !json.success) return;
+
+            const terminal = json.configuracao?.terminal || {};
+            atualizarConfiguracao(terminal);
+        } catch (erro) {
+            console.warn("[TERMINAL] Não foi possível carregar configuração diretamente:", erro);
+        }
     }
 
     function inicializar() {
@@ -191,6 +214,7 @@
         });
         atualizarBotoes(false);
         atualizarHostInfo();
+        carregarConfiguracaoTerminalDireta();
     }
 
     window.terminalAtualizarConfiguracao = atualizarConfiguracao;
