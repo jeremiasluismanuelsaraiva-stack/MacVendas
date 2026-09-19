@@ -1,793 +1,163 @@
 // =====================================================
-// CONFIG.JS
-// Local: public/js/config.js
+// MOZ TECH - CONFIGURAÇÕES
 // =====================================================
-
 (function () {
-
     "use strict";
 
-
-    // =====================================================
-    // CONFIGURAÇÃO DA API
-    // =====================================================
-
-    const API_CONFIG =
-        window.location.origin;
-
-
-    // =====================================================
-    // CONFIGURAÇÃO DE TEMA
-    // =====================================================
+    function el(id) { return document.getElementById(id); }
 
     function aplicarTema(tema) {
-
-        const temaFinal =
-            tema === "light"
-                ? "light"
-                : "dark";
-
-
-        document.documentElement.setAttribute(
-            "data-theme",
-            temaFinal
-        );
-
-
-        localStorage.setItem(
-            "tema",
-            temaFinal
-        );
-
+        const finalTema = tema === "light" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", finalTema);
+        if (document.body) {
+            document.body.classList.remove("theme-dark", "theme-light");
+            document.body.classList.add("theme-" + finalTema);
+        }
+        localStorage.setItem("tema", finalTema);
     }
-
-
-    // =====================================================
-    // CARREGAR TEMA LOCAL
-    // =====================================================
 
     function carregarTema() {
-
-        const temaSalvo =
-            localStorage.getItem("tema");
-
-
-        if (temaSalvo === "light") {
-
-            aplicarTema("light");
-
-        }
-        else {
-
-            aplicarTema("dark");
-
-        }
-
+        aplicarTema(localStorage.getItem("tema") || "dark");
     }
 
+    async function obterConfiguracao() {
+        if (window.MOZ_API && typeof window.MOZ_API.get === "function") {
+            return await window.MOZ_API.get("/configuracoes");
+        }
 
-    // =====================================================
-    // ALTERAR TEMA
-    // =====================================================
-
-    function alterarTema(tema) {
-
-        aplicarTema(
-            tema
-        );
-
+        throw new Error("API do sistema ainda não está disponível.");
     }
-
-
-    // =====================================================
-    // CARREGAR CONFIGURAÇÕES
-    // =====================================================
 
     async function carregarConfiguracoes() {
-
         try {
-
-            const url =
-                API_CONFIG +
-                "/api/configuracoes";
-
-
-            console.log(
-                "[CONFIG] GET:",
-                url
-            );
-
-
-            const resposta =
-                await fetch(
-                    url,
-                    {
-                        method: "GET",
-
-                        headers: {
-                            "Accept":
-                                "application/json"
-                        },
-
-                        cache: "no-store"
-                    }
-                );
-
-
-            // =================================================
-            // VERIFICAR HTTP
-            // =================================================
-
-            if (!resposta.ok) {
-
-                let erroApi = {};
-
-
-                try {
-
-                    erroApi =
-                        await resposta.json();
-
-                }
-                catch (_) {
-
-                    erroApi = {};
-
-                }
-
-
-                throw new Error(
-                    erroApi.error ||
-                    erroApi.message ||
-                    "Erro HTTP: " +
-                    resposta.status
-                );
-
+            const json = await obterConfiguracao();
+            if (!json || !json.success) {
+                throw new Error(json?.error || "Não foi possível carregar as configurações.");
             }
 
+            const cfg = json.configuracao || {};
+            const terminal = cfg.terminal || {};
 
-            // =================================================
-            // LER JSON
-            // =================================================
+            if (el("nomeEmpresa")) el("nomeEmpresa").value = cfg.nomeEmpresa || "";
+            if (el("telefone")) el("telefone").value = cfg.telefone || "";
+            if (el("email")) el("email").value = cfg.email || "";
+            if (el("moeda")) el("moeda").value = cfg.moeda || "MT";
+            if (el("vendaGB")) el("vendaGB").value = cfg.vendaGB ?? 28;
+            if (el("custoGB")) el("custoGB").value = cfg.custoGB ?? 21;
+            if (el("tema")) el("tema").value = cfg.tema === "light" ? "light" : "dark";
+            if (el("idioma")) el("idioma").value = cfg.idioma || "pt";
 
-            const json =
-                await resposta.json();
+            if (el("terminalAtivo")) el("terminalAtivo").checked = terminal.ativo === true;
+            if (el("terminalHost")) el("terminalHost").value = terminal.host || "";
+            if (el("terminalPorta")) el("terminalPorta").value = terminal.porta || 8080;
+            if (el("terminalProtocolo")) el("terminalProtocolo").value = terminal.protocolo === "ws" ? "ws" : "wss";
+            if (el("terminalToken")) el("terminalToken").value = terminal.token || "";
 
+            aplicarTema(cfg.tema);
+            window.MOZ_TERMINAL_CONFIG = terminal;
 
-            console.log(
-                "[CONFIG] Resposta:",
-                json
-            );
-
-
-            // =================================================
-            // VERIFICAR SUCCESS
-            // =================================================
-
-            if (!json.success) {
-
-                console.error(
-                    "[CONFIG] Erro da API:",
-                    json
-                );
-
-                return;
-
+            if (typeof window.terminalAtualizarConfiguracao === "function") {
+                window.terminalAtualizarConfiguracao(terminal);
             }
 
-
-            // =================================================
-            // CONFIGURAÇÃO
-            // =================================================
-            //
-            // O backend retorna:
-            //
-            // {
-            //     success: true,
-            //     configuracao: {...}
-            // }
-            //
-            // =================================================
-
-            const cfg =
-                json.configuracao || {};
-
-
-            if (
-                !cfg ||
-                typeof cfg !== "object"
-            ) {
-
-                console.warn(
-                    "[CONFIG] Configuração inválida."
-                );
-
-                return;
-
+            console.log("[CONFIG] Configurações carregadas.");
+            return cfg;
+        } catch (erro) {
+            console.error("[CONFIG] Erro ao carregar:", erro);
+            const area = el("configConteudo");
+            if (area && !area.querySelector(".config-grid")) {
+                area.innerHTML = `<div class="message error">${String(erro.message || "Erro ao carregar configurações.")}</div>`;
             }
-
-
-            // =================================================
-            // NOME DA EMPRESA
-            // =================================================
-
-            const nomeEmpresa =
-                document.getElementById(
-                    "nomeEmpresa"
-                );
-
-
-            if (nomeEmpresa) {
-
-                nomeEmpresa.value =
-                    cfg.nomeEmpresa || "";
-
-            }
-
-
-            // =================================================
-            // TELEFONE
-            // =================================================
-
-            const telefone =
-                document.getElementById(
-                    "telefone"
-                );
-
-
-            if (telefone) {
-
-                telefone.value =
-                    cfg.telefone || "";
-
-            }
-
-
-            // =================================================
-            // EMAIL
-            // =================================================
-
-            const email =
-                document.getElementById(
-                    "email"
-                );
-
-
-            if (email) {
-
-                email.value =
-                    cfg.email || "";
-
-            }
-
-
-            // =================================================
-            // MOEDA
-            // =================================================
-
-            const moeda =
-                document.getElementById(
-                    "moeda"
-                );
-
-
-            if (moeda) {
-
-                moeda.value =
-                    cfg.moeda || "MT";
-
-            }
-
-
-            // =================================================
-            // VENDA POR GB
-            // =================================================
-
-            const vendaGB =
-                document.getElementById(
-                    "vendaGB"
-                );
-
-
-            if (vendaGB) {
-
-                vendaGB.value =
-                    cfg.vendaGB ?? 28;
-
-            }
-
-
-            // =================================================
-            // CUSTO POR GB
-            // =================================================
-
-            const custoGB =
-                document.getElementById(
-                    "custoGB"
-                );
-
-
-            if (custoGB) {
-
-                custoGB.value =
-                    cfg.custoGB ?? 21;
-
-            }
-
-
-            // =================================================
-            // TEMA
-            // =================================================
-
-            const tema =
-                document.getElementById(
-                    "tema"
-                );
-
-
-            const temaConfigurado =
-                cfg.tema === "light"
-                    ? "light"
-                    : "dark";
-
-
-            if (tema) {
-
-                tema.value =
-                    temaConfigurado;
-
-            }
-
-
-            aplicarTema(
-                temaConfigurado
-            );
-
-
-            // =================================================
-            // IDIOMA
-            // =================================================
-
-            const idioma =
-                document.getElementById(
-                    "idioma"
-                );
-
-
-            if (idioma) {
-
-                idioma.value =
-                    cfg.idioma || "pt";
-
-            }
-
-
-            // =================================================
-            // FINAL
-            // =================================================
-
-            console.log(
-                "[CONFIG] Configurações carregadas."
-            );
-
+            return null;
         }
-
-        catch (erro) {
-
-            console.error(
-                "[CONFIG] Erro ao carregar configurações:",
-                erro
-            );
-
-        }
-
     }
-
-
-    // =====================================================
-    // OBTER DADOS DO FORMULÁRIO
-    // =====================================================
 
     function obterDadosConfiguracoes() {
-
         return {
-
-            // =================================================
-            // EMPRESA
-            // =================================================
-
-            nomeEmpresa:
-                document.getElementById(
-                    "nomeEmpresa"
-                )?.value?.trim() || "",
-
-
-            telefone:
-                document.getElementById(
-                    "telefone"
-                )?.value?.trim() || "",
-
-
-            email:
-                document.getElementById(
-                    "email"
-                )?.value?.trim() || "",
-
-
-            // =================================================
-            // MOEDA
-            // =================================================
-
-            moeda:
-                document.getElementById(
-                    "moeda"
-                )?.value || "MT",
-
-
-            // =================================================
-            // VALORES
-            // =================================================
-
-            vendaGB:
-                Number(
-                    document.getElementById(
-                        "vendaGB"
-                    )?.value || 0
-                ),
-
-
-            custoGB:
-                Number(
-                    document.getElementById(
-                        "custoGB"
-                    )?.value || 0
-                ),
-
-
-            // =================================================
-            // TEMA
-            // =================================================
-
-            tema:
-                document.getElementById(
-                    "tema"
-                )?.value || "dark",
-
-
-            // =================================================
-            // IDIOMA
-            // =================================================
-
-            idioma:
-                document.getElementById(
-                    "idioma"
-                )?.value || "pt"
-
+            nomeEmpresa: el("nomeEmpresa")?.value?.trim() || "",
+            telefone: el("telefone")?.value?.trim() || "",
+            email: el("email")?.value?.trim() || "",
+            moeda: el("moeda")?.value || "MT",
+            vendaGB: Number(el("vendaGB")?.value || 0),
+            custoGB: Number(el("custoGB")?.value || 0),
+            tema: el("tema")?.value || "dark",
+            idioma: el("idioma")?.value || "pt",
+            terminal: {
+                ativo: el("terminalAtivo")?.checked === true,
+                host: el("terminalHost")?.value?.trim() || "",
+                porta: Number(el("terminalPorta")?.value || 8080),
+                protocolo: el("terminalProtocolo")?.value === "ws" ? "ws" : "wss",
+                token: el("terminalToken")?.value?.trim() || ""
+            }
         };
-
     }
-
-
-    // =====================================================
-    // SALVAR CONFIGURAÇÕES
-    // =====================================================
 
     async function salvarConfiguracoes() {
+        const dados = obterDadosConfiguracoes();
+
+        if (dados.terminal.ativo && !dados.terminal.host) {
+            alert("Defina o Host do servidor antes de ativar o terminal.");
+            return;
+        }
+
+        if (dados.terminal.ativo && !dados.terminal.token) {
+            alert("Defina o Token do Terminal antes de ativá-lo.");
+            return;
+        }
 
         try {
+            aplicarTema(dados.tema);
 
-            // =================================================
-            // PEGAR DADOS DO FORMULÁRIO
-            // =================================================
-
-            const dados =
-                obterDadosConfiguracoes();
-
-
-            console.log(
-                "[CONFIG] Dados para guardar:",
-                dados
-            );
-
-
-            // =================================================
-            // APLICAR TEMA IMEDIATAMENTE
-            // =================================================
-
-            aplicarTema(
-                dados.tema
-            );
-
-
-            // =================================================
-            // URL DA API
-            // =================================================
-
-            const url =
-                API_CONFIG +
-                "/api/configuracoes";
-
-
-            console.log(
-                "[CONFIG] PUT:",
-                url
-            );
-
-
-            // =================================================
-            // ENVIAR CONFIGURAÇÕES
-            // =================================================
-
-            const salvarResposta =
-                await fetch(
-                    url,
-                    {
-
-                        method: "PUT",
-
-                        headers: {
-
-                            "Content-Type":
-                                "application/json",
-
-                            "Accept":
-                                "application/json"
-
-                        },
-
-                        body:
-                            JSON.stringify(
-                                dados
-                            )
-
-                    }
-                );
-
-
-            // =================================================
-            // VERIFICAR HTTP
-            // =================================================
-
-            if (!salvarResposta.ok) {
-
-                let erroApi = {};
-
-
-                try {
-
-                    erroApi =
-                        await salvarResposta.json();
-
-                }
-                catch (_) {
-
-                    erroApi = {};
-
-                }
-
-
-                throw new Error(
-                    erroApi.error ||
-                    erroApi.message ||
-                    "Erro HTTP: " +
-                    salvarResposta.status
-                );
-
+            if (!window.MOZ_API || typeof window.MOZ_API.put !== "function") {
+                throw new Error("API do sistema ainda não está disponível.");
             }
 
-
-            // =================================================
-            // LER RESPOSTA
-            // =================================================
-
-            const json =
-                await salvarResposta.json();
-
-
-            console.log(
-                "[CONFIG] Resposta ao guardar:",
-                json
-            );
-
-
-            // =================================================
-            // VERIFICAR SUCCESS
-            // =================================================
-
-            if (!json.success) {
-
-                throw new Error(
-                    json.error ||
-                    json.message ||
-                    "Erro ao guardar configurações."
-                );
-
+            const json = await window.MOZ_API.put("/configuracoes", dados);
+            if (!json || !json.success) {
+                throw new Error(json?.error || "Erro ao guardar configurações.");
             }
 
+            window.MOZ_TERMINAL_CONFIG = json.configuracao?.terminal || dados.terminal;
 
-            // =================================================
-            // SUCESSO
-            // =================================================
+            if (typeof window.terminalAtualizarConfiguracao === "function") {
+                window.terminalAtualizarConfiguracao(window.MOZ_TERMINAL_CONFIG);
+            }
 
-            console.log(
-                "[CONFIG] Configurações guardadas."
-            );
-
-
-            alert(
-                "Configurações guardadas com sucesso!"
-            );
-
-
-            // =================================================
-            // RECARREGAR
-            // =================================================
-
-            await carregarConfiguracoes();
-
+            alert("Configurações guardadas com sucesso!");
+        } catch (erro) {
+            console.error("[CONFIG] Erro ao guardar:", erro);
+            alert(erro.message || "Erro ao guardar as configurações.");
         }
-
-        catch (erro) {
-
-            console.error(
-                "[CONFIG] Erro ao guardar configurações:",
-                erro
-            );
-
-
-            alert(
-                erro.message ||
-                "Erro ao guardar as configurações."
-            );
-
-        }
-
     }
-
-
-    // =====================================================
-    // DISPONIBILIZAR FUNÇÕES GLOBALMENTE
-    // =====================================================
-
-    window.carregarConfiguracoes =
-        carregarConfiguracoes;
-
-
-    window.salvarConfiguracoes =
-        salvarConfiguracoes;
-
-
-    window.aplicarTema =
-        aplicarTema;
-
-
-    window.alterarTema =
-        alterarTema;
-
-
-    window.carregarTema =
-        carregarTema;
-
-
-    // =====================================================
-    // INICIALIZAÇÃO
-    // =====================================================
 
     function inicializarConfiguracoes() {
-
-        console.log(
-            "[CONFIG] Inicializando..."
-        );
-
-
-        // =================================================
-        // PRIMEIRO: TEMA LOCAL
-        // =================================================
-
         carregarTema();
 
+        el("tema")?.addEventListener("change", function () {
+            aplicarTema(this.value);
+        });
 
-        // =================================================
-        // SELETOR DE TEMA
-        // =================================================
-
-        const seletorTema =
-            document.getElementById(
-                "tema"
-            );
-
-
-        if (seletorTema) {
-
-            seletorTema.addEventListener(
-                "change",
-                function () {
-
-                    alterarTema(
-                        this.value
-                    );
-
-                }
-            );
-
+        const btn = el("btnSalvarConfiguracoes");
+        if (btn && btn.dataset.configInicializado !== "true") {
+            btn.dataset.configInicializado = "true";
+            btn.addEventListener("click", function (event) {
+                event.preventDefault();
+                salvarConfiguracoes();
+            });
         }
-
-
-        // =================================================
-        // BOTÃO SALVAR
-        // =================================================
-
-        const btn =
-            document.getElementById(
-                "btnSalvarConfiguracoes"
-            );
-
-
-        if (
-            btn &&
-            btn.dataset.configInicializado !== "true"
-        ) {
-
-            btn.dataset.configInicializado =
-                "true";
-
-
-            btn.addEventListener(
-                "click",
-                function (evento) {
-
-                    evento.preventDefault();
-
-                    evento.stopPropagation();
-
-                    salvarConfiguracoes();
-
-                }
-            );
-
-        }
-
-
-        // =================================================
-        // CARREGAR CONFIGURAÇÕES DA API
-        // =================================================
 
         carregarConfiguracoes();
-
-
-        // =================================================
-        // FINAL
-        // =================================================
-
-        console.log(
-            "[CONFIG] Sistema de configurações pronto."
-        );
-
     }
 
+    window.carregarConfiguracoes = carregarConfiguracoes;
+    window.salvarConfiguracoes = salvarConfiguracoes;
+    window.aplicarTema = aplicarTema;
+    window.alterarTema = aplicarTema;
+    window.carregarTema = carregarTema;
 
-    // =====================================================
-    // DOM READY
-    // =====================================================
-
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-
-        document.addEventListener(
-            "DOMContentLoaded",
-            inicializarConfiguracoes,
-            {
-                once: true
-            }
-        );
-
-    }
-    else {
-
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", inicializarConfiguracoes, { once: true });
+    } else {
         inicializarConfiguracoes();
-
     }
-
 })();
