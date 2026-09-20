@@ -1593,30 +1593,50 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="terminalHost">Servidor / Host</label>
-                                <input id="terminalHost" type="text" placeholder="ex.: servidor.exemplo.com">
+                                <label for="terminalApi">API / Servidor</label>
+                                <input
+                                    id="terminalApi"
+                                    type="url"
+                                    placeholder="http://br1.bronxyshost.com:4234"
+                                >
                             </div>
 
                             <div class="config-row">
                                 <div class="form-group">
-                                    <label for="terminalPorta">Porta</label>
-                                    <input id="terminalPorta" type="number" min="1" max="65535" placeholder="8080">
+                                    <label for="terminalEndpoint">Rota / Endpoint</label>
+                                    <input
+                                        id="terminalEndpoint"
+                                        type="text"
+                                        placeholder="/exec"
+                                    >
                                 </div>
+
                                 <div class="form-group">
-                                    <label for="terminalProtocolo">Protocolo</label>
-                                    <select id="terminalProtocolo">
-                                        <option value="wss">WSS (seguro)</option>
-                                        <option value="ws">WS</option>
+                                    <label for="terminalMetodo">Método</label>
+                                    <select id="terminalMetodo">
+                                        <option value="POST">POST</option>
+                                        <option value="GET">GET</option>
+                                        <option value="PUT">PUT</option>
+                                        <option value="PATCH">PATCH</option>
+                                        <option value="DELETE">DELETE</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div class="form-group">
-                                <label for="terminalToken">Token do Terminal</label>
-                                <input id="terminalToken" type="password" autocomplete="new-password" placeholder="Defina o token do servidor">
+                                <label for="terminalToken">Token (opcional)</label>
+                                <input
+                                    id="terminalToken"
+                                    type="password"
+                                    autocomplete="new-password"
+                                    placeholder="Token opcional"
+                                >
                             </div>
 
-                            <p class="config-help">O token definido aqui deve ser o mesmo token configurado no serviço de terminal do teu servidor.</p>
+                            <p class="config-help">
+                                A API, rota e método são definidos pelo servidor que será utilizado.
+                                O token é opcional.
+                            </p>
                         </div>
 
                     </div>
