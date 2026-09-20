@@ -63,13 +63,6 @@ app.get(
 // =====================================================
 // AUTENTICAÇÃO
 // =====================================================
-//
-// Todas as rotas /api precisam de:
-//
-// x-uid
-// x-api-key
-//
-// =====================================================
 
 app.use(
     "/api",
@@ -126,6 +119,12 @@ app.use(
 app.use(
     "/api/configuracoes",
     require("./configuracoes")
+);
+
+
+app.use(
+    "/api/terminal",
+    require("./terminal")
 );
 
 
