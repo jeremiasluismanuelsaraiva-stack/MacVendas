@@ -1,54 +1,51 @@
-Comparando mudanças
-Escolha dois ramos para ver o que mudou ou para iniciar um novo pull request. Se precisar, pode fazer isso também  Ou aprenda mais sobre comparações de diferenças.
-...
- 1 commit
- 1 arquivo alterado
- 1 colaborador
-Commits em 20 de setembro de 2026
-Atualização firebase-admin.js
+"use strict";
 
-@jeremiasluismanuelsaraiva-stack
-jeremiasluismanuelsaraiva-stack escrito há 3 minutos
- Exibição  com 0 adições e 4 deleções.
-  4 mudanças: 0 adições e 4 eliminações4  
-API/firebase-admin.js
-Número original da linha do arquivo	Número da linha diferencial	Mudança de linha diferencial
-@@ -9,7 +9,6 @@ function inicializarFirebase() {
-        Aplicativo de Retorno ;
+const admin = require("firebase-admin");
+
+let app;
+
+function inicializarFirebase() {
+    if (app) {
+        return app;
     }
 
-    Se o Firebase Admin já estiver inicializado
-    if (admin.aplicativos.Comprimento > 0) {
-        app = admin.Aplicativo();
-        Aplicativo de Retorno ;
-@@ -19,7 +18,6 @@ função inicializarFirebase() {
-    const clientEmail = processo.env.FIREBASE_CLIENT_EMAIL;
-    const privateKey = processo.env.FIREBASE_PRIVATE_KEY;
+    if (admin.apps.length > 0) {
+        app = admin.app();
+        return app;
+    }
 
-    Verificar credenciais
-    se (!projectId ||  !clienteEmail ||  !privateKey) {
-        lançar um novo erro(
-            "Credenciais do Firebase não configuradas." +
-@@ -28,7 +26,6 @@ função inicializarFirebase() {
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+    if (!projectId || !clientEmail || !privateKey) {
+        throw new Error(
+            "Credenciais do Firebase não configuradas. " +
+            "Configure FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL e " +
+            "FIREBASE_PRIVATE_KEY na Vercel."
         );
     }
 
-    Converter \n armazenado como texto em quebras de linha reais
-    const privateKeyFormatada = privateKey.substituir(/\\n/g, "\n");
+    const privateKeyFormatada = privateKey.replace(/\\n/g, "\n");
 
-    app = admin.inicializeApp({
-@@ -37,7 +34,6 @@ função inicializarFirebase() {
- E-mail do cliente,
+    app = admin.initializeApp({
+        credential: admin.credential.cert({
+            projectId,
+            clientEmail,
             privateKey: privateKeyFormatada
         }),
-
-        banco de dadosURL: "https://macvendas-default-rtdb.firebaseio.com"
+        databaseURL: "https://macvendas-default-rtdb.firebaseio.com"
     });
 
-Footer
-© 2026 GitHub, Inc.
-Footer navigation
-Terms
-Privacy
-Security
-S
+    return app;
+}
+
+const firebaseApp = inicializarFirebase();
+
+const db = admin.database(firebaseApp);
+
+module.exports = {
+    admin,
+    app: firebaseApp,
+    db
+};
