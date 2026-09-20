@@ -6,9 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "start": "node api/index.js",
-    "terminal": "node terminal-server.js",
-    "dev": "nodemon api/index.js",
-    "dev:terminal": "nodemon terminal-server.js"
+    "dev": "nodemon api/index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
