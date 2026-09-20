@@ -1,67 +1,12 @@
 "use strict";
 
-const {
-    initializeApp,
-    getApps
-} = require("firebase-admin/app");
-
-const {
-    getDatabase
-} = require("firebase-admin/database");
-
-
-// =====================================================
-// FIREBASE ADMIN
-// =====================================================
-
-let firebaseApp;
-
-try {
-
-    if (getApps().length === 0) {
-
-        firebaseApp =
-            initializeApp({
-
-                databaseURL:
-                    "https://macvendas-default-rtdb.firebaseio.com"
-
-            });
-
-    }
-    else {
-
-        firebaseApp =
-            getApps()[0];
-
-    }
-
-}
-catch (erro) {
-
-    console.error(
-        "[FIREBASE] Erro ao inicializar Firebase Admin:",
-        erro
-    );
-
-    throw erro;
-
-}
-
-
-const database =
-    getDatabase(firebaseApp);
-
+const { db } = require("./firebase-admin");
 
 // =====================================================
 // AUTENTICAÇÃO DA API
 // =====================================================
 
-async function autenticarAPI(
-    req,
-    res,
-    next
-) {
+async function autenticarAPI(req, res, next) {
 
     try {
 
@@ -69,38 +14,33 @@ async function autenticarAPI(
         // UID
         // =================================================
 
-        const uid =
-            String(
-                req.headers["x-uid"] ||
-                req.headers["uid"] ||
-                ""
-            ).trim();
+        const uid = String(
+            req.headers["x-uid"] ||
+            req.headers["uid"] ||
+            req.body?.uid ||
+            req.query?.uid ||
+            ""
+        ).trim();
 
 
         // =================================================
         // API KEY
         // =================================================
 
-        const apiKey =
-            String(
-                req.headers["x-api-key"] ||
-                req.headers["apikey"] ||
-                ""
-            ).trim();
+        const apiKey = String(
+            req.headers["x-api-key"] ||
+            req.headers["apikey"] ||
+            req.body?.apiKey ||
+            req.query?.apiKey ||
+            ""
+        ).trim();
 
 
         console.log(
             "[AUTH API] Tentativa:",
             {
-                uid:
-                    uid
-                        ? "OK"
-                        : "AUSENTE",
-
-                apiKey:
-                    apiKey
-                        ? "OK"
-                        : "AUSENTE"
+                uid: uid ? "OK" : "AUSENTE",
+                apiKey: apiKey ? "OK" : "AUSENTE"
             }
         );
 
@@ -112,12 +52,8 @@ async function autenticarAPI(
         if (!uid) {
 
             return res.status(401).json({
-
                 success: false,
-
-                error:
-                    "UID não informado."
-
+                error: "UID não informado."
             });
 
         }
@@ -130,12 +66,8 @@ async function autenticarAPI(
         if (!apiKey) {
 
             return res.status(401).json({
-
                 success: false,
-
-                error:
-                    "API Key não informada."
-
+                error: "API Key não informada."
             });
 
         }
@@ -143,16 +75,12 @@ async function autenticarAPI(
 
         // =================================================
         // BUSCAR USUÁRIO
-        // users/{UID}
+        // users/{uid}
         // =================================================
 
-        const snapshot =
-            await database
-                .ref(
-                    "users/" +
-                    uid
-                )
-                .once("value");
+        const snapshot = await db
+            .ref("users/" + uid)
+            .once("value");
 
 
         // =================================================
@@ -167,30 +95,27 @@ async function autenticarAPI(
             );
 
             return res.status(401).json({
-
                 success: false,
-
-                error:
-                    "Usuário não encontrado."
-
+                error: "Usuário não encontrado."
             });
 
         }
 
 
-        const dados =
-            snapshot.val() || {};
+        // =================================================
+        // DADOS DO USUÁRIO
+        // =================================================
+
+        const dados = snapshot.val() || {};
 
 
         // =================================================
         // API KEY DO FIREBASE
         // =================================================
 
-        const apiKeyFirebase =
-            String(
-                dados.apiKey ||
-                ""
-            ).trim();
+        const apiKeyFirebase = String(
+            dados.apiKey || ""
+        ).trim();
 
 
         // =================================================
@@ -208,12 +133,8 @@ async function autenticarAPI(
             );
 
             return res.status(401).json({
-
                 success: false,
-
-                error:
-                    "API Key inválida."
-
+                error: "API Key inválida."
             });
 
         }
@@ -224,13 +145,8 @@ async function autenticarAPI(
         // =================================================
 
         req.usuario = {
-
-            uid:
-                uid,
-
-            apiKey:
-                apiKey
-
+            uid,
+            apiKey
         };
 
 
@@ -239,10 +155,6 @@ async function autenticarAPI(
             uid
         );
 
-
-        // =================================================
-        // CONTINUAR
-        // =================================================
 
         return next();
 
@@ -267,12 +179,8 @@ async function autenticarAPI(
 
 
         return res.status(500).json({
-
             success: false,
-
-            error:
-                "Erro ao autenticar a requisição."
-
+            error: "Erro ao autenticar a requisição."
         });
 
     }
@@ -280,5 +188,4 @@ async function autenticarAPI(
 }
 
 
-module.exports =
-    autenticarAPI;
+module.exports = autenticarAPI;
