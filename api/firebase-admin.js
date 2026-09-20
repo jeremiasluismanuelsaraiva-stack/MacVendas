@@ -1,57 +1,48 @@
 "use strict";
 
 const admin = require("firebase-admin");
-const path = require("path");
 
+let app;
 
-// =====================================================
-// SERVICE ACCOUNT
-// =====================================================
+function inicializarFirebase() {
+    if (app) {
+        return app;
+    }
 
-const serviceAccount =
-    require(
-        path.join(
-            __dirname,
-            "..",
-            "serviceAccountKey.json"
-        )
-    );
+    if (admin.apps.length > 0) {
+        app = admin.app();
+        return app;
+    }
 
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
-// =====================================================
-// INICIALIZAR FIREBASE ADMIN
-// =====================================================
+    if (!projectId || !clientEmail || !privateKey) {
+        throw new Error(
+            "Credenciais do Firebase não configuradas. " +
+            "Configure FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL e FIREBASE_PRIVATE_KEY na Vercel."
+        );
+    }
 
-if (!admin.apps.length) {
-
-    admin.initializeApp({
-
-        credential:
-            admin.credential.cert(
-                serviceAccount
-            ),
-
-        databaseURL:
-            "https://macvendas-default-rtdb.firebaseio.com"
-
+    app = admin.initializeApp({
+        credential: admin.credential.cert({
+            projectId,
+            clientEmail,
+            privateKey: privateKey.replace(/\\n/g, "\n")
+        }),
+        databaseURL: "https://macvendas-default-rtdb.firebaseio.com"
     });
 
+    return app;
 }
 
+const firebaseApp = inicializarFirebase();
 
-// =====================================================
-// DATABASE
-// =====================================================
-
-const db =
-    admin.database();
-
-
-// =====================================================
-// EXPORTAR
-// =====================================================
+const db = admin.database(firebaseApp);
 
 module.exports = {
     admin,
+    app: firebaseApp,
     db
 };
