@@ -1,11 +1,9 @@
 "use strict";
 
 const express = require("express");
-
 const router = express.Router();
 
 const { db } = require("./firebase-admin");
-
 const autenticarAPI = require("./auth");
 
 
@@ -133,14 +131,14 @@ function configuracaoPadrao(uid, usuario) {
             ativo:
                 false,
 
-            host:
+            api:
                 "",
 
-            porta:
-                8080,
+            endpoint:
+                "",
 
-            protocolo:
-                "wss",
+            metodo:
+                "POST",
 
             token:
                 ""
@@ -164,6 +162,175 @@ function configuracaoPadrao(uid, usuario) {
 
 
 // =====================================================
+// NORMALIZAR CONFIGURAÇÃO DO TERMINAL
+// =====================================================
+
+function normalizarTerminal(terminal) {
+
+    terminal =
+        terminal &&
+        typeof terminal === "object"
+            ? terminal
+            : {};
+
+
+    const metodosPermitidos = [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+    ];
+
+
+    let metodo =
+        String(
+            terminal.metodo || "POST"
+        )
+        .trim()
+        .toUpperCase();
+
+
+    if (!metodosPermitidos.includes(metodo)) {
+
+        metodo = "POST";
+
+    }
+
+
+    return {
+
+        ativo:
+            terminal.ativo === true,
+
+        api:
+            String(
+                terminal.api || ""
+            ).trim(),
+
+        endpoint:
+            String(
+                terminal.endpoint || ""
+            ).trim(),
+
+        metodo:
+            metodo,
+
+        token:
+            String(
+                terminal.token || ""
+            ).trim()
+
+    };
+
+}
+
+
+// =====================================================
+// NORMALIZAR CONFIGURAÇÃO COMPLETA
+// =====================================================
+
+function normalizarConfiguracao(configuracao, uid, usuario) {
+
+    const resultado = {
+
+        ...configuracao,
+
+        uid:
+            uid,
+
+        apiKey:
+            usuario.apiKey ||
+            configuracao.apiKey ||
+            "",
+
+        nomeEmpresa:
+            configuracao.nomeEmpresa !== undefined
+                ? configuracao.nomeEmpresa
+                : (
+                    usuario.fullName ||
+                    "MACVENDAS"
+                ),
+
+        telefone:
+            configuracao.telefone !== undefined
+                ? configuracao.telefone
+                : "",
+
+        email:
+            configuracao.email !== undefined
+                ? configuracao.email
+                : (
+                    usuario.email ||
+                    ""
+                ),
+
+        moeda:
+            configuracao.moeda !== undefined
+                ? configuracao.moeda
+                : "MT",
+
+        vendaGB:
+            configuracao.vendaGB !== undefined
+                ? numero(configuracao.vendaGB)
+                : 28,
+
+        custoGB:
+            configuracao.custoGB !== undefined
+                ? numero(configuracao.custoGB)
+                : 21,
+
+        tema:
+            configuracao.tema ||
+            "dark",
+
+        idioma:
+            configuracao.idioma ||
+            "pt",
+
+        terminal:
+            normalizarTerminal(
+                configuracao.terminal
+            ),
+
+        criadoEm:
+            configuracao.criadoEm ||
+            agora(),
+
+        atualizado:
+            agora()
+
+    };
+
+
+    // =================================================
+    // REMOVER CONFIGURAÇÃO USSD ANTIGA
+    // =================================================
+
+    delete resultado.ussd;
+
+
+    // =================================================
+    // REMOVER CAMPOS ANTIGOS DO TERMINAL
+    // =================================================
+
+    if (resultado.terminal) {
+
+        delete resultado.terminal.host;
+
+        delete resultado.terminal.porta;
+
+        delete resultado.terminal.protocolo;
+
+    }
+
+
+    return resultado;
+
+}
+
+
+// =====================================================
 // GET /api/configuracoes
 // =====================================================
 
@@ -179,7 +346,7 @@ router.get(
             // =================================================
 
             const uid =
-                req.usuario.uid;
+                req.usuario?.uid;
 
 
             if (!uid) {
@@ -264,224 +431,34 @@ router.get(
             // CONFIGURAÇÃO EXISTENTE
             // =================================================
 
-            const configuracao =
+            const configuracaoAtual =
                 snapshot.val() || {};
 
 
             // =================================================
-            // GARANTIR UID
+            // NORMALIZAR
             // =================================================
 
-            configuracao.uid =
-                uid;
-
-
-            // =================================================
-            // API KEY
-            // =================================================
-
-            configuracao.apiKey =
-                req.usuario.apiKey ||
-                configuracao.apiKey ||
-                "";
+            const configuracao =
+                normalizarConfiguracao(
+                    configuracaoAtual,
+                    uid,
+                    req.usuario
+                );
 
 
             // =================================================
-            // NOME DA EMPRESA
+            // SALVAR CORREÇÕES
             // =================================================
 
-            if (
-                configuracao.nomeEmpresa ===
-                undefined
-            ) {
-
-                configuracao.nomeEmpresa =
-                    req.usuario.fullName ||
-                    "MACVENDAS";
-
-            }
-
-
-            // =================================================
-            // TELEFONE
-            // =================================================
-
-            if (
-                configuracao.telefone ===
-                undefined
-            ) {
-
-                configuracao.telefone =
-                    "";
-
-            }
-
-
-            // =================================================
-            // EMAIL
-            // =================================================
-
-            if (
-                configuracao.email ===
-                undefined
-            ) {
-
-                configuracao.email =
-                    req.usuario.email ||
-                    "";
-
-            }
-
-
-            // =================================================
-            // MOEDA
-            // =================================================
-
-            if (
-                configuracao.moeda ===
-                undefined
-            ) {
-
-                configuracao.moeda =
-                    "MT";
-
-            }
-
-
-            // =================================================
-            // VENDA POR GB
-            // =================================================
-
-            if (
-                configuracao.vendaGB ===
-                undefined
-            ) {
-
-                configuracao.vendaGB =
-                    28;
-
-            }
-
-
-            // =================================================
-            // CUSTO POR GB
-            // =================================================
-
-            if (
-                configuracao.custoGB ===
-                undefined
-            ) {
-
-                configuracao.custoGB =
-                    21;
-
-            }
-
-
-            // =================================================
-            // TEMA
-            // =================================================
-
-            if (!configuracao.tema) {
-
-                configuracao.tema =
-                    "dark";
-
-            }
-
-
-            // =================================================
-            // IDIOMA
-            // =================================================
-
-            if (!configuracao.idioma) {
-
-                configuracao.idioma =
-                    "pt";
-
-            }
-
-
-            // =================================================
-            // DATA DE CRIAÇÃO
-            // =================================================
-
-            if (!configuracao.criadoEm) {
-
-                configuracao.criadoEm =
-                    agora();
-
-            }
-
-
-            // =================================================
-            // TERMINAL
-            // =================================================
-
-            if (
-                !configuracao.terminal ||
-                typeof configuracao.terminal !== "object"
-            ) {
-
-                configuracao.terminal = {
-
-                    ativo: false,
-                    host: "",
-                    porta: 8080,
-                    protocolo: "wss",
-                    token: ""
-
-                };
-
-            }
-            else {
-
-                configuracao.terminal.ativo =
-                    configuracao.terminal.ativo === true;
-
-                configuracao.terminal.host =
-                    String(configuracao.terminal.host || "").trim();
-
-                configuracao.terminal.porta =
-                    Number(configuracao.terminal.porta) || 8080;
-
-                configuracao.terminal.protocolo =
-                    configuracao.terminal.protocolo === "ws"
-                        ? "ws"
-                        : "wss";
-
-                configuracao.terminal.token =
-                    String(configuracao.terminal.token || "").trim();
-
-            }
-
-
-            // =================================================
-            // DATA DE ATUALIZAÇÃO
-            // =================================================
-
-            configuracao.atualizado =
-                agora();
-
-
-            // =================================================
-            // REMOVER USSD ANTIGO
-            // =================================================
-            //
-            // Caso exista uma configuração antiga com
-            // "ussd", ela será removida.
-            //
-            // =================================================
-
-            delete configuracao.ussd;
-
-
-            // =================================================
-            // ATUALIZAR FIREBASE
-            // =================================================
-
-            await referencia.update(
+            await referencia.set(
                 configuracao
+            );
+
+
+            console.log(
+                "[CONFIGURAÇÕES] Configuração carregada:",
+                uid
             );
 
 
@@ -538,7 +515,7 @@ router.put(
             // =================================================
 
             const uid =
-                req.usuario.uid;
+                req.usuario?.uid;
 
 
             if (!uid) {
@@ -591,7 +568,88 @@ router.put(
 
 
             // =================================================
-            // CRIAR NOVA CONFIGURAÇÃO
+            // CONFIGURAÇÃO RECEBIDA
+            // =================================================
+
+            const terminalRecebido =
+                req.body?.terminal || {};
+
+
+            // =================================================
+            // CONFIGURAÇÃO DO TERMINAL
+            // =================================================
+
+            const terminalAtual =
+                normalizarTerminal(
+                    atual.terminal
+                );
+
+
+            const terminal = {
+
+                ativo:
+                    terminalRecebido.ativo === true,
+
+                api:
+                    String(
+                        terminalRecebido.api ??
+                        terminalAtual.api ??
+                        ""
+                    ).trim(),
+
+                endpoint:
+                    String(
+                        terminalRecebido.endpoint ??
+                        terminalAtual.endpoint ??
+                        ""
+                    ).trim(),
+
+                metodo:
+                    String(
+                        terminalRecebido.metodo ??
+                        terminalAtual.metodo ??
+                        "POST"
+                    )
+                    .trim()
+                    .toUpperCase(),
+
+                token:
+                    String(
+                        terminalRecebido.token ??
+                        terminalAtual.token ??
+                        ""
+                    ).trim()
+
+            };
+
+
+            // =================================================
+            // VALIDAR MÉTODO
+            // =================================================
+
+            const metodosPermitidos = [
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE"
+            ];
+
+
+            if (
+                !metodosPermitidos.includes(
+                    terminal.metodo
+                )
+            ) {
+
+                terminal.metodo =
+                    "POST";
+
+            }
+
+
+            // =================================================
+            // NOVA CONFIGURAÇÃO
             // =================================================
 
             const configuracao = {
@@ -702,38 +760,8 @@ router.put(
                 // TERMINAL / SERVIDOR
                 // =================================================
 
-                terminal: {
-
-                    ativo:
-                        req.body.terminal?.ativo === true,
-
-                    host:
-                        String(
-                            req.body.terminal?.host ??
-                            atual.terminal?.host ??
-                            ""
-                        ).trim(),
-
-                    porta:
-                        Number(
-                            req.body.terminal?.porta ??
-                            atual.terminal?.porta ??
-                            8080
-                        ) || 8080,
-
-                    protocolo:
-                        req.body.terminal?.protocolo === "ws"
-                            ? "ws"
-                            : "wss",
-
-                    token:
-                        String(
-                            req.body.terminal?.token ??
-                            atual.terminal?.token ??
-                            ""
-                        ).trim()
-
-                },
+                terminal:
+                    terminal,
 
 
                 // =================================================
@@ -755,6 +783,17 @@ router.put(
             // =================================================
 
             delete configuracao.ussd;
+
+
+            // =================================================
+            // REMOVER CAMPOS ANTIGOS DO TERMINAL
+            // =================================================
+
+            delete configuracao.terminal.host;
+
+            delete configuracao.terminal.porta;
+
+            delete configuracao.terminal.protocolo;
 
 
             // =================================================
@@ -831,8 +870,12 @@ router.get(
 
         try {
 
+            // =================================================
+            // UID DO USUÁRIO
+            // =================================================
+
             const uid =
-                req.usuario.uid;
+                req.usuario?.uid;
 
 
             if (!uid) {
@@ -877,36 +920,31 @@ router.get(
 
 
             // =================================================
-            // CONFIGURAÇÃO
+            // CONFIGURAÇÃO ATUAL
             // =================================================
 
-            const configuracao =
+            const configuracaoAtual =
                 snapshot.val() || {};
 
 
             // =================================================
-            // GARANTIR UID
+            // NORMALIZAR
             // =================================================
 
-            configuracao.uid =
-                uid;
-
-
-            // =================================================
-            // API KEY
-            // =================================================
-
-            configuracao.apiKey =
-                req.usuario.apiKey ||
-                configuracao.apiKey ||
-                "";
+            const configuracao =
+                normalizarConfiguracao(
+                    configuracaoAtual,
+                    uid,
+                    req.usuario
+                );
 
 
             // =================================================
-            // REMOVER USSD ANTIGO
+            // SALVAR CORREÇÕES
             // =================================================
 
-            delete configuracao.ussd;
+            await configuracaoRef(uid)
+                .set(configuracao);
 
 
             // =================================================
