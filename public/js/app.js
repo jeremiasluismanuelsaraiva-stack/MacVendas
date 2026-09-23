@@ -38,14 +38,14 @@
     };
 
     // =====================================================
-    // CONTROLE DE ABERTURA DOS PAINÉIS
-    // Evita chamadas repetidas/concorrentes
+    // CONTROLE DE PAINÉIS
     // =====================================================
 
     let painelAtual = null;
     let painelCarregando = false;
     let ultimoCliquePainel = "";
     let ultimoCliqueTempo = 0;
+
 
 
     // =====================================================
@@ -1292,111 +1292,92 @@
                 panelId
             );
 
-
             const painelId =
                 paineis[panelId];
 
-
             if (!painelId) {
-
                 console.error(
                     "[MOZ TECH] Painel inválido:",
                     panelId
                 );
-
                 return;
-
             }
 
-
-            // =================================================
-            // ESCONDER TODOS
-            // =================================================
-
-            Object.values(paineis)
-                .forEach(function (id) {
-
-                    const painel =
-                        el(id);
-
-
-                    if (painel) {
-
-                        painel.style.display =
-                            "none";
-
-                    }
-
-                });
-
-
-            // =================================================
-            // ABRIR PAINEL
-            // =================================================
-
-            const painel =
-                el(painelId);
-
-
-            if (!painel) {
-
-                console.error(
-                    "[MOZ TECH] Painel não encontrado:",
-                    painelId
+            // Não iniciar duas cargas do mesmo painel ao mesmo tempo.
+            if (
+                painelCarregando &&
+                painelAtual === panelId
+            ) {
+                console.log(
+                    "[MOZ TECH] Ignorado: painel já está carregando:",
+                    panelId
                 );
-
                 return;
-
             }
 
-
-            painel.style.display =
-                "block";
-
-
-            // =================================================
-            // MENU ATIVO
-            // =================================================
-
-            document
-                .querySelectorAll(
-                    ".menu-item[data-panel]"
-                )
-                .forEach(function (item) {
-
-                    item.classList.remove(
-                        "active"
-                    );
-
-                });
-
-
-            const itemAtivo =
-                document.querySelector(
-                    '.menu-item[data-panel="' +
-                    panelId +
-                    '"]'
-                );
-
-
-            if (itemAtivo) {
-
-                itemAtivo.classList.add(
-                    "active"
-                );
-
-            }
-
-
-            // =================================================
-            // CARREGAR CONTEÚDO
-            // =================================================
+            // Registrar o estado ANTES de qualquer await.
+            painelAtual = panelId;
+            painelCarregando = true;
 
             try {
 
-                await carregarPainel(
-                    panelId
-                );
+                // =================================================
+                // ESCONDER TODOS
+                // =================================================
+
+                Object.values(paineis)
+                    .forEach(function (id) {
+
+                        const painel = el(id);
+
+                        if (painel) {
+                            painel.style.display = "none";
+                        }
+
+                    });
+
+                // =================================================
+                // ABRIR PAINEL
+                // =================================================
+
+                const painel = el(painelId);
+
+                if (!painel) {
+                    console.error(
+                        "[MOZ TECH] Painel não encontrado:",
+                        painelId
+                    );
+                    return;
+                }
+
+                painel.style.display = "block";
+
+                // =================================================
+                // MENU ATIVO
+                // =================================================
+
+                document
+                    .querySelectorAll(".menu-item[data-panel]")
+                    .forEach(function (item) {
+                        item.classList.remove("active");
+                    });
+
+                const itemAtivo =
+                    document.querySelector(
+                        '.menu-item[data-panel="' +
+                        panelId +
+                        '"]'
+                    );
+
+                if (itemAtivo) {
+                    itemAtivo.classList.add("active");
+                }
+
+                // =================================================
+                // CARREGAR CONTEÚDO
+                // =================================================
+
+                await carregarPainel(panelId);
 
             }
             catch (erro) {
@@ -1407,21 +1388,24 @@
                 );
 
             }
+            finally {
 
+                painelCarregando = false;
+
+                console.log(
+                    "[MOZ TECH] Painel finalizado:",
+                    panelId
+                );
+
+            }
 
             // =================================================
             // FECHAR MENU MOBILE
             // =================================================
 
-            if (
-                window.innerWidth <= 768
-            ) {
-
+            if (window.innerWidth <= 768) {
                 fecharMenuMobile();
-
             }
-
-            painelCarregando = false;
 
         };
 
@@ -1432,9 +1416,10 @@
 
     function inicializarMenu() {
 
-        const botoes = document.querySelectorAll(
-            ".menu-item[data-panel]"
-        );
+        const botoes =
+            document.querySelectorAll(
+                ".menu-item[data-panel]"
+            );
 
         console.log(
             "[MOZ TECH] Botões encontrados:",
@@ -1443,7 +1428,9 @@
 
         botoes.forEach(function (botao) {
 
-            botao.onclick = function (event) {
+            // onclick substitui eventual handler anterior,
+            // evitando múltiplos listeners.
+            botao.onclick = async function (event) {
 
                 event.preventDefault();
                 event.stopPropagation();
@@ -1460,6 +1447,7 @@
 
                 const agora = Date.now();
 
+                // Bloqueia somente o mesmo painel em processamento.
                 if (
                     painelCarregando &&
                     painelAtual === panel
@@ -1471,9 +1459,10 @@
                     return;
                 }
 
+                // Evita duplo clique imediato.
                 if (
                     ultimoCliquePainel === panel &&
-                    (agora - ultimoCliqueTempo) < 500
+                    (agora - ultimoCliqueTempo) < 400
                 ) {
                     console.log(
                         "[MOZ TECH] Clique duplicado ignorado:",
@@ -1482,12 +1471,15 @@
                     return;
                 }
 
+                ultimoCliquePainel = panel;
+                ultimoCliqueTempo = agora;
+
                 console.log(
                     "[MOZ TECH] BOTÃO CLICADO:",
                     panel
                 );
 
-                window.showPanel(panel);
+                await window.showPanel(panel);
 
             };
 
@@ -1874,4 +1866,6 @@
 
     }
 
-    console.log("[MOZ TECH] app.js FINAL - controle anti-duplicação ativo.");
+    console.log("[MOZ TECH] app.js FINAL corrigido carregado.");
+
+})();
