@@ -1,30 +1,151 @@
-// =====================================================
-// MACVENDAS
-// API DE CLIENTES
-// FIREBASE REALTIME DATABASE
-// =====================================================
-
 "use strict";
 
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 
 const router = express.Router();
 
-const { db } =
-    require("./firebase-admin");
-
 const autenticarAPI =
     require("./auth");
+
+// =====================================================
+// ARQUIVO DE CLIENTES
+// =====================================================
+
+const clientesFile =
+    path.join(
+        __dirname,
+        "..",
+        "data",
+        "clientes.json"
+    );
+
+
+// =====================================================
+// GARANTIR PASTA E ARQUIVO
+// =====================================================
+
+function garantirArquivo() {
+
+    const pasta =
+        path.dirname(
+            clientesFile
+        );
+
+    if (
+        !fs.existsSync(
+            pasta
+        )
+    ) {
+
+        fs.mkdirSync(
+            pasta,
+            {
+                recursive: true
+            }
+        );
+
+    }
+
+    if (
+        !fs.existsSync(
+            clientesFile
+        )
+    ) {
+
+        fs.writeFileSync(
+            clientesFile,
+            "[]",
+            "utf8"
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// LER CLIENTES
+// =====================================================
+
+function lerClientes() {
+
+    garantirArquivo();
+
+    try {
+
+        const conteudo =
+            fs.readFileSync(
+                clientesFile,
+                "utf8"
+            );
+
+        if (
+            !conteudo.trim()
+        ) {
+
+            return [];
+
+        }
+
+        return JSON.parse(
+            conteudo
+        );
+
+    }
+    catch (erro) {
+
+        console.error(
+            "[CLIENTES] Erro ao ler arquivo:",
+            erro
+        );
+
+        return [];
+
+    }
+
+}
+
+
+// =====================================================
+// SALVAR CLIENTES
+// =====================================================
+
+function salvarClientes(
+    clientes
+) {
+
+    garantirArquivo();
+
+    fs.writeFileSync(
+        clientesFile,
+        JSON.stringify(
+            clientes,
+            null,
+            2
+        ),
+        "utf8"
+    );
+
+}
 
 
 // =====================================================
 // FUNÇÃO PARA LIMPAR NÚMERO
 // =====================================================
 
-function limparNumero(numero) {
+function limparNumero(
+    numero
+) {
 
-    return String(numero || "")
-        .replace(/\D/g, "");
+    return String(
+        numero || ""
+    )
+        .replace(
+            /\D/g,
+            ""
+        );
 
 }
 
@@ -44,53 +165,28 @@ router.get(
             const uid =
                 req.usuario.uid;
 
-
-            // =================================================
-            // BUSCAR CLIENTES DO USUÁRIO
-            // =================================================
-
-            const snapshot =
-                await db
-                    .ref(
-                        "clientes/" + uid
-                    )
-                    .once("value");
-
-
-            const dados =
-                snapshot.val() || {};
-
-
-            // =================================================
-            // TRANSFORMAR OBJETO EM ARRAY
-            // =================================================
-
             const clientes =
-                Object.entries(dados)
-                    .map(
-                        ([id, cliente]) => ({
+                lerClientes();
 
-                            id,
-
-                            ...cliente
-
-                        })
+            const meusClientes =
+                clientes
+                    .filter(
+                        cliente =>
+                            cliente.uid ===
+                            uid
                     )
                     .reverse();
 
-
-            // =================================================
-            // RESPOSTA
-            // =================================================
-
             return res.json({
 
-                success: true,
+                success:
+                    true,
 
                 total:
-                    clientes.length,
+                    meusClientes.length,
 
-                clientes
+                clientes:
+                    meusClientes
 
             });
 
@@ -102,15 +198,17 @@ router.get(
                 err
             );
 
+            return res
+                .status(500)
+                .json({
 
-            return res.status(500).json({
+                    success:
+                        false,
 
-                success: false,
+                    error:
+                        "Erro ao listar clientes."
 
-                error:
-                    "Erro ao listar clientes."
-
-            });
+                });
 
         }
 
@@ -133,65 +231,45 @@ router.get(
             const uid =
                 req.usuario.uid;
 
-
             const id =
                 String(
                     req.params.id
                 );
 
+            const clientes =
+                lerClientes();
 
-            // =================================================
-            // BUSCAR
-            // =================================================
+            const cliente =
+                clientes.find(
+                    item =>
+                        item.uid === uid &&
+                        String(
+                            item.id
+                        ) === id
+                );
 
-            const snapshot =
-                await db
-                    .ref(
-                        "clientes/" +
-                        uid +
-                        "/" +
-                        id
-                    )
-                    .once("value");
+            if (!cliente) {
 
+                return res
+                    .status(404)
+                    .json({
 
-            // =================================================
-            // NÃO ENCONTRADO
-            // =================================================
+                        success:
+                            false,
 
-            if (!snapshot.exists()) {
+                        error:
+                            "Cliente não encontrado."
 
-                return res.status(404).json({
-
-                    success: false,
-
-                    error:
-                        "Cliente não encontrado."
-
-                });
+                    });
 
             }
 
-
-            const cliente =
-                snapshot.val();
-
-
-            // =================================================
-            // RESPOSTA
-            // =================================================
-
             return res.json({
 
-                success: true,
+                success:
+                    true,
 
-                cliente: {
-
-                    id,
-
-                    ...cliente
-
-                }
+                cliente
 
             });
 
@@ -203,15 +281,17 @@ router.get(
                 err
             );
 
+            return res
+                .status(500)
+                .json({
 
-            return res.status(500).json({
+                    success:
+                        false,
 
-                success: false,
+                    error:
+                        "Erro ao buscar cliente."
 
-                error:
-                    "Erro ao buscar cliente."
-
-            });
+                });
 
         }
 
@@ -234,7 +314,6 @@ router.post(
             const uid =
                 req.usuario.uid;
 
-
             // =================================================
             // DADOS
             // =================================================
@@ -242,28 +321,23 @@ router.post(
             const nome =
                 req.body.nome || "";
 
-
             const telefone =
                 req.body.telefone ||
                 req.body.numero ||
                 "";
 
-
             const email =
                 req.body.email ||
                 "";
-
 
             const grupo =
                 req.body.grupo ||
                 "GERAL";
 
-
             const saldo =
                 Number(
                     req.body.saldo || 0
                 );
-
 
             const observacao =
                 req.body.observacao ||
@@ -276,14 +350,17 @@ router.post(
 
             if (!telefone) {
 
-                return res.status(400).json({
+                return res
+                    .status(400)
+                    .json({
 
-                    success: false,
+                        success:
+                            false,
 
-                    error:
-                        "Número do cliente é obrigatório."
+                        error:
+                            "Número do cliente é obrigatório."
 
-                });
+                    });
 
             }
 
@@ -298,18 +375,29 @@ router.post(
                 );
 
 
+            if (!id) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success:
+                            false,
+
+                        error:
+                            "Número do cliente inválido."
+
+                    });
+
+            }
+
+
             // =================================================
-            // REFERÊNCIA
+            // LER CLIENTES
             // =================================================
 
-            const clienteRef =
-                db
-                    .ref(
-                        "clientes/" +
-                        uid +
-                        "/" +
-                        id
-                    );
+            const clientes =
+                lerClientes();
 
 
             // =================================================
@@ -317,30 +405,31 @@ router.post(
             // =================================================
 
             const existente =
-                await clienteRef
-                    .once("value");
+                clientes.find(
+                    cliente =>
+                        cliente.uid === uid &&
+                        String(
+                            cliente.id
+                        ) === id
+                );
 
 
-            if (
-                existente.exists()
-            ) {
+            if (existente) {
 
-                return res.status(409).json({
+                return res
+                    .status(409)
+                    .json({
 
-                    success: false,
+                        success:
+                            false,
 
-                    error:
-                        "Cliente já está cadastrado.",
+                        error:
+                            "Cliente já está cadastrado.",
 
-                    cliente: {
+                        cliente:
+                            existente
 
-                        id,
-
-                        ...existente.val()
-
-                    }
-
-                });
+                    });
 
             }
 
@@ -358,7 +447,9 @@ router.post(
                 nome,
 
                 telefone:
-                    String(telefone),
+                    String(
+                        telefone
+                    ),
 
                 email,
 
@@ -369,17 +460,22 @@ router.post(
                 observacao,
 
                 createdAt:
-                    new Date().toISOString()
+                    new Date()
+                        .toISOString()
 
             };
 
 
             // =================================================
-            // GUARDAR FIREBASE
+            // GUARDAR JSON
             // =================================================
 
-            await clienteRef.set(
+            clientes.push(
                 cliente
+            );
+
+            salvarClientes(
+                clientes
             );
 
 
@@ -387,16 +483,19 @@ router.post(
             // RESPOSTA
             // =================================================
 
-            return res.status(201).json({
+            return res
+                .status(201)
+                .json({
 
-                success: true,
+                    success:
+                        true,
 
-                message:
-                    "Cliente adicionado com sucesso.",
+                    message:
+                        "Cliente adicionado com sucesso.",
 
-                cliente
+                    cliente
 
-            });
+                });
 
         }
         catch (err) {
@@ -406,15 +505,17 @@ router.post(
                 err
             );
 
+            return res
+                .status(500)
+                .json({
 
-            return res.status(500).json({
+                    success:
+                        false,
 
-                success: false,
+                    error:
+                        "Erro ao adicionar cliente."
 
-                error:
-                    "Erro ao adicionar cliente."
-
-            });
+                });
 
         }
 
@@ -437,50 +538,58 @@ router.put(
             const uid =
                 req.usuario.uid;
 
-
             const id =
                 String(
                     req.params.id
                 );
 
-
-            const clienteRef =
-                db
-                    .ref(
-                        "clientes/" +
-                        uid +
-                        "/" +
-                        id
-                    );
+            const clientes =
+                lerClientes();
 
 
             // =================================================
-            // BUSCAR CLIENTE
+            // ÍNDICE DO CLIENTE
             // =================================================
 
-            const snapshot =
-                await clienteRef
-                    .once("value");
+            const indice =
+                clientes.findIndex(
+                    cliente =>
+                        cliente.uid === uid &&
+                        String(
+                            cliente.id
+                        ) === id
+                );
 
+
+            // =================================================
+            // NÃO ENCONTRADO
+            // =================================================
 
             if (
-                !snapshot.exists()
+                indice === -1
             ) {
 
-                return res.status(404).json({
+                return res
+                    .status(404)
+                    .json({
 
-                    success: false,
+                        success:
+                            false,
 
-                    error:
-                        "Cliente não encontrado."
+                        error:
+                            "Cliente não encontrado."
 
-                });
+                    });
 
             }
 
 
+            // =================================================
+            // CLIENTE ATUAL
+            // =================================================
+
             const clienteAtual =
-                snapshot.val();
+                clientes[indice];
 
 
             // =================================================
@@ -498,16 +607,21 @@ router.put(
                 uid,
 
                 saldo:
-                    req.body.saldo !== undefined
+                    req.body.saldo !==
+                    undefined
+
                         ? Number(
                             req.body.saldo
                         )
+
                         : Number(
-                            clienteAtual.saldo || 0
+                            clienteAtual.saldo ||
+                            0
                         ),
 
                 atualizado:
-                    new Date().toISOString()
+                    new Date()
+                        .toISOString()
 
             };
 
@@ -529,11 +643,30 @@ router.put(
 
 
             // =================================================
+            // NÃO PERMITIR ALTERAR
+            // CRIADO EM
+            // =================================================
+
+            clienteAtualizado.createdAt =
+                clienteAtual.createdAt ||
+                new Date()
+                    .toISOString();
+
+
+            // =================================================
+            // ATUALIZAR ARRAY
+            // =================================================
+
+            clientes[indice] =
+                clienteAtualizado;
+
+
+            // =================================================
             // GUARDAR
             // =================================================
 
-            await clienteRef.set(
-                clienteAtualizado
+            salvarClientes(
+                clientes
             );
 
 
@@ -543,7 +676,8 @@ router.put(
 
             return res.json({
 
-                success: true,
+                success:
+                    true,
 
                 message:
                     "Cliente atualizado com sucesso.",
@@ -561,15 +695,17 @@ router.put(
                 err
             );
 
+            return res
+                .status(500)
+                .json({
 
-            return res.status(500).json({
+                    success:
+                        false,
 
-                success: false,
+                    error:
+                        "Erro ao editar cliente."
 
-                error:
-                    "Erro ao editar cliente."
-
-            });
+                });
 
         }
 
@@ -592,44 +728,48 @@ router.delete(
             const uid =
                 req.usuario.uid;
 
-
             const id =
                 String(
                     req.params.id
                 );
 
-
-            const clienteRef =
-                db
-                    .ref(
-                        "clientes/" +
-                        uid +
-                        "/" +
-                        id
-                    );
+            const clientes =
+                lerClientes();
 
 
             // =================================================
-            // VERIFICAR
+            // ENCONTRAR CLIENTE
             // =================================================
 
-            const snapshot =
-                await clienteRef
-                    .once("value");
+            const indice =
+                clientes.findIndex(
+                    cliente =>
+                        cliente.uid === uid &&
+                        String(
+                            cliente.id
+                        ) === id
+                );
 
+
+            // =================================================
+            // NÃO ENCONTRADO
+            // =================================================
 
             if (
-                !snapshot.exists()
+                indice === -1
             ) {
 
-                return res.status(404).json({
+                return res
+                    .status(404)
+                    .json({
 
-                    success: false,
+                        success:
+                            false,
 
-                    error:
-                        "Cliente não encontrado."
+                        error:
+                            "Cliente não encontrado."
 
-                });
+                    });
 
             }
 
@@ -638,7 +778,19 @@ router.delete(
             // REMOVER
             // =================================================
 
-            await clienteRef.remove();
+            clientes.splice(
+                indice,
+                1
+            );
+
+
+            // =================================================
+            // GUARDAR
+            // =================================================
+
+            salvarClientes(
+                clientes
+            );
 
 
             // =================================================
@@ -647,7 +799,8 @@ router.delete(
 
             return res.json({
 
-                success: true,
+                success:
+                    true,
 
                 message:
                     "Cliente removido com sucesso.",
@@ -664,15 +817,17 @@ router.delete(
                 err
             );
 
+            return res
+                .status(500)
+                .json({
 
-            return res.status(500).json({
+                    success:
+                        false,
 
-                success: false,
+                    error:
+                        "Erro ao remover cliente."
 
-                error:
-                    "Erro ao remover cliente."
-
-            });
+                });
 
         }
 
@@ -684,4 +839,5 @@ router.delete(
 // EXPORTAR
 // =====================================================
 
-module.exports = router;
+module.exports =
+    router;
