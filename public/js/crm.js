@@ -95,20 +95,22 @@
     function configurarCabecalho() {
         const t = tabela();
         if (!t) return;
+
         const thead = t.querySelector("thead");
         if (!thead) return;
+
         thead.innerHTML = `
             <tr>
-                <th>ID</th>
-                <th>Nome</th>
+                <th>Cliente</th>
                 <th>Nº Cliente</th>
                 <th>Nº que recebeu</th>
+                <th>MB / GB</th>
+                <th>Pacote</th>
+                <th>Valor</th>
+                <th>Pagamento</th>
+                <th>Dispositivo usado</th>
                 <th>Grupo</th>
-                <th>Total GB</th>
-                <th>Compras</th>
-                <th>Total gasto</th>
-                <th>Última compra</th>
-                <th>Ações</th>
+                <th>Status</th>
             </tr>
         `;
     }
@@ -116,8 +118,10 @@
     function mensagem(texto, erro = false) {
         const t = tabela();
         if (!t) return;
+
         const tbody = t.querySelector("tbody");
         if (!tbody) return;
+
         tbody.innerHTML = `
             <tr>
                 <td colspan="10" style="text-align:center;padding:25px;${erro ? "color:#ff6b6b;" : ""}">
@@ -127,78 +131,233 @@
         `;
     }
 
-    function criarClientesDeCompras(compras) {
-        const mapa = new Map();
-
-        (Array.isArray(compras) ? compras : []).forEach(compra => {
-            const numeroCliente = compra.numeroCliente || compra.telefone || compra.numero || "";
-            const numeroRecebeu = compra.numeroRecebeu || compra.numeroDestino || compra.destino || "";
-            const chave = String(numeroCliente || numeroRecebeu).replace(/\D/g, "");
-            if (!chave) return;
-
-            if (!mapa.has(chave)) {
-                mapa.set(chave, {
-                    id: compra.clienteId || chave,
-                    nome: compra.nomeCliente || compra.nome || "Sem nome",
-                    numeroCliente,
-                    numeroRecebeu,
-                    grupo: compra.grupo || "-",
-                    totalGB: 0,
-                    totalCompras: 0,
-                    totalGasto: 0,
-                    ultimaCompra: ""
-                });
+    function obterCampo(compra, campos, padrao = "") {
+        for (const campo of campos) {
+            if (
+                compra &&
+                compra[campo] !== undefined &&
+                compra[campo] !== null &&
+                String(compra[campo]).trim() !== ""
+            ) {
+                return compra[campo];
             }
-
-            const c = mapa.get(chave);
-            const gb = numero(compra.gb) || (numero(compra.mb) / 1000);
-            c.totalGB += gb;
-            c.totalCompras += 1;
-            c.totalGasto += numero(compra.valor);
-            if (numeroRecebeu) c.numeroRecebeu = numeroRecebeu;
-            if (compra.nomeCliente || compra.nome) c.nome = compra.nomeCliente || compra.nome;
-            if (compra.grupo) c.grupo = compra.grupo;
-
-            const dataAtual = dataCompra(compra);
-            if (dataAtual && (!c.ultimaCompra || new Date(dataAtual) > new Date(c.ultimaCompra))) {
-                c.ultimaCompra = dataAtual;
-            }
-        });
-
-        return Array.from(mapa.values());
+        }
+        return padrao;
     }
 
-    function renderizarClientes(clientes) {
+    function obterCliente(compra) {
+        return obterCampo(
+            compra,
+            ["nomeCliente", "nome", "cliente", "nome_cliente"],
+            "-"
+        );
+    }
+
+    function obterNumeroClienteCompra(compra) {
+        return obterCampo(
+            compra,
+            ["numeroCliente", "numero_cliente", "telefone", "numero", "phone"],
+            "-"
+        );
+    }
+
+    function obterNumeroRecebeu(compra) {
+        return obterCampo(
+            compra,
+            [
+                "numeroRecebeu",
+                "numero_recebeu",
+                "numeroDestino",
+                "numero_destino",
+                "destino",
+                "numero",
+            ],
+            "-"
+        );
+    }
+
+    function obterPacote(compra) {
+        return obterCampo(
+            compra,
+            ["pacote", "nomePacote", "nome_pacote"],
+            "-"
+        );
+    }
+
+    function obterPagamento(compra) {
+        return obterCampo(
+            compra,
+            [
+                "metodoPagamento",
+                "metodo_pagamento",
+                "pagamento",
+                "metodo",
+                "formaPagamento",
+                "forma_pagamento",
+            ],
+            "-"
+        );
+    }
+
+    function obterDispositivo(compra) {
+        return obterCampo(
+            compra,
+            [
+                "dispositivoUsado",
+                "dispositivo_usado",
+                "dispositivo",
+                "nomeDispositivo",
+                "nome_dispositivo",
+                "aparelho",
+                "device",
+            ],
+            "-"
+        );
+    }
+
+    function obterGrupo(compra) {
+        return obterCampo(
+            compra,
+            ["grupo", "nomeGrupo", "nome_grupo"],
+            "-"
+        );
+    }
+
+    function obterStatus(compra) {
+        return obterCampo(
+            compra,
+            ["status", "estado"],
+            "pendente"
+        );
+    }
+
+    function obterQuantidade(compra) {
+        const mb = numero(
+            obterCampo(compra, ["mb", "MB", "quantidadeMB", "quantidade_mb"], 0)
+        );
+
+        const gb = numero(
+            obterCampo(compra, ["gb", "GB", "quantidadeGB", "quantidade_gb"], 0)
+        );
+
+        if (gb > 0) {
+            return `${gb.toLocaleString("pt-MZ", {
+                maximumFractionDigits: 2
+            })} GB`;
+        }
+
+        if (mb > 0) {
+            return `${mb.toLocaleString("pt-MZ", {
+                maximumFractionDigits: 2
+            })} MB`;
+        }
+
+        return "-";
+    }
+
+    function obterValor(compra) {
+        return numero(
+            obterCampo(compra, ["valor", "valorVenda", "valor_venda", "preco"], 0)
+        );
+    }
+
+    function classeStatus(status) {
+        const normalizado = String(status || "")
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+
+        if (
+            normalizado.includes("conclu") ||
+            normalizado.includes("concluida") ||
+            normalizado.includes("concluido")
+        ) {
+            return "concluido";
+        }
+
+        if (
+            normalizado.includes("process") ||
+            normalizado.includes("enviando")
+        ) {
+            return "processando";
+        }
+
+        if (
+            normalizado.includes("erro") ||
+            normalizado.includes("falh") ||
+            normalizado.includes("cancel")
+        ) {
+            return "erro";
+        }
+
+        return "pendente";
+    }
+
+    function textoStatus(status) {
+        const valor = String(status || "pendente").trim();
+
+        const mapa = {
+            concluida: "Concluído",
+            concluido: "Concluído",
+            concluída: "Concluído",
+            concluído: "Concluído",
+            processando: "Processando",
+            pendente: "Pendente",
+            erro: "Erro",
+            falhou: "Falhou",
+            cancelado: "Cancelado",
+            cancelada: "Cancelado",
+        };
+
+        return mapa[valor.toLowerCase()] || valor;
+    }
+
+    function renderizarCompras(compras) {
         const t = tabela();
-        if (!t) throw new Error("#tabelaClientes não encontrado.");
+
+        if (!t) {
+            throw new Error("#tabelaClientes não encontrado.");
+        }
+
         const tbody = t.querySelector("tbody");
-        if (!tbody) throw new Error("tbody da tabela de clientes não encontrado.");
+
+        if (!tbody) {
+            throw new Error("tbody da tabela de clientes não encontrado.");
+        }
 
         configurarCabecalho();
 
-        if (!clientes.length) {
-            mensagem("Nenhum cliente com compras encontrado.");
+        if (!Array.isArray(compras) || compras.length === 0) {
+            mensagem("Nenhuma compra encontrada.");
             return;
         }
 
         tbody.innerHTML = "";
 
-        clientes.forEach(cliente => {
+        compras.forEach((compra) => {
+            const status = obterStatus(compra);
+            const statusTexto = textoStatus(status);
+            const classe = classeStatus(status);
+
             const tr = document.createElement("tr");
+
             tr.innerHTML = `
-                <td>${escapar(cliente.id)}</td>
-                <td>${escapar(cliente.nome)}</td>
-                <td>${escapar(cliente.numeroCliente || "-")}</td>
-                <td>${escapar(cliente.numeroRecebeu || "-")}</td>
-                <td>${escapar(cliente.grupo || "-")}</td>
-                <td>${numero(cliente.totalGB).toLocaleString("pt-MZ", { maximumFractionDigits: 2 })} GB</td>
-                <td>${numero(cliente.totalCompras)}</td>
-                <td>${formatarMT(cliente.totalGasto)}</td>
-                <td>${formatarData(cliente.ultimaCompra)}</td>
+                <td>${escapar(obterCliente(compra))}</td>
+                <td>${escapar(obterNumeroClienteCompra(compra))}</td>
+                <td>${escapar(obterNumeroRecebeu(compra))}</td>
+                <td>${escapar(obterQuantidade(compra))}</td>
+                <td>${escapar(obterPacote(compra))}</td>
+                <td>${formatarMT(obterValor(compra))}</td>
+                <td>${escapar(obterPagamento(compra))}</td>
+                <td>${escapar(obterDispositivo(compra))}</td>
+                <td>${escapar(obterGrupo(compra))}</td>
                 <td>
-                    <button type="button" onclick="verClienteCRM('${escapar(cliente.id)}')">Ver</button>
+                    <strong class="crm-status crm-status-${classe}">
+                        ${escapar(statusTexto)}
+                    </strong>
                 </td>
             `;
+
             tbody.appendChild(tr);
         });
     }
@@ -216,10 +375,9 @@
                 ? dadosCompras.compras
                 : (Array.isArray(dadosCompras) ? dadosCompras : []);
 
-            const clientes = criarClientesDeCompras(compras);
-            console.log("[CRM] Clientes derivados das compras:", clientes.length);
-            renderizarClientes(clientes);
-            return clientes;
+            console.log("[CRM] Compras recebidas:", compras.length);
+            renderizarCompras(compras);
+            return compras;
         } catch (erro) {
             console.error("[CRM] ERRO AO CARREGAR CLIENTES:", erro);
             mensagem(`Não foi possível carregar os clientes.<br><small>${escapar(erro.message)}</small><br><button type="button" onclick="carregarClientes()">Tentar novamente</button>`, true);
