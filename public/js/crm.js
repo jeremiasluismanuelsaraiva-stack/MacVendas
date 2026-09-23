@@ -13,7 +13,7 @@
     // API
     // =================================================
 
-    const API = window.location.origin;
+    const API = "http://br1.bronxyshost.com:4234/api";
 
 
     // =================================================
@@ -51,29 +51,18 @@
                 </tr>
             `;
 
-
-            const resposta =
-                await fetch(
-                    API + "/clientes",
-                    {
-                        method: "GET",
-                        cache: "no-store"
-                    }
-                );
-
-
-            if (!resposta.ok) {
-
-                throw new Error(
-                    "Erro HTTP: " +
-                    resposta.status
-                );
-
+            if (typeof window.garantirCredenciaisAPI === "function") {
+                const autenticado = await window.garantirCredenciaisAPI();
+                if (!autenticado) {
+                    throw new Error("Usuário não autenticado ou credenciais da API não encontradas.");
+                }
             }
 
+            if (!window.MOZ_API || typeof window.MOZ_API.get !== "function") {
+                throw new Error("API do sistema ainda não está disponível.");
+            }
 
-            const json =
-                await resposta.json();
+            const json = await window.MOZ_API.get("/clientes");
 
 
             console.log(
@@ -383,36 +372,21 @@
 
         try {
 
-            const resposta =
-                await fetch(
-                    API + "/clientes",
-                    {
+            if (typeof window.garantirCredenciaisAPI === "function") {
+                const autenticado = await window.garantirCredenciaisAPI();
+                if (!autenticado) {
+                    throw new Error("Usuário não autenticado ou credenciais da API não encontradas.");
+                }
+            }
 
-                        method: "POST",
+            if (!window.MOZ_API || typeof window.MOZ_API.post !== "function") {
+                throw new Error("API do sistema ainda não está disponível.");
+            }
 
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
+            const json = await window.MOZ_API.post("/clientes", dados);
 
-                        body:
-                            JSON.stringify(dados)
-
-                    }
-                );
-
-
-            const json =
-                await resposta.json();
-
-
-            if (!resposta.ok) {
-
-                throw new Error(
-                    json.error ||
-                    "Erro ao adicionar cliente."
-                );
-
+            if (!json || json.success !== true) {
+                throw new Error(json?.error || "Erro ao adicionar cliente.");
             }
 
 
@@ -485,40 +459,24 @@
 
         try {
 
-            const resposta =
-                await fetch(
-                    API +
-                    "/clientes/" +
-                    encodeURIComponent(id),
-                    {
+            if (typeof window.garantirCredenciaisAPI === "function") {
+                const autenticado = await window.garantirCredenciaisAPI();
+                if (!autenticado) {
+                    throw new Error("Usuário não autenticado ou credenciais da API não encontradas.");
+                }
+            }
 
-                        method: "PUT",
+            if (!window.MOZ_API || typeof window.MOZ_API.put !== "function") {
+                throw new Error("API do sistema ainda não está disponível.");
+            }
 
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
+            const json = await window.MOZ_API.put(
+                "/clientes/" + encodeURIComponent(id),
+                { nome: nomeLimpo }
+            );
 
-                        body:
-                            JSON.stringify({
-                                nome: nomeLimpo
-                            })
-
-                    }
-                );
-
-
-            const json =
-                await resposta.json();
-
-
-            if (!resposta.ok) {
-
-                throw new Error(
-                    json.error ||
-                    "Erro ao editar cliente."
-                );
-
+            if (!json || json.success !== true) {
+                throw new Error(json?.error || "Erro ao editar cliente.");
             }
 
 
@@ -568,30 +526,23 @@
 
         try {
 
-            const resposta =
-                await fetch(
-                    API +
-                    "/clientes/" +
-                    encodeURIComponent(id),
-                    {
+            if (typeof window.garantirCredenciaisAPI === "function") {
+                const autenticado = await window.garantirCredenciaisAPI();
+                if (!autenticado) {
+                    throw new Error("Usuário não autenticado ou credenciais da API não encontradas.");
+                }
+            }
 
-                        method: "DELETE"
+            if (!window.MOZ_API || typeof window.MOZ_API.delete !== "function") {
+                throw new Error("API do sistema ainda não está disponível.");
+            }
 
-                    }
-                );
+            const json = await window.MOZ_API.delete(
+                "/clientes/" + encodeURIComponent(id)
+            );
 
-
-            const json =
-                await resposta.json();
-
-
-            if (!resposta.ok) {
-
-                throw new Error(
-                    json.error ||
-                    "Erro ao remover cliente."
-                );
-
+            if (!json || json.success !== true) {
+                throw new Error(json?.error || "Erro ao remover cliente.");
             }
 
 
