@@ -1,3 +1,13 @@
 {
-  "version": 2
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api",
+      "destination": "http://br1.bronxyshost.com:4234/"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "http://br1.bronxyshost.com:4234/api/:path*"
+    }
+  ]
 }
