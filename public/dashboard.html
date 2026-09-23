@@ -773,36 +773,7 @@
             }
         }
 
-    
-        .dashboard-graficos {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 24px;
-            margin-bottom: 28px;
-        }
-
-        .dashboard-graficos .chart-card {
-            padding: 24px;
-            margin-bottom: 0;
-            background: rgba(20, 25, 40, 0.65);
-            backdrop-filter: blur(10px);
-            border-radius: 28px;
-            border: 1px solid rgba(0, 102, 204, 0.3);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-        }
-
-        .dashboard-graficos .chart-box {
-            position: relative;
-            width: 100%;
-            height: 320px;
-        }
-
-        .dashboard-graficos canvas {
-            width: 100% !important;
-            height: 100% !important;
-            max-height: none;
-        }
-</style>
+    </style>
 
 </head>
 
@@ -1238,40 +1209,133 @@
 
             </div>
 
-
-            <!-- ================================================= -->
-            <!-- GRÁFICOS: DIÁRIO -> SEMANAL -> MENSAL -->
-            <!-- ================================================= -->
-            <div class="dashboard-graficos">
-
-                <div class="chart-card">
-                    <h3>Movimentos de hoje por hora</h3>
-                    <div class="chart-box">
-                        <canvas id="graficoDiario24h"></canvas>
-                    </div>
-                </div>
-
-                <div class="chart-card">
-                    <h3>Rosca radial semanal</h3>
-                    <div class="chart-box">
-                        <canvas id="graficoSemanalRadial"></canvas>
-                    </div>
-                </div>
-
-                <div class="chart-card">
-                    <h3>Faturamento mensal</h3>
-                    <div class="chart-box">
-                        <canvas id="graficoFaturamentoMensal"></canvas>
-                    </div>
-                </div>
-
-            </div>
-
             <div class="section">
 
                 <div class="section-header">
 
-                    <h2>
+                    
+<!-- GRAFICOS_MOZ_TECH_INICIO -->
+<section class="moz-graficos" id="mozGraficos">
+
+    <div class="moz-grafico-card">
+        <div class="moz-grafico-titulo">
+            <h2>Movimentos de hoje por hora</h2>
+            <span>00h — 23h</span>
+        </div>
+        <div class="moz-grafico-area">
+            <canvas id="graficoDiario24h"></canvas>
+        </div>
+    </div>
+
+    <div class="moz-grafico-card">
+        <div class="moz-grafico-titulo">
+            <h2>Rosca radial semanal</h2>
+            <span>Segunda — Domingo</span>
+        </div>
+        <div class="moz-grafico-area moz-grafico-radial">
+            <canvas id="graficoSemanalRadial"></canvas>
+        </div>
+    </div>
+
+    <div class="moz-grafico-card">
+        <div class="moz-grafico-titulo">
+            <h2>Faturamento mensal</h2>
+            <span>Dia 1 — último dia do mês</span>
+        </div>
+        <div class="moz-grafico-area">
+            <canvas id="graficoFaturamentoMensal"></canvas>
+        </div>
+    </div>
+
+</section>
+
+<style>
+.moz-graficos {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    margin: 0 0 28px;
+}
+
+.moz-grafico-card {
+    width: 100%;
+    min-height: 390px;
+    padding: 22px;
+    border-radius: 24px;
+    border: 1px solid rgba(0, 102, 204, .30);
+    background: rgba(20, 25, 40, .65);
+    box-shadow: 0 15px 35px rgba(0,0,0,.25);
+}
+
+.moz-grafico-titulo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 16px;
+}
+
+.moz-grafico-titulo h2 {
+    margin: 0;
+    font-size: 19px;
+    color: #fff;
+}
+
+.moz-grafico-titulo span {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.moz-grafico-area {
+    position: relative;
+    width: 100%;
+    height: 320px;
+}
+
+.moz-grafico-area canvas {
+    display: block !important;
+    width: 100% !important;
+    height: 320px !important;
+    max-height: none !important;
+}
+
+.moz-grafico-radial {
+    height: 360px;
+}
+
+.moz-grafico-radial canvas {
+    height: 360px !important;
+}
+
+@media (max-width: 700px) {
+    .moz-grafico-card {
+        padding: 16px;
+        min-height: 340px;
+    }
+
+    .moz-grafico-area {
+        height: 280px;
+    }
+
+    .moz-grafico-area canvas {
+        height: 280px !important;
+    }
+
+    .moz-grafico-radial,
+    .moz-grafico-radial canvas {
+        height: 310px !important;
+    }
+
+    .moz-grafico-titulo {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+</style>
+<!-- GRAFICOS_MOZ_TECH_FIM -->
+
+<h2>
                         Últimas Vendas
                     </h2>
 
@@ -1302,23 +1366,7 @@
                                 </th>
 
                                 <th>
-                                    Pacote
-                                </th>
-
-                                <th>
                                     Valor
-                                </th>
-
-                                <th>
-                                    Pagamento
-                                </th>
-
-                                <th>
-                                    Dispositivo usado
-                                </th>
-
-                                <th>
-                                    Grupo
                                 </th>
 
                                 <th>
@@ -1334,7 +1382,7 @@
                             <tr>
 
                                 <td
-                                    colspan="10"
+                                    colspan="6"
                                     style="
                                         text-align:center;
                                         padding:20px;
