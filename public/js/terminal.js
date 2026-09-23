@@ -193,6 +193,13 @@
         try {
 
             if (
+                typeof window.garantirCredenciaisAPI ===
+                "function"
+            ) {
+                await window.garantirCredenciaisAPI();
+            }
+
+            if (
                 !window.MOZ_API ||
                 typeof window.MOZ_API.get !== "function"
             ) {
@@ -719,7 +726,33 @@
         atualizarHostInfo();
 
 
-        carregarConfiguracao();
+        if (
+            typeof window.garantirCredenciaisAPI ===
+            "function"
+        ) {
+
+            window.garantirCredenciaisAPI()
+                .then(
+                    () => carregarConfiguracao()
+                )
+                .catch(
+                    erro => {
+
+                        console.error(
+                            "[TERMINAL] Erro ao preparar sessão:",
+                            erro
+                        );
+
+                    }
+                );
+
+        }
+
+        else {
+
+            carregarConfiguracao();
+
+        }
 
     }
 
