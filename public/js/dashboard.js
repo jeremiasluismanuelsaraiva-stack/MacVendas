@@ -394,22 +394,19 @@
             );
 
 
-            const resposta =
-                await fetch(
-                    "/api/dashboard",
-                    {
+            if (typeof window.garantirCredenciaisAPI === "function") {
+                const autenticado = await window.garantirCredenciaisAPI();
+                if (!autenticado) {
+                    throw new Error("Credenciais da API não encontradas.");
+                }
+            }
 
-                        method:
-                            "GET",
+            if (!window.MOZ_API || typeof window.MOZ_API.get !== "function") {
+                throw new Error("API do sistema ainda não está disponível.");
+            }
 
-                        headers:
-                            headersAPI(),
-
-                        cache:
-                            "no-store"
-
-                    }
-                );
+            const json =
+                await window.MOZ_API.get("/dashboard");
 
 
             console.log(
@@ -440,10 +437,6 @@
                 );
 
             }
-
-
-            const json =
-                await resposta.json();
 
 
             console.log(
@@ -741,42 +734,19 @@
             );
 
 
-            const resposta =
-                await fetch(
-                    "/api/vendas",
-                    {
-
-                        method:
-                            "GET",
-
-                        headers:
-                            headersAPI(),
-
-                        cache:
-                            "no-store"
-
-                    }
-                );
-
-
-            console.log(
-                "[MOZ TECH] Vendas HTTP:",
-                resposta.status
-            );
-
-
-            if (!resposta.ok) {
-
-                throw new Error(
-                    "HTTP " +
-                    resposta.status
-                );
-
+            if (typeof window.garantirCredenciaisAPI === "function") {
+                const autenticado = await window.garantirCredenciaisAPI();
+                if (!autenticado) {
+                    throw new Error("Credenciais da API não encontradas.");
+                }
             }
 
+            if (!window.MOZ_API || typeof window.MOZ_API.get !== "function") {
+                throw new Error("API do sistema ainda não está disponível.");
+            }
 
             const json =
-                await resposta.json();
+                await window.MOZ_API.get("/vendas");
 
 
             console.log(
