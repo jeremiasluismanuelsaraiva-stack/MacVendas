@@ -410,32 +410,17 @@
 
 
             console.log(
-                "[MOZ TECH] Dashboard HTTP:",
-                resposta.status
+                "[MOZ TECH] Resposta dashboard:",
+                json
             );
 
 
-            if (!resposta.ok) {
-
-                const texto =
-                    await resposta.text()
-                        .catch(
-                            function () {
-                                return "";
-                            }
-                        );
-
-
+            if (!json || json.success === false) {
                 throw new Error(
-                    "HTTP " +
-                    resposta.status +
-                    (
-                        texto
-                            ? " - " + texto
-                            : ""
-                    )
+                    json?.message ||
+                    json?.error ||
+                    "Erro ao carregar dashboard."
                 );
-
             }
 
 
@@ -730,7 +715,7 @@
         try {
 
             console.log(
-                "[MOZ TECH] GET /api/vendas"
+                "[MOZ TECH] GET /api/compras"
             );
 
 
@@ -746,7 +731,7 @@
             }
 
             const json =
-                await window.MOZ_API.get("/vendas");
+                await window.MOZ_API.get("/compras");
 
 
             console.log(
@@ -770,6 +755,28 @@
                 json &&
                 Array.isArray(
                     json.vendas
+                )
+            ) {
+
+                vendas =
+                    json.vendas;
+
+            }
+            else if (
+                json &&
+                Array.isArray(
+                    json.compras
+                )
+            ) {
+
+                vendas =
+                    json.compras;
+
+            }
+            else if (
+                json &&
+                Array.isArray(
+                    json.data
                 )
             ) {
 
