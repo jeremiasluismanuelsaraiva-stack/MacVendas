@@ -13,7 +13,106 @@
     // API
     // =================================================
 
-    const API = "http://br1.bronxyshost.com:4234/api";
+    const API = "http://br1.bronxyshost.com:4234";
+
+    // =================================================
+    // API CENTRAL
+    // =================================================
+    // Usa MOZ_API quando disponível.
+    // Caso MOZ_API ainda não tenha sido inicializado,
+    // faz a requisição diretamente para o backend.
+    // =================================================
+
+    async function chamarAPI(endpoint, options = {}) {
+
+        if (
+            window.MOZ_API &&
+            typeof window.MOZ_API.get === "function"
+        ) {
+
+            const metodo =
+                String(options.method || "GET").toUpperCase();
+
+            if (metodo === "GET") {
+                return await window.MOZ_API.get(endpoint);
+            }
+
+            if (
+                metodo === "POST" &&
+                typeof window.MOZ_API.post === "function"
+            ) {
+                return await window.MOZ_API.post(
+                    endpoint,
+                    options.body || {}
+                );
+            }
+
+            if (
+                metodo === "PUT" &&
+                typeof window.MOZ_API.put === "function"
+            ) {
+                return await window.MOZ_API.put(
+                    endpoint,
+                    options.body || {}
+                );
+            }
+
+            if (
+                metodo === "DELETE" &&
+                typeof window.MOZ_API.delete === "function"
+            ) {
+                return await window.MOZ_API.delete(endpoint);
+            }
+        }
+
+        const apiKey =
+            localStorage.getItem("apiKey") || "";
+
+        const config = {
+            method:
+                String(options.method || "GET").toUpperCase(),
+
+            headers: {
+                "Content-Type": "application/json"
+            }
+        };
+
+        if (apiKey) {
+            config.headers["x-api-key"] = apiKey;
+        }
+
+        if (
+            options.body !== undefined &&
+            config.method !== "GET"
+        ) {
+            config.body = JSON.stringify(options.body);
+        }
+
+        const resposta =
+            await fetch(
+                API + endpoint,
+                config
+            );
+
+        let json = {};
+
+        try {
+            json = await resposta.json();
+        }
+        catch {
+            json = {};
+        }
+
+        if (!resposta.ok) {
+            throw new Error(
+                json.error ||
+                json.message ||
+                "HTTP " + resposta.status
+            );
+        }
+
+        return json;
+    }
 
 
     // =================================================
@@ -58,11 +157,8 @@
                 }
             }
 
-            if (!window.MOZ_API || typeof window.MOZ_API.get !== "function") {
-                throw new Error("API do sistema ainda não está disponível.");
-            }
-
-            const json = await window.MOZ_API.get("/clientes");
+            const json =
+                await chamarAPI("/clientes");
 
 
             console.log(
@@ -379,11 +475,14 @@
                 }
             }
 
-            if (!window.MOZ_API || typeof window.MOZ_API.post !== "function") {
-                throw new Error("API do sistema ainda não está disponível.");
-            }
-
-            const json = await window.MOZ_API.post("/clientes", dados);
+            const json =
+                await chamarAPI(
+                    "/clientes",
+                    {
+                        method: "POST",
+                        body: dados
+                    }
+                );
 
             if (!json || json.success !== true) {
                 throw new Error(json?.error || "Erro ao adicionar cliente.");
@@ -466,14 +565,16 @@
                 }
             }
 
-            if (!window.MOZ_API || typeof window.MOZ_API.put !== "function") {
-                throw new Error("API do sistema ainda não está disponível.");
-            }
-
-            const json = await window.MOZ_API.put(
-                "/clientes/" + encodeURIComponent(id),
-                { nome: nomeLimpo }
-            );
+            const json =
+                await chamarAPI(
+                    "/clientes/" + encodeURIComponent(id),
+                    {
+                        method: "PUT",
+                        body: {
+                            nome: nomeLimpo
+                        }
+                    }
+                );
 
             if (!json || json.success !== true) {
                 throw new Error(json?.error || "Erro ao editar cliente.");
@@ -533,13 +634,13 @@
                 }
             }
 
-            if (!window.MOZ_API || typeof window.MOZ_API.delete !== "function") {
-                throw new Error("API do sistema ainda não está disponível.");
-            }
-
-            const json = await window.MOZ_API.delete(
-                "/clientes/" + encodeURIComponent(id)
-            );
+            const json =
+                await chamarAPI(
+                    "/clientes/" + encodeURIComponent(id),
+                    {
+                        method: "DELETE"
+                    }
+                );
 
             if (!json || json.success !== true) {
                 throw new Error(json?.error || "Erro ao remover cliente.");
