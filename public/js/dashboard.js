@@ -153,13 +153,49 @@
         return true;
     }
 
+    async function prepararAPI() {
+        try {
+            if (typeof window.garantirCredenciaisAPI === "function") {
+                const autenticado =
+                    await window.garantirCredenciaisAPI();
+
+                if (!autenticado) {
+                    console.warn(
+                        "[MOZ TECH] Não foi possível preparar as credenciais da API."
+                    );
+                    return false;
+                }
+            }
+
+            if (!verificarCredenciais()) {
+                return false;
+            }
+
+            if (
+                !window.MOZ_API ||
+                typeof window.MOZ_API.get !== "function"
+            ) {
+                console.warn(
+                    "[MOZ TECH] MOZ_API ainda não está disponível."
+                );
+                return false;
+            }
+
+            return true;
+
+        } catch (erro) {
+            console.error(
+                "[MOZ TECH] Erro ao preparar API:",
+                erro
+            );
+
+            return false;
+        }
+    }
+
     async function carregarDashboard() {
 
         if (carregandoDashboard) {
-            return null;
-        }
-
-        if (!verificarCredenciais()) {
             return null;
         }
 
@@ -167,24 +203,8 @@
 
         try {
 
-            if (typeof window.garantirCredenciaisAPI === "function") {
-                const autenticado =
-                    await window.garantirCredenciaisAPI();
-
-                if (!autenticado) {
-                    throw new Error(
-                        "Credenciais da API não encontradas."
-                    );
-                }
-            }
-
-            if (
-                !window.MOZ_API ||
-                typeof window.MOZ_API.get !== "function"
-            ) {
-                throw new Error(
-                    "API do sistema ainda não está disponível."
-                );
+            if (!(await prepararAPI())) {
+                return null;
             }
 
             const json =
@@ -409,32 +429,12 @@
             return [];
         }
 
-        if (!verificarCredenciais()) {
-            return [];
-        }
-
         carregandoVendas = true;
 
         try {
 
-            if (typeof window.garantirCredenciaisAPI === "function") {
-                const autenticado =
-                    await window.garantirCredenciaisAPI();
-
-                if (!autenticado) {
-                    throw new Error(
-                        "Credenciais da API não encontradas."
-                    );
-                }
-            }
-
-            if (
-                !window.MOZ_API ||
-                typeof window.MOZ_API.get !== "function"
-            ) {
-                throw new Error(
-                    "API do sistema ainda não está disponível."
-                );
+            if (!(await prepararAPI())) {
+                return [];
             }
 
             const json =
@@ -742,7 +742,7 @@
             "[MOZ TECH] Atualizando dashboard completo..."
         );
 
-        if (!verificarCredenciais()) {
+        if (!(await prepararAPI())) {
             return;
         }
 
@@ -818,6 +818,10 @@
     function iniciarDashboard() {
         configurarBotaoAtualizar();
         mostrarCarregando();
+
+        setTimeout(function () {
+            carregarTudo();
+        }, 300);
     }
 
     if (document.readyState === "loading") {
