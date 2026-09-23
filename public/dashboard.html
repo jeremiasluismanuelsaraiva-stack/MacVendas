@@ -612,6 +612,32 @@
                 var(--success);
         }
 
+        .status.concluido {
+            background: rgba(0, 204, 102, 0.12);
+            color: var(--success);
+        }
+
+        .status.processando {
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--accent-color);
+        }
+
+        .status.pendente {
+            background: rgba(245, 158, 11, 0.12);
+            color: #d97706;
+        }
+
+        .status.falhou {
+            background: rgba(239, 68, 68, 0.12);
+            color: #dc2626;
+        }
+
+        .status.cancelado {
+            background: rgba(107, 114, 128, 0.12);
+            color: var(--text-secondary);
+        }
+
+
         .panel {
             width: 100%;
         }
@@ -747,71 +773,9 @@
             }
         }
 
-    
-        /* =====================================================
-           GRÁFICOS SEMANAIS MOZ TECH
-           ===================================================== */
-        .graficos-semana {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
-            margin-bottom: 18px;
-        }
-
-        .grafico-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 8px;
-            box-shadow: var(--card-shadow);
-        }
-
-        .grafico-diario-card {
-            grid-column: 1 / -1;
-        }
-
-        .grafico-card h3 {
-            margin: 0 0 3px;
-            font-size: 13px;
-            color: var(--text-primary);
-        }
-
-        .grafico-card p {
-            margin: 0 0 6px;
-            font-size: 10px;
-            color: var(--text-secondary);
-        }
-
-        .grafico-container {
-            position: relative;
-            width: 100%;
-            height: 135px;
-        }
-
-        .grafico-container.radial-container {
-            height: 145px;
-        }
-
-        .grafico-diario-container {
-            height: 175px;
-        }
-
-        @media (max-width: 1050px) {
-            .graficos-semana {
-                grid-template-columns: 1fr;
-            }
-
-            .grafico-container {
-                height: 135px;
-            }
-
-            .grafico-container.radial-container {
-                height: 145px;
-            }
-        }
-
     </style>
 
+<style>#panelDashboard .table-container{overflow-x:auto}#panelDashboard table{min-width:1250px}</style>
 </head>
 
 <body>
@@ -1246,88 +1210,26 @@
 
             </div>
 
-
-            <!-- =====================================================
-                 GRÁFICOS SEMANAIS
-                 ===================================================== -->
-            <div class="graficos-semana">
-
-                <div class="grafico-card grafico-diario-card">
-                    <h3>Movimentos de hoje por hora</h3>
-                    <p>Contagem de vendas e movimentos em cada hora do dia.</p>
-                    <div class="grafico-container grafico-diario-container">
-                        <canvas id="graficoDiario"></canvas>
-                    </div>
-                </div>
-
-                <div class="grafico-card">
-                    <h3>Vendas de segunda a domingo</h3>
-                    
-                    
-                </div>
-
-                <div class="grafico-card">
-                    <h3>Comparação semanal entre quantidade de vendas e faturamento em MT</h3>
-                    <p>Vendas e faturamento de segunda a domingo</p>
-                    
-                </div>
-
-                <div class="grafico-card">
-                    <h3>Rosca radial semanal</h3>
-                    <p>Cada anel representa um dia da semana.</p>
-                    
-                </div>
-
-            </div>
-
             <div class="section">
-
-                <div class="section-header">
-
-                    
-<section class="graficos-moztech" style="margin:18px 0;">
-  <div class="grafico-card" style="margin-bottom:14px;">
-    <h3>Movimentos de hoje</h3>
-    
-  </div>
-
-  <div class="grafico-card" style="margin-bottom:14px;">
-    <h3>Faturamento mensal</h3>
-    
-  </div>
-
-  <div class="grafico-card">
-    <h3>Rosca radial semanal</h3>
-    
-  </div>
-</section>
 
 <section id="graficos-moztech" style="margin:18px 0;">
   <div class="grafico-card" style="margin-bottom:14px;">
     <h3>Movimentos de hoje por hora</h3>
-    <p style="margin:4px 0 10px;">Contagem de vendas e movimentos em cada hora do dia.</p>
-    <div class="grafico-container" style="height:230px;">
-      <canvas id="graficoDiario24h"></canvas>
-    </div>
+    <div class="grafico-container" style="height:230px;"><canvas id="graficoDiario24h"></canvas></div>
   </div>
-
   <div class="grafico-card" style="margin-bottom:14px;">
     <h3>Faturamento mensal</h3>
-    <div class="grafico-container" style="height:230px;">
-      <canvas id="graficoFaturamentoMensal"></canvas>
-    </div>
+    <div class="grafico-container" style="height:230px;"><canvas id="graficoFaturamentoMensal"></canvas></div>
   </div>
-
   <div class="grafico-card">
     <h3>Rosca radial semanal</h3>
-    <p style="margin:4px 0 10px;">Cada anel representa um dia da semana.</p>
-    <div class="grafico-container" style="height:250px;">
-      <canvas id="graficoSemanalRadial"></canvas>
-    </div>
+    <div class="grafico-container" style="height:250px;"><canvas id="graficoSemanalRadial"></canvas></div>
   </div>
 </section>
 
-<h2>
+                <div class="section-header">
+
+                    <h2>
                         Últimas Vendas
                     </h2>
 
@@ -1341,21 +1243,16 @@
 
                             <tr>
 
-                                <th>
-                                    Número
-                                </th>
-
-                                <th>
-                                    MB / GB
-                                </th>
-
-                                <th>
-                                    Valor
-                                </th>
-
-                                <th>
-                                    Status
-                                </th>
+                                <th>Cliente</th>
+                                <th>Nº Cliente</th>
+                                <th>Nº que recebeu</th>
+                                <th>MB / GB</th>
+                                <th>Pacote</th>
+                                <th>Valor</th>
+                                <th>Pagamento</th>
+                                <th>Dispositivo usado</th>
+                                <th>Grupo</th>
+                                <th>Status</th>
 
                             </tr>
 
@@ -1366,7 +1263,7 @@
                             <tr>
 
                                 <td
-                                    colspan="4"
+                                    colspan="10"
                                     style="
                                         text-align:center;
                                         padding:20px;
