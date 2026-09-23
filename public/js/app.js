@@ -37,16 +37,6 @@
 
     };
 
-    // =====================================================
-    // CONTROLE DE PAINÉIS
-    // =====================================================
-
-    let painelAtual = null;
-    let painelCarregando = false;
-    let ultimoCliquePainel = "";
-    let ultimoCliqueTempo = 0;
-
-
 
     // =====================================================
     // AUXILIAR
@@ -1296,88 +1286,94 @@
                 paineis[panelId];
 
             if (!painelId) {
+
                 console.error(
                     "[MOZ TECH] Painel inválido:",
                     panelId
                 );
+
                 return;
             }
 
-            // Não iniciar duas cargas do mesmo painel ao mesmo tempo.
-            if (
-                painelCarregando &&
-                painelAtual === panelId
-            ) {
-                console.log(
-                    "[MOZ TECH] Ignorado: painel já está carregando:",
-                    panelId
+            // =================================================
+            // ESCONDER TODOS
+            // =================================================
+
+            Object.values(paineis)
+                .forEach(function (id) {
+
+                    const painel =
+                        el(id);
+
+                    if (painel) {
+
+                        painel.style.display =
+                            "none";
+
+                    }
+
+                });
+
+            // =================================================
+            // ABRIR PAINEL
+            // =================================================
+
+            const painel =
+                el(painelId);
+
+            if (!painel) {
+
+                console.error(
+                    "[MOZ TECH] Painel não encontrado:",
+                    painelId
                 );
+
                 return;
             }
 
-            // Registrar o estado ANTES de qualquer await.
-            painelAtual = panelId;
-            painelCarregando = true;
+            painel.style.display =
+                "block";
+
+            // =================================================
+            // MENU ATIVO
+            // =================================================
+
+            document
+                .querySelectorAll(
+                    ".menu-item[data-panel]"
+                )
+                .forEach(function (item) {
+
+                    item.classList.remove(
+                        "active"
+                    );
+
+                });
+
+            const itemAtivo =
+                document.querySelector(
+                    '.menu-item[data-panel="' +
+                    panelId +
+                    '"]'
+                );
+
+            if (itemAtivo) {
+
+                itemAtivo.classList.add(
+                    "active"
+                );
+
+            }
+
+            // =================================================
+            // CARREGAR CONTEÚDO
+            // =================================================
 
             try {
 
-                // =================================================
-                // ESCONDER TODOS
-                // =================================================
-
-                Object.values(paineis)
-                    .forEach(function (id) {
-
-                        const painel = el(id);
-
-                        if (painel) {
-                            painel.style.display = "none";
-                        }
-
-                    });
-
-                // =================================================
-                // ABRIR PAINEL
-                // =================================================
-
-                const painel = el(painelId);
-
-                if (!painel) {
-                    console.error(
-                        "[MOZ TECH] Painel não encontrado:",
-                        painelId
-                    );
-                    return;
-                }
-
-                painel.style.display = "block";
-
-                // =================================================
-                // MENU ATIVO
-                // =================================================
-
-                document
-                    .querySelectorAll(".menu-item[data-panel]")
-                    .forEach(function (item) {
-                        item.classList.remove("active");
-                    });
-
-                const itemAtivo =
-                    document.querySelector(
-                        '.menu-item[data-panel="' +
-                        panelId +
-                        '"]'
-                    );
-
-                if (itemAtivo) {
-                    itemAtivo.classList.add("active");
-                }
-
-                // =================================================
-                // CARREGAR CONTEÚDO
-                // =================================================
-
-                await carregarPainel(panelId);
+                await carregarPainel(
+                    panelId
+                );
 
             }
             catch (erro) {
@@ -1388,23 +1384,17 @@
                 );
 
             }
-            finally {
-
-                painelCarregando = false;
-
-                console.log(
-                    "[MOZ TECH] Painel finalizado:",
-                    panelId
-                );
-
-            }
 
             // =================================================
             // FECHAR MENU MOBILE
             // =================================================
 
-            if (window.innerWidth <= 768) {
+            if (
+                window.innerWidth <= 768
+            ) {
+
                 fecharMenuMobile();
+
             }
 
         };
@@ -1428,9 +1418,7 @@
 
         botoes.forEach(function (botao) {
 
-            // onclick substitui eventual handler anterior,
-            // evitando múltiplos listeners.
-            botao.onclick = async function (event) {
+            botao.onclick = function (event) {
 
                 event.preventDefault();
                 event.stopPropagation();
@@ -1438,48 +1426,23 @@
                 const panel =
                     botao.getAttribute("data-panel");
 
-                if (!panel) {
-                    console.error(
-                        "[MOZ TECH] Botão sem data-panel"
-                    );
-                    return;
-                }
-
-                const agora = Date.now();
-
-                // Bloqueia somente o mesmo painel em processamento.
-                if (
-                    painelCarregando &&
-                    painelAtual === panel
-                ) {
-                    console.log(
-                        "[MOZ TECH] Clique ignorado: painel já está carregando:",
-                        panel
-                    );
-                    return;
-                }
-
-                // Evita duplo clique imediato.
-                if (
-                    ultimoCliquePainel === panel &&
-                    (agora - ultimoCliqueTempo) < 400
-                ) {
-                    console.log(
-                        "[MOZ TECH] Clique duplicado ignorado:",
-                        panel
-                    );
-                    return;
-                }
-
-                ultimoCliquePainel = panel;
-                ultimoCliqueTempo = agora;
-
                 console.log(
                     "[MOZ TECH] BOTÃO CLICADO:",
                     panel
                 );
 
-                await window.showPanel(panel);
+                if (!panel) {
+
+                    console.error(
+                        "[MOZ TECH] Botão sem data-panel"
+                    );
+
+                    return;
+                }
+
+                window.showPanel(
+                    panel
+                );
 
             };
 
@@ -1865,7 +1828,5 @@
         iniciarSistema();
 
     }
-
-    console.log("[MOZ TECH] app.js FINAL corrigido carregado.");
 
 })();
