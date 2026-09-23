@@ -1,38 +1,68 @@
+"use strict";
 
-const API = window.location.origin;
+// ======================================
+// PACOTES.JS
+// MACVENDAS
+// API PRÓPRIA
+// ======================================
+
+
+// ======================================
+// GARANTIR API
+// ======================================
+
+async function garantirAPI() {
+
+    if (
+        typeof window.garantirCredenciaisAPI ===
+        "function"
+    ) {
+
+        await window.garantirCredenciaisAPI();
+
+    }
+
+
+    if (!window.MOZ_API) {
+
+        throw new Error(
+            "MOZ_API não está disponível."
+        );
+
+    }
+
+}
 
 
 // ======================================
 // CARREGAR PACOTES
+// GET /pacotes
 // ======================================
 
 async function carregarPacotes() {
 
     try {
 
-        const resposta =
-            await fetch(API + "/pacotes");
+        await garantirAPI();
 
-        if (!resposta.ok) {
-
-            throw new Error(
-                "Erro HTTP: " + resposta.status
-            );
-
-        }
 
         const json =
-            await resposta.json();
+            await window.MOZ_API.get(
+                "/pacotes"
+            );
 
 
-        if (!json.success) {
+        if (
+            !json ||
+            json.success === false
+        ) {
 
             console.error(
                 "Erro da API:",
                 json
             );
 
-            return;
+            return [];
 
         }
 
@@ -43,96 +73,170 @@ async function carregarPacotes() {
             );
 
 
-        if (!tabela) return;
+        if (!tabela) {
+
+            return [];
+
+        }
 
 
         tabela.innerHTML = "";
 
 
         const pacotes =
-            json.pacotes || [];
+            Array.isArray(
+                json.pacotes
+            )
+                ? json.pacotes
+                : [];
 
 
-        if (pacotes.length === 0) {
+        if (
+            pacotes.length ===
+            0
+        ) {
 
             tabela.innerHTML = `
+
                 <tr>
+
                     <td
                         colspan="7"
-                        style="text-align:center;padding:25px;"
+                        style="
+                            text-align:center;
+                            padding:25px;
+                        "
                     >
+
                         Nenhum pacote cadastrado.
+
                     </td>
+
                 </tr>
+
             `;
 
-            return;
+            return [];
 
         }
 
 
-        pacotes.forEach(pacote => {
+        // ======================================
+        // MOSTRAR PACOTES
+        // ======================================
 
-            const tr =
-                document.createElement("tr");
+        pacotes.forEach(
+            pacote => {
 
-
-            tr.innerHTML = `
-
-                <td>
-                    ${pacote.nome || "-"}
-                </td>
-
-                <td>
-                    ${pacote.tipo || "-"}
-                </td>
-
-                <td>
-                    ${pacote.gb || 0} GB
-                </td>
-
-                <td>
-                    ${pacote.valor || 0} MT
-                </td>
-
-                <td>
-                    ${pacote.vantagem || "-"}
-                </td>
-
-                <td>
-                    ${
-                        pacote.ativo
-                            ? "Ativo"
-                            : "Desativado"
-                    }
-                </td>
-
-                <td>
-
-                    <button
-                        class="btn btn-outline"
-                        data-editar-pacote="${pacote.id}"
-                    >
-                        <i class="fas fa-edit"></i>
-                        Editar
-                    </button>
-
-                    <button
-                        class="btn btn-outline"
-                        data-remover-pacote="${pacote.id}"
-                    >
-                        <i class="fas fa-trash"></i>
-                        Remover
-                    </button>
-
-                </td>
-
-            `;
+                const tr =
+                    document.createElement(
+                        "tr"
+                    );
 
 
-            tabela.appendChild(tr);
+                const id =
+                    pacote.id ?? "";
 
-        });
+
+                const nome =
+                    pacote.nome ?? "-";
+
+
+                const tipo =
+                    pacote.tipo ?? "-";
+
+
+                const gb =
+                    pacote.gb ??
+                    pacote.quantidadeGB ??
+                    0;
+
+
+                const valor =
+                    pacote.valor ??
+                    pacote.preco ??
+                    pacote.valorVenda ??
+                    pacote.valor_venda ??
+                    0;
+
+
+                const vantagem =
+                    pacote.vantagem ??
+                    "-";
+
+
+                const ativo =
+                    pacote.ativo !== false;
+
+
+                tr.innerHTML = `
+
+                    <td>
+                        ${escaparHTML(nome)}
+                    </td>
+
+                    <td>
+                        ${escaparHTML(tipo)}
+                    </td>
+
+                    <td>
+                        ${escaparHTML(gb)} GB
+                    </td>
+
+                    <td>
+                        ${escaparHTML(valor)} MT
+                    </td>
+
+                    <td>
+                        ${escaparHTML(vantagem)}
+                    </td>
+
+                    <td>
+                        ${
+                            ativo
+                                ? "Ativo"
+                                : "Desativado"
+                        }
+                    </td>
+
+                    <td>
+
+                        <button
+                            type="button"
+                            class="btn btn-outline"
+                            data-editar-pacote="${escaparHTML(id)}"
+                        >
+
+                            <i class="fas fa-edit"></i>
+
+                            Editar
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-outline"
+                            data-remover-pacote="${escaparHTML(id)}"
+                        >
+
+                            <i class="fas fa-trash"></i>
+
+                            Remover
+
+                        </button>
+
+                    </td>
+
+                `;
+
+
+                tabela.appendChild(
+                    tr
+                );
+
+            }
+        );
 
 
         // ======================================
@@ -143,23 +247,33 @@ async function carregarPacotes() {
             .querySelectorAll(
                 "[data-editar-pacote]"
             )
-            .forEach(botao => {
+            .forEach(
+                botao => {
 
-                botao.addEventListener(
-                    "click",
-                    () => {
+                    botao.addEventListener(
+                        "click",
+                        function (event) {
 
-                        const id =
-                            botao.getAttribute(
-                                "data-editar-pacote"
+                            event.preventDefault();
+
+                            event.stopPropagation();
+
+
+                            const id =
+                                this.getAttribute(
+                                    "data-editar-pacote"
+                                );
+
+
+                            editarPacote(
+                                id
                             );
 
-                        editarPacote(id);
+                        }
+                    );
 
-                    }
-                );
-
-            });
+                }
+            );
 
 
         // ======================================
@@ -170,24 +284,42 @@ async function carregarPacotes() {
             .querySelectorAll(
                 "[data-remover-pacote]"
             )
-            .forEach(botao => {
+            .forEach(
+                botao => {
 
-                botao.addEventListener(
-                    "click",
-                    () => {
+                    botao.addEventListener(
+                        "click",
+                        function (event) {
 
-                        const id =
-                            botao.getAttribute(
-                                "data-remover-pacote"
+                            event.preventDefault();
+
+                            event.stopPropagation();
+
+
+                            const id =
+                                this.getAttribute(
+                                    "data-remover-pacote"
+                                );
+
+
+                            removerPacote(
+                                id
                             );
 
-                        removerPacote(id);
+                        }
+                    );
 
-                    }
-                );
+                }
+            );
 
-            });
 
+        console.log(
+            "[MACVENDAS] Pacotes carregados:",
+            pacotes.length
+        );
+
+
+        return pacotes;
 
     }
 
@@ -198,6 +330,41 @@ async function carregarPacotes() {
             erro
         );
 
+
+        const tabela =
+            document.getElementById(
+                "tabelaPacotes"
+            );
+
+
+        if (tabela) {
+
+            tabela.innerHTML = `
+
+                <tr>
+
+                    <td
+                        colspan="7"
+                        style="
+                            text-align:center;
+                            padding:25px;
+                        "
+                    >
+
+                        Não foi possível carregar
+                        os pacotes.
+
+                    </td>
+
+                </tr>
+
+            `;
+
+        }
+
+
+        return [];
+
     }
 
 }
@@ -205,37 +372,39 @@ async function carregarPacotes() {
 
 // ======================================
 // ADICIONAR PACOTE
+// POST /pacotes
 // ======================================
 
-async function adicionarPacote(dados) {
+async function adicionarPacote(
+    dados
+) {
 
     try {
 
-        const resposta =
-            await fetch(
-                API + "/pacotes",
-                {
-                    method: "POST",
+        await garantirAPI();
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
 
-                    body:
-                        JSON.stringify(dados)
-                }
-            );
+        console.log(
+            "[MACVENDAS] Adicionando pacote:",
+            dados
+        );
 
 
         const json =
-            await resposta.json();
+            await window.MOZ_API.post(
+                "/pacotes",
+                dados
+            );
 
 
-        if (!resposta.ok) {
+        if (
+            !json ||
+            json.success === false
+        ) {
 
             throw new Error(
-                json.error ||
+                json?.error ||
+                json?.message ||
                 "Erro ao adicionar pacote."
             );
 
@@ -258,13 +427,18 @@ async function adicionarPacote(dados) {
 
 
         alert(
+            erro.message ||
             "Não foi possível adicionar o pacote."
         );
 
 
         return {
+
             success: false,
-            error: erro.message
+
+            error:
+                erro.message
+
         };
 
     }
@@ -274,9 +448,12 @@ async function adicionarPacote(dados) {
 
 // ======================================
 // EDITAR PACOTE
+// PUT /pacotes/:id
 // ======================================
 
-async function editarPacote(id) {
+async function editarPacote(
+    id
+) {
 
     const nome =
         prompt(
@@ -284,8 +461,12 @@ async function editarPacote(id) {
         );
 
 
-    if (nome === null) {
+    if (
+        nome === null
+    ) {
+
         return;
+
     }
 
 
@@ -306,37 +487,34 @@ async function editarPacote(id) {
 
     try {
 
-        const resposta =
-            await fetch(
-                API +
+        await garantirAPI();
+
+
+        console.log(
+            "[MACVENDAS] Editando pacote:",
+            id
+        );
+
+
+        const json =
+            await window.MOZ_API.put(
                 "/pacotes/" +
                 encodeURIComponent(id),
                 {
-
-                    method: "PUT",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify({
-                            nome: nomeFinal
-                        })
-
+                    nome:
+                        nomeFinal
                 }
             );
 
 
-        const json =
-            await resposta.json();
-
-
-        if (!resposta.ok) {
+        if (
+            !json ||
+            json.success === false
+        ) {
 
             throw new Error(
-                json.error ||
+                json?.error ||
+                json?.message ||
                 "Erro ao editar pacote."
             );
 
@@ -361,6 +539,7 @@ async function editarPacote(id) {
 
 
         alert(
+            erro.message ||
             "Não foi possível editar o pacote."
         );
 
@@ -371,9 +550,12 @@ async function editarPacote(id) {
 
 // ======================================
 // REMOVER PACOTE
+// DELETE /pacotes/:id
 // ======================================
 
-async function removerPacote(id) {
+async function removerPacote(
+    id
+) {
 
     const confirmar =
         confirm(
@@ -381,32 +563,41 @@ async function removerPacote(id) {
         );
 
 
-    if (!confirmar) {
+    if (
+        !confirmar
+    ) {
+
         return;
+
     }
 
 
     try {
 
-        const resposta =
-            await fetch(
-                API +
-                "/pacotes/" +
-                encodeURIComponent(id),
-                {
-                    method: "DELETE"
-                }
-            );
+        await garantirAPI();
+
+
+        console.log(
+            "[MACVENDAS] Removendo pacote:",
+            id
+        );
 
 
         const json =
-            await resposta.json();
+            await window.MOZ_API.delete(
+                "/pacotes/" +
+                encodeURIComponent(id)
+            );
 
 
-        if (!resposta.ok) {
+        if (
+            !json ||
+            json.success === false
+        ) {
 
             throw new Error(
-                json.error ||
+                json?.error ||
+                json?.message ||
                 "Erro ao remover pacote."
             );
 
@@ -431,10 +622,46 @@ async function removerPacote(id) {
 
 
         alert(
+            erro.message ||
             "Não foi possível remover o pacote."
         );
 
     }
+
+}
+
+
+// ======================================
+// ESCAPAR HTML
+// ======================================
+
+function escaparHTML(
+    valor
+) {
+
+    return String(
+        valor ?? ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 
 }
 
@@ -446,11 +673,14 @@ async function removerPacote(id) {
 window.carregarPacotes =
     carregarPacotes;
 
+
 window.adicionarPacote =
     adicionarPacote;
 
+
 window.editarPacote =
     editarPacote;
+
 
 window.removerPacote =
     removerPacote;
@@ -460,11 +690,81 @@ window.removerPacote =
 // INICIALIZAÇÃO
 // ======================================
 
-carregarPacotes();
+function iniciarPacotes() {
+
+    console.log(
+        "[MACVENDAS] pacotes.js iniciado."
+    );
 
 
-// Atualização automática
+    if (
+        typeof window.garantirCredenciaisAPI ===
+        "function"
+    ) {
+
+        window.garantirCredenciaisAPI()
+            .then(
+                () =>
+                    carregarPacotes()
+            )
+            .catch(
+                erro => {
+
+                    console.error(
+                        "[MACVENDAS] Erro ao iniciar pacotes:",
+                        erro
+                    );
+
+                }
+            );
+
+    }
+
+    else {
+
+        carregarPacotes();
+
+    }
+
+}
+
+
+// ======================================
+// DOM READY
+// ======================================
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        iniciarPacotes,
+        {
+            once: true
+        }
+    );
+
+}
+
+else {
+
+    iniciarPacotes();
+
+}
+
+
+// ======================================
+// ATUALIZAÇÃO AUTOMÁTICA
+// ======================================
+
 setInterval(
-    carregarPacotes,
+    function () {
+
+        carregarPacotes();
+
+    },
     10000
 );
+
