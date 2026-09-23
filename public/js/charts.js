@@ -108,22 +108,32 @@ function nivelCor(valor, maior) {
 // ============================================================
 
 function calcularDadosDiarios(compras) {
-    const hoje = obterHoje();
-    const movimentos = Array(24).fill(0);
-    const faturamento = Array(24).fill(0);
+    const agora = new Date();
+    const ano = agora.getFullYear();
+    const mes = agora.getMonth();
+    const dia = agora.getDate();
+
+    const vendas = Array(24).fill(0);
+    const gb = Array(24).fill(0);
+    const mb = Array(24).fill(0);
 
     compras.forEach(compra => {
-        const data = new Date(dataCompra(compra));
-        if (Number.isNaN(data.getTime())) return;
-
-        if (dataLocal(data) !== hoje) return;
+        const data = new Date(compra.criadoEm || compra.data || compra.createdAt);
+        if (isNaN(data.getTime()) ||
+            data.getFullYear() !== ano ||
+            data.getMonth() !== mes ||
+            data.getDate() !== dia) return;
 
         const hora = data.getHours();
-        movimentos[hora] += 1;
-        faturamento[hora] += valorCompra(compra);
+        const mbCompra = Number(compra.mb || 0);
+        const gbCompra = Number(compra.gb || 0) || (mbCompra / 1000);
+
+        vendas[hora] += 1;
+        mb[hora] += mbCompra;
+        gb[hora] += gbCompra;
     });
 
-    return { movimentos, faturamento };
+    return { vendas, gb, mb };
 }
 
 function criarGraficoDiario24h(dados) {
@@ -175,29 +185,31 @@ function criarGraficoDiario24h(dados) {
 // ============================================================
 
 function calcularFaturamentoMensal(compras) {
-    const mesAtual = obterMesAtual();
     const agora = new Date();
-    const ultimoDia = new Date(agora.getFullYear(), agora.getMonth() + 1, 0).getDate();
+    const ano = agora.getFullYear();
+    const mes = agora.getMonth();
+    const diasNoMes = new Date(ano, mes + 1, 0).getDate();
 
-    const dias = [];
-    const faturamento = [];
-
-    for (let dia = 1; dia <= ultimoDia; dia++) {
-        const chave = `${mesAtual}-${String(dia).padStart(2, "0")}`;
-        dias.push(chave);
-        faturamento.push(0);
-    }
+    const faturamento = Array(diasNoMes).fill(0);
+    const gb = Array(diasNoMes).fill(0);
+    const mb = Array(diasNoMes).fill(0);
 
     compras.forEach(compra => {
-        const data = new Date(dataCompra(compra));
-        if (Number.isNaN(data.getTime())) return;
+        const data = new Date(compra.criadoEm || compra.data || compra.createdAt);
+        if (isNaN(data.getTime()) ||
+            data.getFullYear() !== ano ||
+            data.getMonth() !== mes) return;
 
-        const chave = dataLocal(data);
-        const indice = dias.indexOf(chave);
-        if (indice >= 0) faturamento[indice] += valorCompra(compra);
+        const dia = data.getDate() - 1;
+        const mbCompra = Number(compra.mb || 0);
+        const gbCompra = Number(compra.gb || 0) || (mbCompra / 1000);
+
+        faturamento[dia] += Number(compra.valor || 0);
+        mb[dia] += mbCompra;
+        gb[dia] += gbCompra;
     });
 
-    return { dias, faturamento };
+    return { faturamento, gb, mb };
 }
 
 function criarGraficoFaturamentoMensal(dados) {
@@ -353,39 +365,186 @@ async function extrairComprasGraficos() {
 
 let carregandoGraficos = false;
 
-async function carregarGraficos() {
-    if (carregandoGraficos) return;
-    carregandoGraficos = true;
+function calcularDadosSemanais(compras) {
+    const agora = new Date();
+    const inicioSemana = new Date(agora);
+    const diaSemana = agora.getDay();
+    const deslocamento = diaSemana === 0 ? 6 : diaSemana - 1;
 
+    inicioSemana.setDate(agora.getDate() - deslocamento);
+    inicioSemana.setHours(0, 0, 0, 0);
+
+    const vendas = Array(7).fill(0);
+    const gb = Array(7).fill(0);
+    const mb = Array(7).fill(0);
+
+    compras.forEach(compra => {
+        const data = new Date(compra.criadoEm || compra.data || compra.createdAt);
+        if (isNaN(data.getTime())) return;
+
+        const dia = new Date(data);
+        dia.setHours(0, 0, 0, 0);
+        const diferenca = Math.floor(
+            (dia.getTime() - inicioSemana.getTime()) / 86400000
+        );
+
+        if (diferenca < 0 || diferenca > 6) return;
+
+        const mbCompra = Number(compra.mb || 0);
+        const gbCompra = Number(compra.gb || 0) || (mbCompra / 1000);
+
+        vendas[diferenca] += 1;
+        mb[diferenca] += mbCompra;
+        gb[diferenca] += gbCompra;
+    });
+
+    return { vendas, gb, mb };
+}
+
+async function carregarGraficos() {
     try {
         if (typeof Chart === "undefined") {
-            console.error("[MOZ TECH] Chart.js não foi carregado.");
+            console.warn("[MOZ TECH] Chart.js ainda não está disponível.");
             return;
         }
 
         const compras = await extrairComprasGraficos();
 
-        console.log(
-            "[MOZ TECH] Total de compras recebidas:",
-            compras.length
-        );
-
         const diario = calcularDadosDiarios(compras);
+        const semanal = calcularDadosSemanais(compras);
         const mensal = calcularFaturamentoMensal(compras);
 
-        criarGraficoDiario24h(diario);
-        criarGraficoSemanalRadial(compras);
-        criarGraficoFaturamentoMensal(mensal);
+        destruirGrafico("graficoDiario24h");
+        destruirGrafico("graficoSemanalRadial");
+        destruirGrafico("graficoFaturamentoMensal");
 
-        console.log("[MOZ TECH] 3 gráficos carregados.", {
+        const ctxDiario = document.getElementById("graficoDiario24h");
+        if (ctxDiario) {
+            graficos.graficoDiario24h = new Chart(ctxDiario, {
+                type: "line",
+                data: {
+                    labels: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}h`),
+                    datasets: [
+                        { label: "Vendas", data: diario.vendas, yAxisID: "y" },
+                        { label: "GB", data: diario.gb, yAxisID: "gb", tension: 0.3 },
+                        { label: "MB", data: diario.mb, yAxisID: "mb", tension: 0.3 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: "index", intersect: false },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: "Vendas" } },
+                        gb: {
+                            position: "right", beginAtZero: true,
+                            grid: { drawOnChartArea: false },
+                            title: { display: true, text: "GB" }
+                        },
+                        mb: { display: false, beginAtZero: true }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const v = context.parsed.y || 0;
+                                    if (context.dataset.label === "GB") return `GB: ${v.toFixed(2)} GB`;
+                                    if (context.dataset.label === "MB") return `MB: ${v.toFixed(0)} MB`;
+                                    return `Vendas: ${v}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        const ctxSemanal = document.getElementById("graficoSemanalRadial");
+        if (ctxSemanal) {
+            graficos.graficoSemanalRadial = new Chart(ctxSemanal, {
+                type: "doughnut",
+                data: {
+                    labels: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"],
+                    datasets: [{ label: "GB vendidos", data: semanal.gb, borderWidth: 2 }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: "45%",
+                    plugins: {
+                        legend: { position: "right" },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const i = context.dataIndex;
+                                    return [
+                                        `${context.label}:`,
+                                        `GB: ${semanal.gb[i].toFixed(2)} GB`,
+                                        `MB: ${semanal.mb[i].toFixed(0)} MB`,
+                                        `Vendas: ${semanal.vendas[i]}`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        const ctxMensal = document.getElementById("graficoFaturamentoMensal");
+        if (ctxMensal) {
+            const labels = mensal.faturamento.map((_, i) => String(i + 1).padStart(2, "0"));
+
+            graficos.graficoFaturamentoMensal = new Chart(ctxMensal, {
+                type: "bar",
+                data: {
+                    labels,
+                    datasets: [
+                        { label: "Faturamento (MT)", data: mensal.faturamento, yAxisID: "dinheiro" },
+                        { label: "GB vendidos", data: mensal.gb, type: "line", yAxisID: "gb", tension: 0.3 },
+                        { label: "MB vendidos", data: mensal.mb, type: "line", yAxisID: "mb", tension: 0.3 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: "index", intersect: false },
+                    scales: {
+                        dinheiro: { beginAtZero: true, title: { display: true, text: "MT" } },
+                        gb: {
+                            position: "right", beginAtZero: true,
+                            grid: { drawOnChartArea: false },
+                            title: { display: true, text: "GB" }
+                        },
+                        mb: { display: false, beginAtZero: true }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const i = context.dataIndex;
+                                    if (context.dataset.label === "Faturamento (MT)")
+                                        return `Faturamento: ${mensal.faturamento[i].toFixed(2)} MT`;
+                                    if (context.dataset.label === "GB vendidos")
+                                        return `GB: ${mensal.gb[i].toFixed(2)} GB`;
+                                    return `MB: ${mensal.mb[i].toFixed(0)} MB`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        console.log("[MOZ TECH] Gráficos carregados:", {
             compras: compras.length,
-            movimentosHoje: diario.movimentos.reduce((a, b) => a + b, 0),
-            faturamentoMes: mensal.faturamento.reduce((a, b) => a + b, 0)
+            hojeGB: diario.gb.reduce((a, b) => a + b, 0),
+            hojeMB: diario.mb.reduce((a, b) => a + b, 0),
+            semanaGB: semanal.gb.reduce((a, b) => a + b, 0),
+            mesGB: mensal.gb.reduce((a, b) => a + b, 0)
         });
     } catch (erro) {
-        console.error("[MOZ TECH] Erro nos gráficos:", erro);
-    } finally {
-        carregandoGraficos = false;
+        console.error("[MOZ TECH] Erro ao carregar gráficos:", erro);
     }
 }
 
