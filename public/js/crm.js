@@ -98,6 +98,17 @@
 
         const thead = t.querySelector("thead");
         if (thead) thead.innerHTML = "";
+
+        const tbody = t.querySelector("tbody");
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="1" style="padding:0;border:0;">
+                        <div id="crmClientesCards"></div>
+                    </td>
+                </tr>
+            `;
+        }
     }
 
     function mensagem(texto, erro = false) {
@@ -155,7 +166,6 @@
                 "numeroDestino",
                 "numero_destino",
                 "destino",
-                "numero",
             ],
             "-"
         );
@@ -963,6 +973,218 @@
         });
     }
 
+    function atualizarEstatisticasCRM(clientes) {
+        const todos = clientes || [];
+        const agora = Date.now();
+        const trintaDias = 30 * 24 * 60 * 60 * 1000;
+        const seteDias = 7 * 24 * 60 * 60 * 1000;
+
+        const ativos = todos.filter(cliente => {
+            const data = new Date(cliente.ultimaCompra || 0).getTime();
+            return data && (agora - data) <= trintaDias;
+        }).length;
+
+        const novos = todos.filter(cliente => {
+            const data = new Date(cliente.primeiraCompra || 0).getTime();
+            return data && (agora - data) <= seteDias;
+        }).length;
+
+        const compras = todos.reduce((total, cliente) => total + cliente.compras.length, 0);
+        const totalGB = todos.reduce((total, cliente) => total + numero(cliente.totalGB), 0);
+        const totalGasto = todos.reduce((total, cliente) => total + numero(cliente.totalGasto), 0);
+        const totalLucro = todos.reduce((total, cliente) => total + numero(cliente.totalLucro), 0);
+        const ticket = compras ? totalGasto / compras : 0;
+
+        const valores = {
+            totalClientes: todos.length,
+            clientesAtivos: ativos,
+            clientesRecentes: novos,
+            totalGastoCRM: formatarMT(totalGasto),
+            totalComprasCRM: compras,
+            totalGBCRM: `${totalGB.toLocaleString("pt-MZ", { maximumFractionDigits: 2 })} GB`,
+            ticketMedioCRM: formatarMT(ticket),
+            lucroCRM: formatarMT(totalLucro)
+        };
+
+        Object.entries(valores).forEach(([id, valor]) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = valor;
+        });
+    }
+
+    function garantirEstatisticasCRM() {
+        const painel = document.getElementById("panelCRM");
+        if (!painel) return;
+
+        let grid = painel.querySelector(".crm-stats-grid");
+        if (!grid) {
+            const header = painel.querySelector(".header");
+            grid = document.createElement("div");
+            grid.className = "crm-stats-grid";
+            if (header) header.insertAdjacentElement("afterend", grid);
+            else painel.prepend(grid);
+        }
+
+        grid.innerHTML = `
+            <div class="crm-stat-card">
+                <div class="crm-stat-label">CLIENTES</div>
+                <div class="crm-stat-value" id="totalClientes">0</div>
+            </div>
+            <div class="crm-stat-card">
+                <div class="crm-stat-label">ATIVOS</div>
+                <div class="crm-stat-value" id="clientesAtivos">0</div>
+            </div>
+            <div class="crm-stat-card">
+                <div class="crm-stat-label">NOVOS</div>
+                <div class="crm-stat-value" id="clientesRecentes">0</div>
+            </div>
+            <div class="crm-stat-card">
+                <div class="crm-stat-label">TOTAL GASTO</div>
+                <div class="crm-stat-value" id="totalGastoCRM">0 MT</div>
+            </div>
+            <div class="crm-stat-card">
+                <div class="crm-stat-label">COMPRAS</div>
+                <div class="crm-stat-value" id="totalComprasCRM">0</div>
+            </div>
+            <div class="crm-stat-card">
+                <div class="crm-stat-label">TOTAL GB</div>
+                <div class="crm-stat-value" id="totalGBCRM">0 GB</div>
+            </div>
+            <div class="crm-stat-card">
+                <div class="crm-stat-label">TICKET MÉDIO</div>
+                <div class="crm-stat-value" id="ticketMedioCRM">0 MT</div>
+            </div>
+            <div class="crm-stat-card">
+                <div class="crm-stat-label">LUCRO</div>
+                <div class="crm-stat-value" id="lucroCRM">0 MT</div>
+            </div>
+        `;
+
+        if (!document.getElementById("crmCardsStyle")) {
+            const style = document.createElement("style");
+            style.id = "crmCardsStyle";
+            style.textContent = `
+                #panelCRM .crm-stats-grid {
+                    display: grid;
+                    grid-template-columns: repeat(4, minmax(0, 1fr));
+                    gap: 18px;
+                    margin: 0 0 28px;
+                }
+
+                #panelCRM .crm-stat-card {
+                    min-height: 125px;
+                    padding: 22px;
+                    border-radius: 18px;
+                    border: 1px solid rgba(59, 130, 246, .28);
+                    background: rgba(20, 25, 40, .72);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    text-align: center;
+                    box-sizing: border-box;
+                    transition: transform .2s, border-color .2s, box-shadow .2s;
+                }
+
+                #panelCRM .crm-stat-card:hover {
+                    transform: translateY(-3px);
+                    border-color: rgba(59, 130, 246, .55);
+                    box-shadow: 0 10px 30px rgba(0,0,0,.18);
+                }
+
+                #panelCRM .crm-stat-label {
+                    font-size: 12px;
+                    font-weight: 700;
+                    letter-spacing: .5px;
+                    color: #9ca3af;
+                    margin-bottom: 10px;
+                }
+
+                #panelCRM .crm-stat-value {
+                    font-size: 30px;
+                    line-height: 1.1;
+                    font-weight: 800;
+                    color: #f8fafc;
+                }
+
+                #panelCRM #crmClientesCards {
+                    display: grid;
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                    gap: 18px;
+                    width: 100%;
+                    box-sizing: border-box;
+                }
+
+                #panelCRM .crm-cliente-card {
+                    background: rgba(20, 25, 40, .72);
+                    border: 1px solid rgba(59, 130, 246, .25);
+                    border-radius: 18px;
+                    padding: 22px;
+                    min-height: 150px;
+                    box-sizing: border-box;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    transition: transform .2s, border-color .2s, box-shadow .2s;
+                }
+
+                #panelCRM .crm-cliente-card:hover {
+                    transform: translateY(-3px);
+                    border-color: rgba(59, 130, 246, .55);
+                    box-shadow: 0 12px 30px rgba(0,0,0,.2);
+                }
+
+                #panelCRM .crm-cliente-nome {
+                    font-size: 19px;
+                    font-weight: 800;
+                    color: #f8fafc;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+
+                #panelCRM .crm-cliente-gb {
+                    font-size: 28px;
+                    font-weight: 800;
+                    color: #f8fafc;
+                    margin: 16px 0;
+                }
+
+                #panelCRM .crm-ver-detalhes {
+                    width: 100%;
+                    border: 1px solid rgba(59, 130, 246, .45);
+                    background: rgba(59, 130, 246, .12);
+                    color: #f8fafc;
+                    border-radius: 10px;
+                    padding: 10px 14px;
+                    font-weight: 700;
+                    cursor: pointer;
+                }
+
+                #panelCRM .crm-ver-detalhes:hover {
+                    background: rgba(59, 130, 246, .22);
+                }
+
+                @media (max-width: 1050px) {
+                    #panelCRM .crm-stats-grid {
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                    }
+                    #panelCRM #crmClientesCards {
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                    }
+                }
+
+                @media (max-width: 650px) {
+                    #panelCRM .crm-stats-grid,
+                    #panelCRM #crmClientesCards {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+
     function renderizarClientes(clientes) {
         const t = tabela();
 
@@ -971,48 +1193,61 @@
         }
 
         const tbody = t.querySelector("tbody");
-        if (!tbody) throw new Error("tbody do CRM não encontrado.");
+        if (!tbody) {
+            throw new Error("tbody do CRM não encontrado.");
+        }
 
+        garantirEstatisticasCRM();
         atualizarEstatisticasCRM(clientes);
-        configurarCabecalho();
+
+        let container = document.getElementById("crmClientesCards");
+
+        if (!container) {
+            container = document.createElement("div");
+            container.id = "crmClientesCards";
+            tbody.innerHTML = "";
+            const linha = document.createElement("tr");
+            const celula = document.createElement("td");
+            celula.colSpan = 1;
+            celula.style.padding = "0";
+            celula.style.border = "0";
+            celula.appendChild(container);
+            linha.appendChild(celula);
+            tbody.appendChild(linha);
+        }
 
         if (!clientes.length) {
-            mensagem("Nenhum cliente com compras encontrado.");
+            container.innerHTML = `
+                <div style="grid-column:1/-1;text-align:center;padding:35px;">
+                    Nenhum cliente com compras encontrado.
+                </div>
+            `;
             return;
         }
 
-        tbody.innerHTML = "";
+        container.innerHTML = "";
 
         clientes.forEach((cliente) => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td colspan="9" style="padding:0;border:0;background:transparent;">
-                    <article class="crm-cliente-card" tabindex="0" role="button" aria-label="Ver detalhes de ${escapar(cliente.nome || "cliente")}">
-                        <div class="crm-cliente-card-top">
-                            <div class="crm-cliente-nome">${escapar(cliente.nome || "-")}</div>
-                            <div class="crm-cliente-dados">${numero(cliente.totalGB).toLocaleString("pt-MZ", { maximumFractionDigits: 2 })} GB</div>
-                        </div>
-                        <button type="button" class="crm-ver-detalhes">Ver detalhes</button>
-                    </article>
-                </td>
+            const card = document.createElement("div");
+            card.className = "crm-cliente-card";
+            card.innerHTML = `
+                <div class="crm-cliente-nome">${escapar(cliente.nome || "-")}</div>
+                <div class="crm-cliente-gb">
+                    ${numero(cliente.totalGB).toLocaleString("pt-MZ", { maximumFractionDigits: 2 })} GB
+                </div>
+                <button type="button" class="crm-ver-detalhes">
+                    VER DETALHES
+                </button>
             `;
 
-            const card = tr.querySelector(".crm-cliente-card");
-            const botao = tr.querySelector(".crm-ver-detalhes");
-
-            card.addEventListener("click", () => abrirDetalhesCRM(cliente));
-            card.addEventListener("keydown", (event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    abrirDetalhesCRM(cliente);
-                }
-            });
-            botao.addEventListener("click", (event) => {
+            card.querySelector(".crm-ver-detalhes").addEventListener("click", (event) => {
                 event.stopPropagation();
                 abrirDetalhesCRM(cliente);
             });
 
-            tbody.appendChild(tr);
+            card.addEventListener("click", () => abrirDetalhesCRM(cliente));
+
+            container.appendChild(card);
         });
     }
 
@@ -1022,6 +1257,7 @@
 
         try {
             mensagem("Carregando clientes...");
+            garantirEstatisticasCRM();
             configurarCabecalho();
 
             const dadosCompras = await requisicao(`${API_URL}/compras`);
