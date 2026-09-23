@@ -4,7 +4,7 @@
 // SISTEMA DE PAINÉIS
 // + MENU MOBILE
 // + TEMA GLOBAL
-// + CREDENCIAIS FIREBASE
+// + CREDENCIAIS DA API
 // + AUTENTICAÇÃO API
 // =====================================================
 
@@ -155,15 +155,11 @@
                 ) {
 
                     window.MOZ_API.definirCredenciais(
-
                         window.MOZ_CREDENCIAIS_API.uid,
-
                         window.MOZ_CREDENCIAIS_API.apiKey
-
                     );
 
                 }
-
 
                 return true;
 
@@ -171,70 +167,34 @@
 
 
             // =================================================
-            // VERIFICAR FIREBASE
-            // =================================================
-
-            if (
-                typeof window.obterDadosUsuario !==
-                "function"
-            ) {
-
-                console.warn(
-                    "[MOZ TECH] obterDadosUsuario() não está disponível."
-                );
-
-                return false;
-
-            }
-
-
-            // =================================================
-            // BUSCAR FIREBASE
-            // =================================================
-
-            const dados =
-                await window.obterDadosUsuario();
-
-
-            if (!dados) {
-
-                console.warn(
-                    "[MOZ TECH] Usuário não autenticado."
-                );
-
-                return false;
-
-            }
-
-
-            // =================================================
-            // UID
+            // BUSCAR CREDENCIAIS NO LOCALSTORAGE
             // =================================================
 
             const uid =
                 String(
-                    dados.uid || ""
+                    localStorage.getItem("uid") ||
+                    localStorage.getItem("moz_uid") ||
+                    ""
                 ).trim();
-
-
-            // =================================================
-            // API KEY
-            // =================================================
 
             const apiKey =
                 String(
-                    dados.apiKey || ""
+                    localStorage.getItem("apiKey") ||
+                    localStorage.getItem("moz_api_key") ||
+                    ""
                 ).trim();
 
 
-            if (
-                !uid ||
-                !apiKey
-            ) {
+            if (!uid || !apiKey) {
 
                 console.warn(
-                    "[MOZ TECH] UID ou API Key não encontrado."
+                    "[MOZ TECH] UID ou API Key não encontrados no localStorage."
                 );
+
+                window.MOZ_CREDENCIAIS_API = {
+                    uid: "",
+                    apiKey: ""
+                };
 
                 return false;
 
@@ -242,7 +202,7 @@
 
 
             // =================================================
-            // DEFINIR CREDENCIAIS NA API
+            // CONFIGURAR API
             // =================================================
 
             if (
@@ -264,44 +224,23 @@
             // =================================================
 
             window.MOZ_CREDENCIAIS_API = {
-
-                uid:
-                    uid,
-
-                apiKey:
-                    apiKey
-
+                uid: uid,
+                apiKey: apiKey
             };
 
 
             // =================================================
-            // COMPATIBILIDADE LOCAL
+            // GARANTIR COMPATIBILIDADE LOCAL
             // =================================================
 
-            localStorage.setItem(
-                "uid",
-                uid
-            );
-
-            localStorage.setItem(
-                "apiKey",
-                apiKey
-            );
-
-
-            localStorage.setItem(
-                "moz_uid",
-                uid
-            );
-
-            localStorage.setItem(
-                "moz_api_key",
-                apiKey
-            );
+            localStorage.setItem("uid", uid);
+            localStorage.setItem("apiKey", apiKey);
+            localStorage.setItem("moz_uid", uid);
+            localStorage.setItem("moz_api_key", apiKey);
 
 
             console.log(
-                "[MOZ TECH] Credenciais da API configuradas."
+                "[MOZ TECH] Credenciais da API configuradas pelo localStorage."
             );
 
             console.log(
@@ -330,7 +269,6 @@
         }
 
     }
-
 
     // =====================================================
     // TEMA API
@@ -942,7 +880,7 @@
 
 
     // =====================================================
-    // CREDENCIAIS DA API — FIREBASE
+    // CREDENCIAIS DA API — LOCALSTORAGE
     // =====================================================
 
     async function carregarCredenciaisTutorial() {
@@ -983,51 +921,38 @@
         try {
 
             // =================================================
-            // FIREBASE
+            // GARANTIR CREDENCIAIS
             // =================================================
 
-            if (
-                typeof window.obterDadosUsuario !==
-                "function"
-            ) {
+            const autenticado =
+                await garantirCredenciaisAPI();
+
+
+            if (!autenticado) {
 
                 throw new Error(
-                    "firebase.js não foi carregado."
-                );
-
-            }
-
-
-            const dados =
-                await window.obterDadosUsuario();
-
-
-            if (!dados) {
-
-                throw new Error(
-                    "Nenhum usuário autenticado."
+                    "Credenciais da API não encontradas."
                 );
 
             }
 
 
             // =================================================
-            // UID
+            // LER DO LOCALSTORAGE
             // =================================================
 
             const uid =
                 String(
-                    dados.uid || ""
+                    localStorage.getItem("uid") ||
+                    localStorage.getItem("moz_uid") ||
+                    ""
                 ).trim();
-
-
-            // =================================================
-            // API KEY
-            // =================================================
 
             const apiKey =
                 String(
-                    dados.apiKey || ""
+                    localStorage.getItem("apiKey") ||
+                    localStorage.getItem("moz_api_key") ||
+                    ""
                 ).trim();
 
 
@@ -1072,39 +997,19 @@
             // =================================================
 
             window.MOZ_CREDENCIAIS_API = {
-
-                uid:
-                    uid,
-
-                apiKey:
-                    apiKey
-
+                uid: uid,
+                apiKey: apiKey
             };
 
 
             // =================================================
-            // LOCAL STORAGE
+            // GARANTIR LOCALSTORAGE
             // =================================================
 
-            localStorage.setItem(
-                "uid",
-                uid
-            );
-
-            localStorage.setItem(
-                "apiKey",
-                apiKey
-            );
-
-            localStorage.setItem(
-                "moz_uid",
-                uid
-            );
-
-            localStorage.setItem(
-                "moz_api_key",
-                apiKey
-            );
+            localStorage.setItem("uid", uid);
+            localStorage.setItem("apiKey", apiKey);
+            localStorage.setItem("moz_uid", uid);
+            localStorage.setItem("moz_api_key", apiKey);
 
 
             // =================================================
@@ -1132,7 +1037,7 @@
 
 
             console.log(
-                "[MOZ TECH] Credenciais obtidas diretamente do Firebase."
+                "[MOZ TECH] Credenciais obtidas do localStorage."
             );
 
             console.log(
@@ -1149,7 +1054,7 @@
         catch (erro) {
 
             console.error(
-                "[MOZ TECH] Erro ao buscar credenciais do Firebase:",
+                "[MOZ TECH] Erro ao buscar credenciais da API:",
                 erro
             );
 
@@ -1171,19 +1076,13 @@
 
 
             window.MOZ_CREDENCIAIS_API = {
-
-                uid:
-                    "",
-
-                apiKey:
-                    ""
-
+                uid: "",
+                apiKey: ""
             };
 
         }
 
     }
-
 
     // =====================================================
     // COPIAR UID
@@ -1194,25 +1093,24 @@
 
             try {
 
-                if (
-                    typeof window.obterDadosUsuario !==
-                    "function"
-                ) {
+                const autenticado =
+                    await garantirCredenciaisAPI();
+
+
+                if (!autenticado) {
 
                     throw new Error(
-                        "firebase.js não foi carregado."
+                        "UID não disponível."
                     );
 
                 }
 
 
-                const dados =
-                    await window.obterDadosUsuario();
-
-
                 const uid =
                     String(
-                        dados?.uid || ""
+                        localStorage.getItem("uid") ||
+                        localStorage.getItem("moz_uid") ||
+                        ""
                     ).trim();
 
 
@@ -1228,12 +1126,8 @@
 
 
                 window.MOZ_CREDENCIAIS_API = {
-
                     ...(window.MOZ_CREDENCIAIS_API || {}),
-
-                    uid:
-                        uid
-
+                    uid: uid
                 };
 
 
@@ -1247,11 +1141,8 @@
                         window.MOZ_CREDENCIAIS_API;
 
                     window.MOZ_API.definirCredenciais(
-
                         uid,
-
                         atual.apiKey || ""
-
                     );
 
                 }
@@ -1283,7 +1174,6 @@
 
         };
 
-
     // =====================================================
     // COPIAR API KEY
     // =====================================================
@@ -1293,25 +1183,24 @@
 
             try {
 
-                if (
-                    typeof window.obterDadosUsuario !==
-                    "function"
-                ) {
+                const autenticado =
+                    await garantirCredenciaisAPI();
+
+
+                if (!autenticado) {
 
                     throw new Error(
-                        "firebase.js não foi carregado."
+                        "API Key não disponível."
                     );
 
                 }
 
 
-                const dados =
-                    await window.obterDadosUsuario();
-
-
                 const apiKey =
                     String(
-                        dados?.apiKey || ""
+                        localStorage.getItem("apiKey") ||
+                        localStorage.getItem("moz_api_key") ||
+                        ""
                     ).trim();
 
 
@@ -1328,20 +1217,16 @@
 
                 const uid =
                     String(
-                        dados?.uid || ""
+                        localStorage.getItem("uid") ||
+                        localStorage.getItem("moz_uid") ||
+                        ""
                     ).trim();
 
 
                 window.MOZ_CREDENCIAIS_API = {
-
                     ...(window.MOZ_CREDENCIAIS_API || {}),
-
-                    uid:
-                        uid,
-
-                    apiKey:
-                        apiKey
-
+                    uid: uid,
+                    apiKey: apiKey
                 };
 
 
@@ -1352,11 +1237,8 @@
                 ) {
 
                     window.MOZ_API.definirCredenciais(
-
                         uid,
-
                         apiKey
-
                     );
 
                 }
@@ -1387,7 +1269,6 @@
             }
 
         };
-
 
     // =====================================================
     // MOSTRAR PAINEL
