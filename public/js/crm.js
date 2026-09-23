@@ -1071,32 +1071,35 @@
                     margin: 0 0 28px;
                 }
 
+                /* CARDS DE ESTATÍSTICAS — AZUL CELESTE */
                 #panelCRM .crm-stat-card {
                     min-height: 125px;
                     padding: 22px;
                     border-radius: 18px;
-                    border: 1px solid rgba(59, 130, 246, .28);
-                    background: rgba(20, 25, 40, .72);
+                    border: 1px solid #38bdf8;
+                    background: #38bdf8;
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
                     align-items: center;
                     text-align: center;
                     box-sizing: border-box;
-                    transition: transform .2s, border-color .2s, box-shadow .2s;
+                    transition: transform .2s, background .2s, box-shadow .2s;
+                    box-shadow: 0 8px 20px rgba(56, 189, 248, .22);
                 }
 
                 #panelCRM .crm-stat-card:hover {
                     transform: translateY(-3px);
-                    border-color: rgba(59, 130, 246, .55);
-                    box-shadow: 0 10px 30px rgba(0,0,0,.18);
+                    background: #0ea5e9;
+                    border-color: #0ea5e9;
+                    box-shadow: 0 12px 28px rgba(14, 165, 233, .30);
                 }
 
                 #panelCRM .crm-stat-label {
                     font-size: 12px;
-                    font-weight: 700;
-                    letter-spacing: .5px;
-                    color: #9ca3af;
+                    font-weight: 800;
+                    letter-spacing: .6px;
+                    color: #ffffff;
                     margin-bottom: 10px;
                 }
 
@@ -1104,7 +1107,7 @@
                     font-size: 30px;
                     line-height: 1.1;
                     font-weight: 800;
-                    color: #f8fafc;
+                    color: #ffffff;
                 }
 
                 #panelCRM #crmClientesCards {
