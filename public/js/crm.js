@@ -123,7 +123,7 @@
 
         tbody.innerHTML = `
             <tr>
-                <td colspan="10" style="text-align:center;padding:25px;${erro ? "color:#ff6b6b;" : ""}">
+                <td colspan="9" style="text-align:center;padding:25px;${erro ? "color:#ff6b6b;" : ""}">
                     ${texto}
                 </td>
             </tr>
@@ -592,8 +592,7 @@
             return new Date(dataCompra(b) || 0) - new Date(dataCompra(a) || 0);
         });
 
-        const ultima = compras[0];
-        const totalCompras = compras.length;
+            const totalCompras = compras.length;
         const ticketMedio = totalCompras ? cliente.totalGasto / totalCompras : 0;
 
         conteudo.innerHTML = `
