@@ -1829,4 +1829,6 @@
 
     }
 
+    console.log("[MOZ TECH] app.js NAV-OK carregado.");
+
 })();
