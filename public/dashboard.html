@@ -753,7 +753,7 @@
            ===================================================== */
         .graficos-semana {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 12px;
             margin-bottom: 18px;
         }
@@ -764,6 +764,10 @@
             border-radius: 10px;
             padding: 8px;
             box-shadow: var(--card-shadow);
+        }
+
+        .grafico-diario-card {
+            grid-column: 1 / -1;
         }
 
         .grafico-card h3 {
@@ -786,6 +790,10 @@
 
         .grafico-container.radial-container {
             height: 145px;
+        }
+
+        .grafico-diario-container {
+            height: 175px;
         }
 
         @media (max-width: 1050px) {
@@ -1244,28 +1252,30 @@
                  ===================================================== -->
             <div class="graficos-semana">
 
+                <div class="grafico-card grafico-diario-card">
+                    <h3>Movimentos de hoje por hora</h3>
+                    <p>Contagem de vendas e movimentos em cada hora do dia.</p>
+                    <div class="grafico-container grafico-diario-container">
+                        <canvas id="graficoDiario"></canvas>
+                    </div>
+                </div>
+
                 <div class="grafico-card">
                     <h3>Vendas de segunda a domingo</h3>
                     
-                    <div class="grafico-container">
-                        <canvas id="graficoVendasEmpilhadas"></canvas>
-                    </div>
+                    
                 </div>
 
                 <div class="grafico-card">
                     <h3>Comparação semanal entre quantidade de vendas e faturamento em MT</h3>
                     <p>Vendas e faturamento de segunda a domingo</p>
-                    <div class="grafico-container">
-                        <canvas id="graficoVendasFaturamento"></canvas>
-                    </div>
+                    
                 </div>
 
                 <div class="grafico-card">
                     <h3>Rosca radial semanal</h3>
                     <p>Cada anel representa um dia da semana.</p>
-                    <div class="grafico-container radial-container">
-                        <canvas id="graficoSemanalRadial"></canvas>
-                    </div>
+                    
                 </div>
 
             </div>
@@ -1274,7 +1284,50 @@
 
                 <div class="section-header">
 
-                    <h2>
+                    
+<section class="graficos-moztech" style="margin:18px 0;">
+  <div class="grafico-card" style="margin-bottom:14px;">
+    <h3>Movimentos de hoje</h3>
+    
+  </div>
+
+  <div class="grafico-card" style="margin-bottom:14px;">
+    <h3>Faturamento mensal</h3>
+    
+  </div>
+
+  <div class="grafico-card">
+    <h3>Rosca radial semanal</h3>
+    
+  </div>
+</section>
+
+<section id="graficos-moztech" style="margin:18px 0;">
+  <div class="grafico-card" style="margin-bottom:14px;">
+    <h3>Movimentos de hoje por hora</h3>
+    <p style="margin:4px 0 10px;">Contagem de vendas e movimentos em cada hora do dia.</p>
+    <div class="grafico-container" style="height:230px;">
+      <canvas id="graficoDiario24h"></canvas>
+    </div>
+  </div>
+
+  <div class="grafico-card" style="margin-bottom:14px;">
+    <h3>Faturamento mensal</h3>
+    <div class="grafico-container" style="height:230px;">
+      <canvas id="graficoFaturamentoMensal"></canvas>
+    </div>
+  </div>
+
+  <div class="grafico-card">
+    <h3>Rosca radial semanal</h3>
+    <p style="margin:4px 0 10px;">Cada anel representa um dia da semana.</p>
+    <div class="grafico-container" style="height:250px;">
+      <canvas id="graficoSemanalRadial"></canvas>
+    </div>
+  </div>
+</section>
+
+<h2>
                         Últimas Vendas
                     </h2>
 
