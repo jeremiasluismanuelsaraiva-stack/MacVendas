@@ -37,6 +37,16 @@
 
     };
 
+    // =====================================================
+    // CONTROLE DE ABERTURA DOS PAINÉIS
+    // Evita chamadas repetidas/concorrentes
+    // =====================================================
+
+    let painelAtual = null;
+    let painelCarregando = false;
+    let ultimoCliquePainel = "";
+    let ultimoCliqueTempo = 0;
+
 
     // =====================================================
     // AUXILIAR
@@ -1411,6 +1421,8 @@
 
             }
 
+            painelCarregando = false;
+
         };
 
 
@@ -1439,20 +1451,41 @@
                 const panel =
                     botao.getAttribute("data-panel");
 
+                if (!panel) {
+                    console.error(
+                        "[MOZ TECH] Botão sem data-panel"
+                    );
+                    return;
+                }
+
+                const agora = Date.now();
+
+                if (
+                    painelCarregando &&
+                    painelAtual === panel
+                ) {
+                    console.log(
+                        "[MOZ TECH] Clique ignorado: painel já está carregando:",
+                        panel
+                    );
+                    return;
+                }
+
+                if (
+                    ultimoCliquePainel === panel &&
+                    (agora - ultimoCliqueTempo) < 500
+                ) {
+                    console.log(
+                        "[MOZ TECH] Clique duplicado ignorado:",
+                        panel
+                    );
+                    return;
+                }
+
                 console.log(
                     "[MOZ TECH] BOTÃO CLICADO:",
                     panel
                 );
-
-                if (!panel) {
-
-                    console.error(
-                        "[MOZ TECH] Botão sem data-panel"
-                    );
-
-                    return;
-
-                }
 
                 window.showPanel(panel);
 
@@ -1841,4 +1874,4 @@
 
     }
 
-})();
+    console.log("[MOZ TECH] app.js FINAL - controle anti-duplicação ativo.");
