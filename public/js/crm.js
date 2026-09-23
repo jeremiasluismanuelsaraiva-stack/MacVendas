@@ -387,6 +387,7 @@
         const style = document.createElement("style");
         style.id = "crmDetalhesStyle";
         style.textContent = `
+            /* DETALHES CRM — visual simples */
             #crmDetalhesCliente {
                 position: fixed;
                 inset: 0;
@@ -395,45 +396,58 @@
                 align-items: center;
                 justify-content: center;
                 padding: 20px;
-                background: rgba(5, 25, 65, .72);
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
-                animation: crmFundoEntrada .18s ease-out;
+                box-sizing: border-box;
+
+                /* apenas o fundo atrás fica escuro e desfocado */
+                background: rgba(5, 25, 65, .68);
+                backdrop-filter: blur(9px);
+                -webkit-backdrop-filter: blur(9px);
             }
 
             #crmDetalhesCliente.ativo {
                 display: flex;
             }
 
+            /* fundo da janela de detalhes */
             #crmDetalhesCliente .crm-modal {
                 width: min(1050px, 100%);
                 max-height: 90vh;
                 overflow: auto;
-                background: #ffffff;
-                color: #0f172a;
+                background: #0b1730;
+                color: #f8fafc;
+                border: 1px solid #1e3a8a;
                 border-radius: 16px;
-                border: 1px solid #bfdbfe;
-                box-shadow: 0 20px 60px rgba(0,0,0,.35);
+                box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
             }
 
+            /* TODAS as letras do detalhe usam a mesma cor */
+            #crmDetalhesCliente,
+            #crmDetalhesCliente h1,
+            #crmDetalhesCliente h2,
+            #crmDetalhesCliente h3,
+            #crmDetalhesCliente h4,
+            #crmDetalhesCliente p,
+            #crmDetalhesCliente span,
+            #crmDetalhesCliente small,
+            #crmDetalhesCliente strong,
+            #crmDetalhesCliente th,
+            #crmDetalhesCliente td,
+            #crmDetalhesCliente .crm-card-label,
+            #crmDetalhesCliente .crm-card-value,
+            #crmDetalhesCliente .crm-subtitulo,
+            #crmDetalhesCliente .crm-info-item small {
+                color: #f8fafc;
+            }
+
+            /* cabeçalho do detalhe */
             #crmDetalhesCliente .crm-modal-header {
                 display: flex;
                 justify-content: space-between;
-                align-items: flex-start;
+                align-items: center;
                 gap: 15px;
-                padding: 20px;
-                border-bottom: 1px solid #e5e7eb;
-            }
-
-            #crmDetalhesCliente .crm-fechar {
-                border: 0;
-                background: #1e3a8a;
-                color: #fff;
-                width: 40px;
-                height: 40px;
-                border-radius: 10px;
-                cursor: pointer;
-                font-size: 20px;
+                padding: 18px 20px;
+                background: #10264a;
+                border-bottom: 1px solid #1e3a8a;
             }
 
             #crmDetalhesCliente .crm-identidade {
@@ -448,67 +462,70 @@
                 border-radius: 50%;
                 display: grid;
                 place-items: center;
-                background: #1e3a8a;
-                color: #fff;
+                background: #16345f;
+                color: #f8fafc;
                 font-weight: 700;
             }
 
             #crmDetalhesCliente .crm-subtitulo {
-                color: #6b7280;
                 font-size: 13px;
                 margin-top: 3px;
             }
 
+            #crmDetalhesCliente .crm-fechar {
+                border: 0;
+                background: #16345f;
+                color: #f8fafc;
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+                cursor: pointer;
+                font-size: 20px;
+            }
+
             #crmDetalhesCliente .crm-resumo {
                 display: grid;
-                grid-template-columns: repeat(4, minmax(0,1fr));
+                grid-template-columns: repeat(4, minmax(0, 1fr));
                 gap: 12px;
                 padding: 18px 20px;
+                background: #0b1730;
             }
 
             #crmDetalhesCliente .crm-card {
-                border: 1px solid #e5e7eb;
+                border: 1px solid #1e3a8a;
                 border-radius: 12px;
                 padding: 14px;
-                background: #eff6ff;
-            }
-
-            #crmDetalhesCliente .crm-card-label {
-                color: #6b7280;
-                font-size: 12px;
-                margin-bottom: 6px;
-            }
-
-            #crmDetalhesCliente .crm-card-value {
-                font-size: 18px;
-                font-weight: 700;
+                background: #10264a;
             }
 
             #crmDetalhesCliente .crm-info {
                 display: grid;
-                grid-template-columns: repeat(3, minmax(0,1fr));
+                grid-template-columns: repeat(3, minmax(0, 1fr));
                 gap: 10px;
                 padding: 0 20px 18px;
+                background: #ffffff;
             }
 
             #crmDetalhesCliente .crm-info-item {
                 padding: 12px;
-                border-bottom: 1px solid #e5e7eb;
+                border: 1px solid #1e3a8a;
+                border-radius: 10px;
+                background: #10264a;
             }
 
             #crmDetalhesCliente .crm-info-item small {
                 display: block;
-                color: #6b7280;
                 margin-bottom: 4px;
             }
 
             #crmDetalhesCliente .crm-historico {
                 padding: 0 20px 20px;
+                background: #0b1730;
             }
 
             #crmDetalhesCliente .crm-historico-wrap {
                 overflow-x: auto;
-                border: 1px solid #e5e7eb;
+                border: 1px solid #1e3a8a;
                 border-radius: 12px;
             }
 
@@ -522,16 +539,23 @@
             #crmDetalhesCliente td {
                 padding: 11px;
                 text-align: left;
-                border-bottom: 1px solid #e5e7eb;
+                border-bottom: 1px solid #e5efff;
                 white-space: nowrap;
                 font-size: 13px;
+                color: #172033;
             }
 
             #crmDetalhesCliente th {
-                background: #eff6ff;
+                background: #10264a;
+                color: #f8fafc;
                 font-weight: 700;
             }
 
+            #crmDetalhesCliente td {
+                background: #0b1730;
+            }
+
+            /* status também segue a mesma cor das letras */
             #crmDetalhesCliente .crm-status {
                 display: inline-flex;
                 align-items: center;
@@ -540,37 +564,18 @@
                 border-radius: 999px;
                 font-size: 12px;
                 font-weight: 700;
-                line-height: 1;
-                border: 1px solid transparent;
-            }
-
-            #crmDetalhesCliente .crm-status.concluido {
-                color: #166534;
-                background: #dcfce7;
-                border-color: #86efac;
-            }
-
-            #crmDetalhesCliente .crm-status.processando {
-                color: #92400e;
-                background: #fef3c7;
-                border-color: #fcd34d;
-            }
-
-            #crmDetalhesCliente .crm-status.pendente {
-                color: #1d4ed8;
-                background: #dbeafe;
-                border-color: #93c5fd;
-            }
-
-            #crmDetalhesCliente .crm-status.erro {
-                color: #991b1b;
-                background: #fee2e2;
-                border-color: #fca5a5;
+                color: #172033;
+                background: #eff6ff;
+                border: 1px solid #1e3a8a;
             }
 
             @media (max-width: 700px) {
+                #crmDetalhesCliente {
+                    padding: 10px;
+                }
+
                 #crmDetalhesCliente .crm-resumo {
-                    grid-template-columns: repeat(2, minmax(0,1fr));
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
                 }
 
                 #crmDetalhesCliente .crm-info {
