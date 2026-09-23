@@ -12,7 +12,17 @@
     // CONFIGURAÇÃO DA API
     // =====================================================
 
-    const API = window.location.origin;
+    const API = window.MOZ_API;
+
+    async function garantirAPI() {
+        if (typeof window.garantirCredenciaisAPI === "function") {
+            await window.garantirCredenciaisAPI();
+        }
+
+        if (!window.MOZ_API) {
+            throw new Error("MOZ_API não está disponível.");
+        }
+    }
 
 
     // =====================================================
@@ -57,20 +67,10 @@
 
         try {
 
-            const resposta =
-                await fetch(
-                    API + "/dispositivos",
-                    {
-                        method: "GET",
+            await garantirAPI();
 
-                        headers: {
-                            "Accept":
-                                "application/json"
-                        },
-
-                        cache: "no-store"
-                    }
-                );
+            const json =
+                await API.get("/dispositivos");
 
 
             console.log(
@@ -79,20 +79,7 @@
             );
 
 
-            if (!resposta.ok) {
-
-                throw new Error(
-                    "Erro HTTP: " +
-                    resposta.status
-                );
-
-            }
-
-
-            const json =
-                await resposta.json();
-
-
+            
             console.log(
                 "[MOZ TECH] Resposta dispositivos:",
                 json
@@ -437,34 +424,13 @@
 
         try {
 
-            const resposta =
-                await fetch(
-                    API + "/dispositivos",
-                    {
-
-                        method: "POST",
-
-                        headers: {
-
-                            "Content-Type":
-                                "application/json",
-
-                            "Accept":
-                                "application/json"
-
-                        },
-
-                        body:
-                            JSON.stringify(
-                                dados
-                            )
-
-                    }
-                );
-
+            await garantirAPI();
 
             const json =
-                await resposta.json();
+                await API.post(
+                    "/dispositivos",
+                    dados
+                );
 
 
             console.log(
@@ -473,7 +439,7 @@
             );
 
 
-            if (!resposta.ok) {
+            if (!json || json.success === false) {
 
                 throw new Error(
                     json?.error ||
@@ -561,41 +527,16 @@
 
         try {
 
-            const resposta =
-                await fetch(
-                    API +
-                    "/dispositivos/" +
-                    encodeURIComponent(
-                        id
-                    ),
-                    {
-
-                        method: "PUT",
-
-                        headers: {
-
-                            "Content-Type":
-                                "application/json",
-
-                            "Accept":
-                                "application/json"
-
-                        },
-
-                        body:
-                            JSON.stringify({
-
-                                nome:
-                                    nomeFinal
-
-                            })
-
-                    }
-                );
-
+            await garantirAPI();
 
             const json =
-                await resposta.json();
+                await API.put(
+                    "/dispositivos/" +
+                    encodeURIComponent(id),
+                    {
+                        nome: nomeFinal
+                    }
+                );
 
 
             console.log(
@@ -604,7 +545,7 @@
             );
 
 
-            if (!resposta.ok) {
+            if (!json || json.success === false) {
 
                 throw new Error(
                     json?.error ||
@@ -667,30 +608,13 @@
 
         try {
 
-            const resposta =
-                await fetch(
-                    API +
-                    "/dispositivos/" +
-                    encodeURIComponent(
-                        id
-                    ),
-                    {
-
-                        method: "DELETE",
-
-                        headers: {
-
-                            "Accept":
-                                "application/json"
-
-                        }
-
-                    }
-                );
-
+            await garantirAPI();
 
             const json =
-                await resposta.json();
+                await API.delete(
+                    "/dispositivos/" +
+                    encodeURIComponent(id)
+                );
 
 
             console.log(
@@ -699,7 +623,7 @@
             );
 
 
-            if (!resposta.ok) {
+            if (!json || json.success === false) {
 
                 throw new Error(
                     json?.error ||
@@ -765,7 +689,18 @@
         );
 
 
-        carregarDispositivos();
+        if (typeof window.garantirCredenciaisAPI === "function") {
+            window.garantirCredenciaisAPI()
+                .then(() => carregarDispositivos())
+                .catch((erro) => {
+                    console.error(
+                        "[MOZ TECH] Não foi possível iniciar dispositivos:",
+                        erro
+                    );
+                });
+        } else {
+            carregarDispositivos();
+        }
 
     }
 
