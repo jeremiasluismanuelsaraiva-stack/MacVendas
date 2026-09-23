@@ -1,24 +1,122 @@
 "use strict";
 
-// =====================================================
-// MACVENDAS
-// API DE PACOTES - FIREBASE
-// =====================================================
-
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 
 const router = express.Router();
 
-const { db } =
-    require("./firebase-admin");
+const autenticarAPI = require("./auth");
 
-const autenticarAPI =
-    require("./auth");
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO DE DADOS
+|--------------------------------------------------------------------------
+*/
 
+const DATA_DIR = path.join(__dirname, "data");
+const ARQUIVO = path.join(DATA_DIR, "pacotes.json");
 
-// =====================================================
-// FUNÇÕES AUXILIARES
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| GARANTIR ARMAZENAMENTO
+|--------------------------------------------------------------------------
+*/
+
+function garantirArquivo() {
+    if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, {
+            recursive: true
+        });
+    }
+
+    if (!fs.existsSync(ARQUIVO)) {
+        fs.writeFileSync(
+            ARQUIVO,
+            "[]",
+            "utf8"
+        );
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| LER PACOTES
+|--------------------------------------------------------------------------
+*/
+
+function lerPacotes() {
+    garantirArquivo();
+
+    try {
+        const conteudo = fs.readFileSync(
+            ARQUIVO,
+            "utf8"
+        ).trim();
+
+        if (!conteudo) {
+            return [];
+        }
+
+        const dados = JSON.parse(conteudo);
+
+        return Array.isArray(dados)
+            ? dados
+            : [];
+
+    } catch (erro) {
+
+        console.error(
+            "[API PACOTES] Erro ao ler pacotes.json:",
+            erro
+        );
+
+        return [];
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| SALVAR PACOTES
+|--------------------------------------------------------------------------
+*/
+
+function salvarPacotes(pacotes) {
+    garantirArquivo();
+
+    fs.writeFileSync(
+        ARQUIVO,
+        JSON.stringify(
+            pacotes,
+            null,
+            4
+        ),
+        "utf8"
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| GERAR ID
+|--------------------------------------------------------------------------
+*/
+
+function gerarId() {
+
+    return (
+        Date.now().toString(36) +
+        "-" +
+        Math.random()
+            .toString(36)
+            .substring(2, 10)
+    ).toUpperCase();
+}
+
+/*
+|--------------------------------------------------------------------------
+| CONVERTER NÚMERO
+|--------------------------------------------------------------------------
+*/
 
 function numeroValor(valor) {
 
@@ -27,73 +125,98 @@ function numeroValor(valor) {
         valor === null ||
         valor === ""
     ) {
-
         return 0;
-
     }
 
-    const n =
-        Number(valor);
+    const n = Number(valor);
 
     return Number.isFinite(n)
         ? n
         : 0;
-
 }
 
+/*
+|--------------------------------------------------------------------------
+| CONVERTER BOOLEAN
+|--------------------------------------------------------------------------
+*/
 
-function booleanValor(valor, padrao = true) {
+function booleanValor(
+    valor,
+    padrao = true
+) {
 
     if (
         valor === undefined ||
         valor === null ||
         valor === ""
     ) {
-
         return padrao;
-
     }
-
 
     if (
         typeof valor === "boolean"
     ) {
-
         return valor;
-
     }
-
 
     if (
         typeof valor === "string"
     ) {
 
-        return (
-            valor.toLowerCase() === "true" ||
-            valor === "1" ||
-            valor.toLowerCase() === "sim"
-        );
+        const texto =
+            valor
+                .trim()
+                .toLowerCase();
 
+        return (
+            texto === "true" ||
+            texto === "1" ||
+            texto === "sim" ||
+            texto === "yes" ||
+            texto === "on"
+        );
     }
 
-
     return Boolean(valor);
-
 }
 
+/*
+|--------------------------------------------------------------------------
+| DATA ATUAL
+|--------------------------------------------------------------------------
+*/
 
 function agora() {
 
     return new Date()
         .toISOString();
-
 }
 
+/*
+|--------------------------------------------------------------------------
+| VERIFICAR SE O PACOTE PERTENCE AO USUÁRIO
+|--------------------------------------------------------------------------
+*/
 
-// =====================================================
-// LISTAR PACOTES
-// GET /api/pacotes
-// =====================================================
+function pacoteDoUsuario(
+    pacote,
+    uid
+) {
+
+    return (
+        pacote &&
+        String(pacote.uid) === String(uid)
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| LISTAR PACOTES
+|--------------------------------------------------------------------------
+| GET /api/pacotes
+|--------------------------------------------------------------------------
+*/
 
 router.get(
     "/",
@@ -105,44 +228,28 @@ router.get(
             const uid =
                 req.usuario.uid;
 
-
-            // =============================================
-            // BUSCAR PACOTES DO USUÁRIO
-            // =============================================
-
-            const snapshot =
-                await db
-                    .ref(
-                        "pacotes/" + uid
-                    )
-                    .once("value");
-
-
             const dados =
-                snapshot.val() || {};
+                lerPacotes();
 
-
-            // =============================================
-            // TRANSFORMAR EM ARRAY
-            // =============================================
+            /*
+             * Somente pacotes deste usuário.
+             */
 
             const pacotes =
-                Object.entries(dados)
+                dados
+                    .filter(
+                        pacote =>
+                            pacoteDoUsuario(
+                                pacote,
+                                uid
+                            )
+                    )
                     .map(
-                        ([id, pacote]) => ({
-
-                            id,
-
+                        pacote => ({
                             ...pacote
-
                         })
                     )
                     .reverse();
-
-
-            // =============================================
-            // RESPOSTA
-            // =============================================
 
             return res.json({
 
@@ -155,14 +262,12 @@ router.get(
 
             });
 
-        }
-        catch (err) {
+        } catch (err) {
 
             console.error(
                 "[API PACOTES] Erro ao listar:",
                 err
             );
-
 
             return res.status(500).json({
 
@@ -173,17 +278,17 @@ router.get(
                     "Erro ao listar pacotes."
 
             });
-
         }
-
     }
 );
 
-
-// =====================================================
-// BUSCAR PACOTE
-// GET /api/pacotes/:id
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| BUSCAR PACOTE
+|--------------------------------------------------------------------------
+| GET /api/pacotes/:id
+|--------------------------------------------------------------------------
+*/
 
 router.get(
     "/:id",
@@ -195,39 +300,25 @@ router.get(
             const uid =
                 req.usuario.uid;
 
-
             const id =
                 String(
                     req.params.id
                 );
 
+            const dados =
+                lerPacotes();
 
-            // =============================================
-            // REFERÊNCIA
-            // =============================================
+            const pacote =
+                dados.find(
+                    item =>
+                        String(item.id) === id &&
+                        pacoteDoUsuario(
+                            item,
+                            uid
+                        )
+                );
 
-            const pacoteRef =
-                db
-                    .ref(
-                        "pacotes/" +
-                        uid +
-                        "/" +
-                        id
-                    );
-
-
-            const snapshot =
-                await pacoteRef
-                    .once("value");
-
-
-            // =============================================
-            // VERIFICAR
-            // =============================================
-
-            if (
-                !snapshot.exists()
-            ) {
+            if (!pacote) {
 
                 return res.status(404).json({
 
@@ -237,40 +328,24 @@ router.get(
                         "Pacote não encontrado."
 
                 });
-
             }
-
-
-            // =============================================
-            // DADOS
-            // =============================================
-
-            const pacote =
-                snapshot.val();
-
 
             return res.json({
 
                 success: true,
 
                 pacote: {
-
-                    id,
-
                     ...pacote
-
                 }
 
             });
 
-        }
-        catch (err) {
+        } catch (err) {
 
             console.error(
                 "[API PACOTES] Erro ao buscar:",
                 err
             );
-
 
             return res.status(500).json({
 
@@ -281,17 +356,17 @@ router.get(
                     "Erro ao buscar pacote."
 
             });
-
         }
-
     }
 );
 
-
-// =====================================================
-// ADICIONAR PACOTE
-// POST /api/pacotes
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| ADICIONAR PACOTE
+|--------------------------------------------------------------------------
+| POST /api/pacotes
+|--------------------------------------------------------------------------
+*/
 
 router.post(
     "/",
@@ -303,48 +378,40 @@ router.post(
             const uid =
                 req.usuario.uid;
 
-
-            // =============================================
-            // DADOS RECEBIDOS
-            // =============================================
+            /*
+             * DADOS RECEBIDOS
+             */
 
             const nome =
                 req.body.nome ||
                 "";
 
-
             const tipo =
                 req.body.tipo ||
                 "NORMAL";
-
 
             const gbRecebido =
                 numeroValor(
                     req.body.gb
                 );
 
-
             const mbRecebido =
                 numeroValor(
                     req.body.mb
                 );
-
 
             const valor =
                 numeroValor(
                     req.body.valor
                 );
 
-
             const vantagem =
                 req.body.vantagem ||
                 "";
 
-
             const descricao =
                 req.body.descricao ||
                 "";
-
 
             const ativo =
                 booleanValor(
@@ -352,44 +419,32 @@ router.post(
                     true
                 );
 
-
-            // =============================================
-            // CALCULAR GB / MB
-            // =============================================
+            /*
+             * CALCULAR GB / MB
+             */
 
             let gb =
                 gbRecebido;
 
-
             let mb =
                 mbRecebido;
 
-
-            if (
-                gb > 0
-            ) {
+            if (gb > 0) {
 
                 mb =
                     gb * 1024;
 
-            }
-            else if (
-                mb > 0
-            ) {
+            } else if (mb > 0) {
 
                 gb =
                     mb / 1024;
-
             }
 
+            /*
+             * VALIDAR NOME
+             */
 
-            // =============================================
-            // VALIDAR
-            // =============================================
-
-            if (
-                !nome
-            ) {
+            if (!nome) {
 
                 return res.status(400).json({
 
@@ -399,9 +454,11 @@ router.post(
                         "Nome do pacote é obrigatório."
 
                 });
-
             }
 
+            /*
+             * VALIDAR GB / MB
+             */
 
             if (
                 gb <= 0 &&
@@ -416,30 +473,21 @@ router.post(
                         "GB ou MB do pacote é obrigatório."
 
                 });
-
             }
 
-
-            // =============================================
-            // CRIAR REFERÊNCIA
-            // =============================================
-
-            const pacoteRef =
-                db
-                    .ref(
-                        "pacotes/" +
-                        uid
-                    )
-                    .push();
-
+            /*
+             * GERAR ID
+             */
 
             const id =
-                pacoteRef.key;
+                gerarId();
 
+            const data =
+                agora();
 
-            // =============================================
-            // CRIAR PACOTE
-            // =============================================
+            /*
+             * CRIAR PACOTE
+             */
 
             const pacote = {
 
@@ -464,26 +512,39 @@ router.post(
                 ativo,
 
                 createdAt:
-                    agora(),
+                    data,
 
                 criadoEm:
-                    agora()
+                    data
 
             };
 
+            /*
+             * LER DADOS
+             */
 
-            // =============================================
-            // GUARDAR
-            // =============================================
+            const pacotes =
+                lerPacotes();
 
-            await pacoteRef.set(
+            /*
+             * ADICIONAR
+             */
+
+            pacotes.push(
                 pacote
             );
 
+            /*
+             * GUARDAR
+             */
 
-            // =============================================
-            // RESPOSTA
-            // =============================================
+            salvarPacotes(
+                pacotes
+            );
+
+            /*
+             * RESPOSTA
+             */
 
             return res.status(201).json({
 
@@ -496,14 +557,12 @@ router.post(
 
             });
 
-        }
-        catch (err) {
+        } catch (err) {
 
             console.error(
                 "[API PACOTES] Erro ao adicionar:",
                 err
             );
-
 
             return res.status(500).json({
 
@@ -514,17 +573,17 @@ router.post(
                     "Erro ao adicionar pacote."
 
             });
-
         }
-
     }
 );
 
-
-// =====================================================
-// EDITAR PACOTE
-// PUT /api/pacotes/:id
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| EDITAR PACOTE
+|--------------------------------------------------------------------------
+| PUT /api/pacotes/:id
+|--------------------------------------------------------------------------
+*/
 
 router.put(
     "/:id",
@@ -536,39 +595,29 @@ router.put(
             const uid =
                 req.usuario.uid;
 
-
             const id =
                 String(
                     req.params.id
                 );
 
+            const pacotes =
+                lerPacotes();
 
-            // =============================================
-            // REFERÊNCIA
-            // =============================================
+            const indice =
+                pacotes.findIndex(
+                    pacote =>
+                        String(pacote.id) === id &&
+                        pacoteDoUsuario(
+                            pacote,
+                            uid
+                        )
+                );
 
-            const pacoteRef =
-                db
-                    .ref(
-                        "pacotes/" +
-                        uid +
-                        "/" +
-                        id
-                    );
+            /*
+             * VERIFICAR
+             */
 
-
-            const snapshot =
-                await pacoteRef
-                    .once("value");
-
-
-            // =============================================
-            // VERIFICAR
-            // =============================================
-
-            if (
-                !snapshot.exists()
-            ) {
+            if (indice === -1) {
 
                 return res.status(404).json({
 
@@ -578,21 +627,20 @@ router.put(
                         "Pacote não encontrado."
 
                 });
-
             }
 
-
-            // =============================================
-            // PACOTE ATUAL
-            // =============================================
+            /*
+             * PACOTE ATUAL
+             */
 
             const atual =
-                snapshot.val() || {};
+                pacotes[indice];
 
-
-            // =============================================
-            // DADOS RECEBIDOS
-            // =============================================
+            /*
+             * DADOS RECEBIDOS
+             *
+             * Mantemos id e uid protegidos.
+             */
 
             const atualizado = {
 
@@ -606,10 +654,9 @@ router.put(
 
             };
 
-
-            // =============================================
-            // SINCRONIZAR GB / MB
-            // =============================================
+            /*
+             * GB / MB
+             */
 
             if (
                 req.body.gb !== undefined
@@ -620,13 +667,11 @@ router.put(
                         req.body.gb
                     );
 
-
                 atualizado.mb =
                     atualizado.gb *
                     1024;
 
-            }
-            else if (
+            } else if (
                 req.body.mb !== undefined
             ) {
 
@@ -635,31 +680,26 @@ router.put(
                         req.body.mb
                     );
 
-
                 atualizado.gb =
                     atualizado.mb /
                     1024;
 
-            }
-            else {
+            } else {
 
                 atualizado.gb =
                     numeroValor(
                         atualizado.gb
                     );
 
-
                 atualizado.mb =
                     numeroValor(
                         atualizado.mb
                     );
-
             }
 
-
-            // =============================================
-            // VALOR
-            // =============================================
+            /*
+             * VALOR
+             */
 
             if (
                 req.body.valor !== undefined
@@ -670,20 +710,17 @@ router.put(
                         req.body.valor
                     );
 
-            }
-            else {
+            } else {
 
                 atualizado.valor =
                     numeroValor(
                         atualizado.valor
                     );
-
             }
 
-
-            // =============================================
-            // ATIVO
-            // =============================================
+            /*
+             * ATIVO
+             */
 
             if (
                 req.body.ativo !== undefined
@@ -694,30 +731,40 @@ router.put(
                         req.body.ativo,
                         true
                     );
-
             }
 
-
-            // =============================================
-            // DATA
-            // =============================================
+            /*
+             * DATA
+             */
 
             atualizado.atualizado =
                 agora();
 
+            /*
+             * GARANTIR QUE CREATEDAT NÃO DESAPAREÇA
+             */
 
-            // =============================================
-            // GUARDAR
-            // =============================================
+            if (!atualizado.createdAt) {
 
-            await pacoteRef.update(
-                atualizado
+                atualizado.createdAt =
+                    atual.createdAt ||
+                    agora();
+            }
+
+            /*
+             * GUARDAR
+             */
+
+            pacotes[indice] =
+                atualizado;
+
+            salvarPacotes(
+                pacotes
             );
 
-
-            // =============================================
-            // RESPOSTA
-            // =============================================
+            /*
+             * RESPOSTA
+             */
 
             return res.json({
 
@@ -731,14 +778,12 @@ router.put(
 
             });
 
-        }
-        catch (err) {
+        } catch (err) {
 
             console.error(
                 "[API PACOTES] Erro ao editar:",
                 err
             );
-
 
             return res.status(500).json({
 
@@ -749,17 +794,17 @@ router.put(
                     "Erro ao editar pacote."
 
             });
-
         }
-
     }
 );
 
-
-// =====================================================
-// ATIVAR / DESATIVAR PACOTE
-// PATCH /api/pacotes/:id/status
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| ATIVAR / DESATIVAR PACOTE
+|--------------------------------------------------------------------------
+| PATCH /api/pacotes/:id/status
+|--------------------------------------------------------------------------
+*/
 
 router.patch(
     "/:id/status",
@@ -771,12 +816,10 @@ router.patch(
             const uid =
                 req.usuario.uid;
 
-
             const id =
                 String(
                     req.params.id
                 );
-
 
             const ativo =
                 booleanValor(
@@ -784,25 +827,24 @@ router.patch(
                     true
                 );
 
+            const pacotes =
+                lerPacotes();
 
-            const pacoteRef =
-                db
-                    .ref(
-                        "pacotes/" +
-                        uid +
-                        "/" +
-                        id
-                    );
+            const indice =
+                pacotes.findIndex(
+                    pacote =>
+                        String(pacote.id) === id &&
+                        pacoteDoUsuario(
+                            pacote,
+                            uid
+                        )
+                );
 
+            /*
+             * VERIFICAR
+             */
 
-            const snapshot =
-                await pacoteRef
-                    .once("value");
-
-
-            if (
-                !snapshot.exists()
-            ) {
+            if (indice === -1) {
 
                 return res.status(404).json({
 
@@ -812,19 +854,34 @@ router.patch(
                         "Pacote não encontrado."
 
                 });
-
             }
 
+            /*
+             * ATUALIZAR
+             */
 
-            await pacoteRef.update({
+            pacotes[indice] = {
+
+                ...pacotes[indice],
 
                 ativo,
 
                 atualizado:
                     agora()
 
-            });
+            };
 
+            /*
+             * GUARDAR
+             */
+
+            salvarPacotes(
+                pacotes
+            );
+
+            /*
+             * RESPOSTA
+             */
 
             return res.json({
 
@@ -841,14 +898,12 @@ router.patch(
 
             });
 
-        }
-        catch (err) {
+        } catch (err) {
 
             console.error(
                 "[API PACOTES] Erro ao alterar status:",
                 err
             );
-
 
             return res.status(500).json({
 
@@ -859,17 +914,17 @@ router.patch(
                     "Erro ao alterar status do pacote."
 
             });
-
         }
-
     }
 );
 
-
-// =====================================================
-// REMOVER PACOTE
-// DELETE /api/pacotes/:id
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| REMOVER PACOTE
+|--------------------------------------------------------------------------
+| DELETE /api/pacotes/:id
+|--------------------------------------------------------------------------
+*/
 
 router.delete(
     "/:id",
@@ -881,39 +936,29 @@ router.delete(
             const uid =
                 req.usuario.uid;
 
-
             const id =
                 String(
                     req.params.id
                 );
 
+            const pacotes =
+                lerPacotes();
 
-            // =============================================
-            // REFERÊNCIA
-            // =============================================
+            const indice =
+                pacotes.findIndex(
+                    pacote =>
+                        String(pacote.id) === id &&
+                        pacoteDoUsuario(
+                            pacote,
+                            uid
+                        )
+                );
 
-            const pacoteRef =
-                db
-                    .ref(
-                        "pacotes/" +
-                        uid +
-                        "/" +
-                        id
-                    );
+            /*
+             * VERIFICAR
+             */
 
-
-            const snapshot =
-                await pacoteRef
-                    .once("value");
-
-
-            // =============================================
-            // VERIFICAR
-            // =============================================
-
-            if (
-                !snapshot.exists()
-            ) {
+            if (indice === -1) {
 
                 return res.status(404).json({
 
@@ -923,20 +968,28 @@ router.delete(
                         "Pacote não encontrado."
 
                 });
-
             }
 
+            /*
+             * REMOVER
+             */
 
-            // =============================================
-            // APAGAR
-            // =============================================
+            pacotes.splice(
+                indice,
+                1
+            );
 
-            await pacoteRef.remove();
+            /*
+             * GUARDAR
+             */
 
+            salvarPacotes(
+                pacotes
+            );
 
-            // =============================================
-            // RESPOSTA
-            // =============================================
+            /*
+             * RESPOSTA
+             */
 
             return res.json({
 
@@ -949,14 +1002,12 @@ router.delete(
 
             });
 
-        }
-        catch (err) {
+        } catch (err) {
 
             console.error(
                 "[API PACOTES] Erro ao remover:",
                 err
             );
-
 
             return res.status(500).json({
 
@@ -967,16 +1018,16 @@ router.delete(
                     "Erro ao remover pacote."
 
             });
-
         }
-
     }
 );
 
-
-// =====================================================
-// EXPORTAR
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| EXPORTAR
+|--------------------------------------------------------------------------
+*/
 
 module.exports =
     router;
+
