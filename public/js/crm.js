@@ -1027,7 +1027,6 @@
             throw new Error("tbody do CRM não encontrado.");
         }
 
-        garantirEstatisticasCRM();
         atualizarEstatisticasCRM(clientes);
 
         const escapar = (valor) => {
