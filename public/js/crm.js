@@ -613,6 +613,7 @@
     }
 
     function abrirDetalhesCRM(cliente) {
+        document.body.classList.add("crm-detalhes-aberto");
         instalarModal();
 
         const modal = document.getElementById("crmDetalhesCliente");
@@ -733,6 +734,7 @@
     }
 
     function fecharDetalhesCRM() {
+        document.body.classList.remove("crm-detalhes-aberto");
             const modal = document.getElementById("crmDetalhesCliente");
         if (modal) modal.classList.remove("ativo");
     }
@@ -862,15 +864,16 @@
     console.log("[CRM] CRM de vendas com detalhes carregado.");
 })();
 
-
 document.addEventListener("keydown", function (evento) {
-    if (evento.key === "Escape") {
-        const modal = document.getElementById("crmDetalhesCliente");
-        if (modal && modal.style.display !== "none") {
-            if (typeof fecharDetalhesCRM === "function") {
-                fecharDetalhesCRM();
-            } else {
-                            }
+    if (evento.key !== "Escape") return;
+
+    const modal = document.getElementById("crmDetalhesCliente");
+    if (modal && modal.classList.contains("ativo")) {
+        if (typeof fecharDetalhesCRM === "function") {
+            fecharDetalhesCRM();
+        } else {
+            modal.classList.remove("ativo");
+            document.body.classList.remove("crm-detalhes-aberto");
         }
     }
 });
