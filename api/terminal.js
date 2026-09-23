@@ -1,38 +1,123 @@
 "use strict";
 
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
+
 const router = express.Router();
 
-const admin = require("./firebase-admin");
+const autenticarAPI = require("./auth");
 
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO DE CONFIGURAÇÕES
+|--------------------------------------------------------------------------
+*/
 
-// =====================================================
-// FIREBASE DATABASE
-// =====================================================
+const DATA_DIR = path.join(
+    __dirname,
+    "data"
+);
 
-const db =
-    admin.database();
+const ARQUIVO_CONFIGURACOES =
+    path.join(
+        DATA_DIR,
+        "configuracoes.json"
+    );
 
+/*
+|--------------------------------------------------------------------------
+| LER CONFIGURAÇÕES
+|--------------------------------------------------------------------------
+*/
 
-// =====================================================
-// OBTER CONFIGURAÇÃO DO TERMINAL
-// =====================================================
+function lerConfiguracoes() {
 
-async function obterConfiguracaoTerminal(uid) {
+    try {
+
+        if (
+            !fs.existsSync(
+                ARQUIVO_CONFIGURACOES
+            )
+        ) {
+            return [];
+        }
+
+        const conteudo =
+            fs.readFileSync(
+                ARQUIVO_CONFIGURACOES,
+                "utf8"
+            ).trim();
+
+        if (!conteudo) {
+            return [];
+        }
+
+        const dados =
+            JSON.parse(
+                conteudo
+            );
+
+        return Array.isArray(dados)
+            ? dados
+            : [];
+
+    } catch (erro) {
+
+        console.error(
+            "[TERMINAL] Erro ao ler configuracoes.json:",
+            erro
+        );
+
+        return [];
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| OBTER CONFIGURAÇÃO DO TERMINAL
+|--------------------------------------------------------------------------
+*/
+
+function obterConfiguracaoTerminal(uid) {
 
     if (!uid) {
+
         throw new Error(
             "Utilizador não autenticado."
         );
     }
 
-    const snapshot =
-        await db
-            .ref(`configuracoes/${uid}/terminal`)
-            .once("value");
+    const configuracoes =
+        lerConfiguracoes();
+
+    const configuracao =
+        configuracoes.find(
+            item =>
+                item &&
+                String(item.uid) ===
+                String(uid)
+        );
+
+    if (!configuracao) {
+
+        return {
+
+            ativo: false,
+
+            api: "",
+
+            endpoint: "",
+
+            metodo: "POST",
+
+            token: ""
+
+        };
+    }
 
     const terminal =
-        snapshot.val() || {};
+        configuracao.terminal || {};
 
     return {
 
@@ -51,7 +136,8 @@ async function obterConfiguracaoTerminal(uid) {
 
         metodo:
             String(
-                terminal.metodo || "POST"
+                terminal.metodo ||
+                "POST"
             )
                 .trim()
                 .toUpperCase(),
@@ -64,14 +150,16 @@ async function obterConfiguracaoTerminal(uid) {
     };
 }
 
-
-// =====================================================
-// VALIDAR CONFIGURAÇÃO
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| VALIDAR CONFIGURAÇÃO
+|--------------------------------------------------------------------------
+*/
 
 function validarURL(api) {
 
     if (!api) {
+
         throw new Error(
             "API do terminal não configurada."
         );
@@ -89,7 +177,6 @@ function validarURL(api) {
         throw new Error(
             "URL da API do terminal inválida."
         );
-
     }
 
     if (
@@ -100,18 +187,21 @@ function validarURL(api) {
         throw new Error(
             "A API deve utilizar HTTP ou HTTPS."
         );
-
     }
 
     return url;
 }
 
+/*
+|--------------------------------------------------------------------------
+| MONTAR URL
+|--------------------------------------------------------------------------
+*/
 
-// =====================================================
-// MONTAR URL
-// =====================================================
-
-function montarURL(api, endpoint) {
+function montarURL(
+    api,
+    endpoint
+) {
 
     const base =
         validarURL(api);
@@ -122,6 +212,7 @@ function montarURL(api, endpoint) {
         ).trim();
 
     if (!caminho) {
+
         return base.toString();
     }
 
@@ -131,21 +222,28 @@ function montarURL(api, endpoint) {
      * /exec
      * /api/exec
      * exec
-     *
      */
 
-    if (caminho.startsWith("http://") ||
-        caminho.startsWith("https://")) {
+    if (
+        caminho.startsWith(
+            "http://"
+        ) ||
+        caminho.startsWith(
+            "https://"
+        )
+    ) {
 
         throw new Error(
             "O endpoint deve ser uma rota, não uma URL completa."
         );
-
     }
 
     const basePath =
         base.pathname.endsWith("/")
-            ? base.pathname.slice(0, -1)
+            ? base.pathname.slice(
+                0,
+                -1
+            )
             : base.pathname;
 
     const endpointPath =
@@ -154,17 +252,22 @@ function montarURL(api, endpoint) {
             : "/" + caminho;
 
     base.pathname =
-        basePath + endpointPath;
+        basePath +
+        endpointPath;
 
     return base.toString();
 }
 
+/*
+|--------------------------------------------------------------------------
+| HEADERS
+|--------------------------------------------------------------------------
+*/
 
-// =====================================================
-// HEADERS
-// =====================================================
-
-function criarHeaders(config, req) {
+function criarHeaders(
+    config,
+    req
+) {
 
     const headers = {
 
@@ -176,41 +279,42 @@ function criarHeaders(config, req) {
 
     };
 
-
-    // =================================================
-    // TOKEN OPCIONAL
-    // =================================================
+    /*
+     * TOKEN OPCIONAL
+     */
 
     if (config.token) {
 
         headers.Authorization =
             `Bearer ${config.token}`;
-
     }
 
+    /*
+     * IDENTIFICAÇÃO DO UTILIZADOR
+     */
 
-    // =================================================
-    // IDENTIFICAÇÃO DO UTILIZADOR
-    // =================================================
-
-    if (req.usuario?.uid) {
+    if (
+        req.usuario?.uid
+    ) {
 
         headers["x-uid"] =
             req.usuario.uid;
-
     }
-
 
     return headers;
 }
 
-
-// =====================================================
-// STATUS
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| STATUS
+|--------------------------------------------------------------------------
+| GET /api/terminal/status
+|--------------------------------------------------------------------------
+*/
 
 router.get(
     "/status",
+    autenticarAPI,
     async (req, res) => {
 
         try {
@@ -218,9 +322,26 @@ router.get(
             const uid =
                 req.usuario?.uid;
 
-            const config =
-                await obterConfiguracaoTerminal(uid);
+            if (!uid) {
 
+                return res.status(401).json({
+
+                    success: false,
+
+                    erro:
+                        "Utilizador não autenticado."
+
+                });
+            }
+
+            const config =
+                obterConfiguracaoTerminal(
+                    uid
+                );
+
+            /*
+             * TERMINAL ATIVO?
+             */
 
             if (!config.ativo) {
 
@@ -232,9 +353,11 @@ router.get(
                         "Terminal está desativado nas Configurações."
 
                 });
-
             }
 
+            /*
+             * URL
+             */
 
             const url =
                 montarURL(
@@ -242,6 +365,9 @@ router.get(
                     config.endpoint
                 );
 
+            /*
+             * HEADERS
+             */
 
             const headers =
                 criarHeaders(
@@ -249,12 +375,14 @@ router.get(
                     req
                 );
 
-
             console.log(
                 "[TERMINAL] Testando:",
                 url
             );
 
+            /*
+             * REQUEST
+             */
 
             const resposta =
                 await fetch(
@@ -262,41 +390,48 @@ router.get(
                     {
 
                         method:
-                            config.metodo || "POST",
+                            config.metodo ||
+                            "POST",
 
                         headers,
 
                         body:
-                            config.metodo === "GET" ||
-                            config.metodo === "HEAD"
+                            config.metodo ===
+                                "GET" ||
+                            config.metodo ===
+                                "HEAD"
                                 ? undefined
                                 : JSON.stringify({
+
                                     action:
                                         "status"
+
                                 })
 
                     }
                 );
 
+            /*
+             * RESPOSTA
+             */
 
             const texto =
                 await resposta.text();
-
 
             let resultado;
 
             try {
 
                 resultado =
-                    JSON.parse(texto);
+                    JSON.parse(
+                        texto
+                    );
 
             } catch {
 
                 resultado =
                     texto;
-
             }
-
 
             return res.json({
 
@@ -317,7 +452,6 @@ router.get(
                 erro
             );
 
-
             return res.status(500).json({
 
                 success: false,
@@ -327,19 +461,21 @@ router.get(
                     "Erro ao testar a API do terminal."
 
             });
-
         }
-
     }
 );
 
-
-// =====================================================
-// EXECUTAR COMANDO
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| EXECUTAR COMANDO
+|--------------------------------------------------------------------------
+| POST /api/terminal/exec
+|--------------------------------------------------------------------------
+*/
 
 router.post(
     "/exec",
+    autenticarAPI,
     async (req, res) => {
 
         try {
@@ -347,6 +483,9 @@ router.post(
             const uid =
                 req.usuario?.uid;
 
+            /*
+             * UTILIZADOR
+             */
 
             if (!uid) {
 
@@ -358,17 +497,20 @@ router.post(
                         "Utilizador não autenticado."
 
                 });
-
             }
 
+            /*
+             * CONFIGURAÇÃO
+             */
 
             const config =
-                await obterConfiguracaoTerminal(uid);
+                obterConfiguracaoTerminal(
+                    uid
+                );
 
-
-            // =========================================
-            // TERMINAL ATIVO?
-            // =========================================
+            /*
+             * TERMINAL ATIVO?
+             */
 
             if (!config.ativo) {
 
@@ -380,13 +522,11 @@ router.post(
                         "Terminal está desativado nas Configurações."
 
                 });
-
             }
 
-
-            // =========================================
-            // API CONFIGURADA?
-            // =========================================
+            /*
+             * API CONFIGURADA?
+             */
 
             if (!config.api) {
 
@@ -398,19 +538,17 @@ router.post(
                         "Configure a API do terminal antes de executar comandos."
 
                 });
-
             }
 
-
-            // =========================================
-            // COMANDO
-            // =========================================
+            /*
+             * COMANDO
+             */
 
             const command =
                 String(
-                    req.body?.command || ""
+                    req.body?.command ||
+                    ""
                 ).trim();
-
 
             if (!command) {
 
@@ -422,13 +560,11 @@ router.post(
                         "Nenhum comando foi informado."
 
                 });
-
             }
 
-
-            // =========================================
-            // URL
-            // =========================================
+            /*
+             * URL
+             */
 
             const url =
                 montarURL(
@@ -436,18 +572,17 @@ router.post(
                     config.endpoint
                 );
 
-
-            // =========================================
-            // MÉTODO
-            // =========================================
+            /*
+             * MÉTODO
+             */
 
             const metodo =
-                config.metodo || "POST";
+                config.metodo ||
+                "POST";
 
-
-            // =========================================
-            // HEADERS
-            // =========================================
+            /*
+             * HEADERS
+             */
 
             const headers =
                 criarHeaders(
@@ -455,10 +590,9 @@ router.post(
                     req
                 );
 
-
-            // =========================================
-            // CORPO
-            // =========================================
+            /*
+             * CORPO
+             */
 
             const body = {
 
@@ -466,22 +600,19 @@ router.post(
 
             };
 
-
             console.log(
                 "[TERMINAL] Executando comando:",
                 command
             );
-
 
             console.log(
                 "[TERMINAL] URL:",
                 url
             );
 
-
-            // =========================================
-            // REQUEST
-            // =========================================
+            /*
+             * REQUEST
+             */
 
             const resposta =
                 await fetch(
@@ -497,40 +628,39 @@ router.post(
                             metodo === "GET" ||
                             metodo === "HEAD"
                                 ? undefined
-                                : JSON.stringify(body)
+                                : JSON.stringify(
+                                    body
+                                )
 
                     }
                 );
 
-
-            // =========================================
-            // RESPOSTA
-            // =========================================
+            /*
+             * RESPOSTA
+             */
 
             const texto =
                 await resposta.text();
-
 
             let resultado;
 
             try {
 
                 resultado =
-                    JSON.parse(texto);
+                    JSON.parse(
+                        texto
+                    );
 
             } catch {
 
                 resultado =
                     texto;
-
             }
-
 
             console.log(
                 "[TERMINAL] HTTP:",
                 resposta.status
             );
-
 
             return res.json({
 
@@ -551,7 +681,6 @@ router.post(
                 erro
             );
 
-
             return res.status(500).json({
 
                 success: false,
@@ -561,16 +690,15 @@ router.post(
                     "Erro ao executar comando."
 
             });
-
         }
-
     }
 );
 
-
-// =====================================================
-// EXPORTAR
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| EXPORTAR
+|--------------------------------------------------------------------------
+*/
 
 module.exports =
     router;
