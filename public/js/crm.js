@@ -104,13 +104,12 @@
                 <th>Cliente</th>
                 <th>Nº Cliente</th>
                 <th>Nº que recebeu</th>
-                <th>MB / GB</th>
-                <th>Pacote</th>
-                <th>Valor</th>
-                <th>Pagamento</th>
-                <th>Dispositivo usado</th>
+                <th>Total GB</th>
+                <th>Compras</th>
+                <th>Total gasto</th>
                 <th>Grupo</th>
-                <th>Status</th>
+                <th>Última compra</th>
+                <th>Ações</th>
             </tr>
         `;
     }
@@ -312,7 +311,410 @@
         return mapa[valor.toLowerCase()] || valor;
     }
 
-    function renderizarCompras(compras) {
+    function agruparClientes(compras) {
+        const mapa = new Map();
+
+        (Array.isArray(compras) ? compras : []).forEach((compra, indice) => {
+            const numeroCliente = obterNumeroClienteCompra(compra);
+            const numeroLimpo = String(numeroCliente || "").replace(/\D/g, "");
+            const numeroRecebeu = obterNumeroRecebeu(compra);
+            const chave = numeroLimpo || String(compra.clienteId || compra.id || indice);
+
+            if (!mapa.has(chave)) {
+                mapa.set(chave, {
+                    id: compra.clienteId || chave,
+                    nome: obterCliente(compra),
+                    numeroCliente,
+                    numeroRecebeu,
+                    grupo: obterGrupo(compra),
+                    compras: [],
+                    totalGB: 0,
+                    totalMB: 0,
+                    totalGasto: 0,
+                    totalCusto: 0,
+                    totalLucro: 0,
+                    primeiraCompra: dataCompra(compra),
+                    ultimaCompra: dataCompra(compra)
+                });
+            }
+
+            const cliente = mapa.get(chave);
+
+            cliente.compras.push(compra);
+
+            if (obterCliente(compra) !== "-") {
+                cliente.nome = obterCliente(compra);
+            }
+
+            if (numeroRecebeu !== "-") {
+                cliente.numeroRecebeu = numeroRecebeu;
+            }
+
+            if (obterGrupo(compra) !== "-") {
+                cliente.grupo = obterGrupo(compra);
+            }
+
+            const gb = numero(obterCampo(compra, ["gb", "GB", "quantidadeGB", "quantidade_gb"], 0));
+            const mb = numero(obterCampo(compra, ["mb", "MB", "quantidadeMB", "quantidade_mb"], 0));
+
+            cliente.totalGB += gb || (mb / 1000);
+            cliente.totalMB += mb || (gb * 1000);
+            cliente.totalGasto += obterValor(compra);
+            cliente.totalCusto += numero(obterCampo(compra, ["custo", "valorCusto", "valor_custo"], 0));
+
+            const lucroInformado = numero(obterCampo(compra, ["lucro"], 0));
+            cliente.totalLucro += lucroInformado || (obterValor(compra) - cliente.totalCusto);
+
+            const data = dataCompra(compra);
+            if (data) {
+                if (!cliente.primeiraCompra || new Date(data) < new Date(cliente.primeiraCompra)) {
+                    cliente.primeiraCompra = data;
+                }
+                if (!cliente.ultimaCompra || new Date(data) > new Date(cliente.ultimaCompra)) {
+                    cliente.ultimaCompra = data;
+                }
+            }
+        });
+
+        return Array.from(mapa.values()).sort((a, b) => {
+            return new Date(b.ultimaCompra || 0) - new Date(a.ultimaCompra || 0);
+        });
+    }
+
+    function instalarModal() {
+        if (document.getElementById("crmDetalhesCliente")) return;
+
+        const style = document.createElement("style");
+        style.id = "crmDetalhesStyle";
+        style.textContent = `
+            #crmDetalhesCliente {
+                position: fixed;
+                inset: 0;
+                z-index: 99999;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                background: rgba(0,0,0,.65);
+            }
+
+            #crmDetalhesCliente.ativo {
+                display: flex;
+            }
+
+            #crmDetalhesCliente .crm-modal {
+                width: min(1050px, 100%);
+                max-height: 90vh;
+                overflow: auto;
+                background: #fff;
+                color: #111827;
+                border-radius: 16px;
+                box-shadow: 0 20px 60px rgba(0,0,0,.35);
+            }
+
+            #crmDetalhesCliente .crm-modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 15px;
+                padding: 20px;
+                border-bottom: 1px solid #e5e7eb;
+            }
+
+            #crmDetalhesCliente .crm-fechar {
+                border: 0;
+                background: #f3f4f6;
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+                cursor: pointer;
+                font-size: 20px;
+            }
+
+            #crmDetalhesCliente .crm-identidade {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            #crmDetalhesCliente .crm-avatar {
+                width: 48px;
+                height: 48px;
+                border-radius: 50%;
+                display: grid;
+                place-items: center;
+                background: #111827;
+                color: #fff;
+                font-weight: 700;
+            }
+
+            #crmDetalhesCliente .crm-subtitulo {
+                color: #6b7280;
+                font-size: 13px;
+                margin-top: 3px;
+            }
+
+            #crmDetalhesCliente .crm-resumo {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0,1fr));
+                gap: 12px;
+                padding: 18px 20px;
+            }
+
+            #crmDetalhesCliente .crm-card {
+                border: 1px solid #e5e7eb;
+                border-radius: 12px;
+                padding: 14px;
+                background: #f9fafb;
+            }
+
+            #crmDetalhesCliente .crm-card-label {
+                color: #6b7280;
+                font-size: 12px;
+                margin-bottom: 6px;
+            }
+
+            #crmDetalhesCliente .crm-card-value {
+                font-size: 18px;
+                font-weight: 700;
+            }
+
+            #crmDetalhesCliente .crm-info {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0,1fr));
+                gap: 10px;
+                padding: 0 20px 18px;
+            }
+
+            #crmDetalhesCliente .crm-info-item {
+                padding: 12px;
+                border-bottom: 1px solid #e5e7eb;
+            }
+
+            #crmDetalhesCliente .crm-info-item small {
+                display: block;
+                color: #6b7280;
+                margin-bottom: 4px;
+            }
+
+            #crmDetalhesCliente .crm-historico {
+                padding: 0 20px 20px;
+            }
+
+            #crmDetalhesCliente .crm-historico-wrap {
+                overflow-x: auto;
+                border: 1px solid #e5e7eb;
+                border-radius: 12px;
+            }
+
+            #crmDetalhesCliente table {
+                width: 100%;
+                border-collapse: collapse;
+                min-width: 850px;
+            }
+
+            #crmDetalhesCliente th,
+            #crmDetalhesCliente td {
+                padding: 11px;
+                text-align: left;
+                border-bottom: 1px solid #e5e7eb;
+                white-space: nowrap;
+                font-size: 13px;
+            }
+
+            #crmDetalhesCliente th {
+                background: #f9fafb;
+                font-weight: 700;
+            }
+
+            #crmDetalhesCliente .crm-status {
+                font-weight: 700;
+            }
+
+            @media (max-width: 700px) {
+                #crmDetalhesCliente .crm-resumo {
+                    grid-template-columns: repeat(2, minmax(0,1fr));
+                }
+
+                #crmDetalhesCliente .crm-info {
+                    grid-template-columns: 1fr;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        const modal = document.createElement("div");
+        modal.id = "crmDetalhesCliente";
+        modal.innerHTML = `
+            <div class="crm-modal" role="dialog" aria-modal="true" aria-labelledby="crmDetalhesTitulo">
+                <div class="crm-modal-header">
+                    <div class="crm-identidade">
+                        <div class="crm-avatar" id="crmAvatar">C</div>
+                        <div>
+                            <h2 id="crmDetalhesTitulo" style="margin:0;">Cliente</h2>
+                            <div id="crmDetalhesSubtitulo" class="crm-subtitulo"></div>
+                        </div>
+                    </div>
+                    <button type="button" class="crm-fechar" id="crmFecharDetalhes" aria-label="Fechar">×</button>
+                </div>
+
+                <div id="crmDetalhesConteudo"></div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        document.getElementById("crmFecharDetalhes").addEventListener("click", fecharDetalhesCRM);
+
+        modal.addEventListener("click", (event) => {
+            if (event.target === modal) fecharDetalhesCRM();
+        });
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") fecharDetalhesCRM();
+        });
+    }
+
+    function abrirDetalhesCRM(cliente) {
+        instalarModal();
+
+        const modal = document.getElementById("crmDetalhesCliente");
+        const titulo = document.getElementById("crmDetalhesTitulo");
+        const subtitulo = document.getElementById("crmDetalhesSubtitulo");
+        const avatar = document.getElementById("crmAvatar");
+        const conteudo = document.getElementById("crmDetalhesConteudo");
+
+        titulo.textContent = cliente.nome || "Cliente";
+        subtitulo.textContent = cliente.numeroCliente || "Número não informado";
+        avatar.textContent = String(cliente.nome || "C").trim().charAt(0).toUpperCase();
+
+        const compras = [...cliente.compras].sort((a, b) => {
+            return new Date(dataCompra(b) || 0) - new Date(dataCompra(a) || 0);
+        });
+
+        const ultima = compras[0];
+        const totalCompras = compras.length;
+        const ticketMedio = totalCompras ? cliente.totalGasto / totalCompras : 0;
+
+        conteudo.innerHTML = `
+            <div class="crm-resumo">
+                <div class="crm-card">
+                    <div class="crm-card-label">Total de compras</div>
+                    <div class="crm-card-value">${totalCompras}</div>
+                </div>
+                <div class="crm-card">
+                    <div class="crm-card-label">Total gasto</div>
+                    <div class="crm-card-value">${formatarMT(cliente.totalGasto)}</div>
+                </div>
+                <div class="crm-card">
+                    <div class="crm-card-label">Total de dados</div>
+                    <div class="crm-card-value">${numero(cliente.totalGB).toLocaleString("pt-MZ", { maximumFractionDigits: 2 })} GB</div>
+                </div>
+                <div class="crm-card">
+                    <div class="crm-card-label">Ticket médio</div>
+                    <div class="crm-card-value">${formatarMT(ticketMedio)}</div>
+                </div>
+            </div>
+
+            <div class="crm-info">
+                <div class="crm-info-item">
+                    <small>Nome</small>
+                    <strong>${escapar(cliente.nome || "-")}</strong>
+                </div>
+                <div class="crm-info-item">
+                    <small>Nº Cliente</small>
+                    <strong>${escapar(cliente.numeroCliente || "-")}</strong>
+                </div>
+                <div class="crm-info-item">
+                    <small>Nº que recebeu</small>
+                    <strong>${escapar(cliente.numeroRecebeu || "-")}</strong>
+                </div>
+                <div class="crm-info-item">
+                    <small>Grupo</small>
+                    <strong>${escapar(cliente.grupo || "-")}</strong>
+                </div>
+                <div class="crm-info-item">
+                    <small>Primeira compra</small>
+                    <strong>${formatarDataHora(cliente.primeiraCompra)}</strong>
+                </div>
+                <div class="crm-info-item">
+                    <small>Última compra</small>
+                    <strong>${formatarDataHora(cliente.ultimaCompra)}</strong>
+                </div>
+                <div class="crm-info-item">
+                    <small>Total MB</small>
+                    <strong>${numero(cliente.totalMB).toLocaleString("pt-MZ", { maximumFractionDigits: 2 })} MB</strong>
+                </div>
+                <div class="crm-info-item">
+                    <small>Total custo</small>
+                    <strong>${formatarMT(cliente.totalCusto)}</strong>
+                </div>
+                <div class="crm-info-item">
+                    <small>Lucro</small>
+                    <strong>${formatarMT(cliente.totalLucro)}</strong>
+                </div>
+            </div>
+
+            <div class="crm-historico">
+                <h3 style="margin:0 0 12px;">Histórico de compras</h3>
+                <div class="crm-historico-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data / hora</th>
+                                <th>Pacote</th>
+                                <th>MB / GB</th>
+                                <th>Valor</th>
+                                <th>Pagamento</th>
+                                <th>Dispositivo</th>
+                                <th>Grupo</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${compras.map(compra => {
+                                const status = obterStatus(compra);
+                                return `
+                                    <tr>
+                                        <td>${formatarDataHora(dataCompra(compra))}</td>
+                                        <td>${escapar(obterPacote(compra))}</td>
+                                        <td>${escapar(obterQuantidade(compra))}</td>
+                                        <td>${formatarMT(obterValor(compra))}</td>
+                                        <td>${escapar(obterPagamento(compra))}</td>
+                                        <td>${escapar(obterDispositivo(compra))}</td>
+                                        <td>${escapar(obterGrupo(compra))}</td>
+                                        <td class="crm-status">${escapar(textoStatus(status))}</td>
+                                    </tr>
+                                `;
+                            }).join("")}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+
+        modal.classList.add("ativo");
+    }
+
+    function fecharDetalhesCRM() {
+        const modal = document.getElementById("crmDetalhesCliente");
+        if (modal) modal.classList.remove("ativo");
+    }
+
+    function formatarDataHora(valor) {
+        if (!valor) return "-";
+
+        const d = new Date(valor);
+
+        if (Number.isNaN(d.getTime())) return String(valor);
+
+        return d.toLocaleString("pt-MZ", {
+            dateStyle: "short",
+            timeStyle: "short"
+        });
+    }
+
+    function renderizarClientes(clientes) {
         const t = tabela();
 
         if (!t) {
@@ -327,36 +729,42 @@
 
         configurarCabecalho();
 
-        if (!Array.isArray(compras) || compras.length === 0) {
-            mensagem("Nenhuma compra encontrada.");
+        if (!clientes.length) {
+            mensagem("Nenhum cliente com compras encontrado.");
             return;
         }
 
         tbody.innerHTML = "";
 
-        compras.forEach((compra) => {
-            const status = obterStatus(compra);
-            const statusTexto = textoStatus(status);
-            const classe = classeStatus(status);
-
+        clientes.forEach((cliente) => {
             const tr = document.createElement("tr");
 
+            tr.style.cursor = "pointer";
+            tr.title = "Clique para ver os detalhes deste cliente";
+
             tr.innerHTML = `
-                <td>${escapar(obterCliente(compra))}</td>
-                <td>${escapar(obterNumeroClienteCompra(compra))}</td>
-                <td>${escapar(obterNumeroRecebeu(compra))}</td>
-                <td>${escapar(obterQuantidade(compra))}</td>
-                <td>${escapar(obterPacote(compra))}</td>
-                <td>${formatarMT(obterValor(compra))}</td>
-                <td>${escapar(obterPagamento(compra))}</td>
-                <td>${escapar(obterDispositivo(compra))}</td>
-                <td>${escapar(obterGrupo(compra))}</td>
+                <td>${escapar(cliente.nome || "-")}</td>
+                <td>${escapar(cliente.numeroCliente || "-")}</td>
+                <td>${escapar(cliente.numeroRecebeu || "-")}</td>
+                <td>${numero(cliente.totalGB).toLocaleString("pt-MZ", { maximumFractionDigits: 2 })} GB</td>
+                <td>${cliente.compras.length}</td>
+                <td>${formatarMT(cliente.totalGasto)}</td>
+                <td>${escapar(cliente.grupo || "-")}</td>
+                <td>${formatarDataHora(cliente.ultimaCompra)}</td>
                 <td>
-                    <strong class="crm-status crm-status-${classe}">
-                        ${escapar(statusTexto)}
-                    </strong>
+                    <button type="button" class="crm-ver-detalhes">
+                        Ver detalhes
+                    </button>
                 </td>
             `;
+
+            tr.addEventListener("click", () => abrirDetalhesCRM(cliente));
+
+            const botao = tr.querySelector(".crm-ver-detalhes");
+            botao.addEventListener("click", (event) => {
+                event.stopPropagation();
+                abrirDetalhesCRM(cliente);
+            });
 
             tbody.appendChild(tr);
         });
@@ -375,9 +783,13 @@
                 ? dadosCompras.compras
                 : (Array.isArray(dadosCompras) ? dadosCompras : []);
 
+            const clientes = agruparClientes(compras);
+
             console.log("[CRM] Compras recebidas:", compras.length);
-            renderizarCompras(compras);
-            return compras;
+            console.log("[CRM] Clientes agrupados:", clientes.length);
+
+            renderizarClientes(clientes);
+            return clientes;
         } catch (erro) {
             console.error("[CRM] ERRO AO CARREGAR CLIENTES:", erro);
             mensagem(`Não foi possível carregar os clientes.<br><small>${escapar(erro.message)}</small><br><button type="button" onclick="carregarClientes()">Tentar novamente</button>`, true);
@@ -408,6 +820,8 @@
     window.abrirCRM = abrirCRM;
     window.iniciarCRM = iniciarCRM;
     window.verClienteCRM = verClienteCRM;
+    window.abrirDetalhesCRM = abrirDetalhesCRM;
+    window.fecharDetalhesCRM = fecharDetalhesCRM;
 
-    console.log("[CRM] crm.js de vendas carregado.");
+    console.log("[CRM] CRM de vendas com detalhes carregado.");
 })();
