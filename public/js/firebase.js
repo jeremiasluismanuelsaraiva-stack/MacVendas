@@ -2,7 +2,7 @@
 
 // =====================================================
 // MACVENDAS - API.JS
-// SUBSTITUIÇÃO COMPLETA DO FIREBASE
+// API PRÓPRIA - JSON
 // =====================================================
 
 // =====================================================
@@ -10,7 +10,7 @@
 // =====================================================
 
 const API_URL =
-    "http://br1.bronxyshost.com:4234";
+    "http://br1.bronxyshost.com:4234/api";
 
 
 // =====================================================
@@ -41,11 +41,32 @@ async function apiFetch(
             "apiKey"
         );
 
+    const uid =
+        localStorage.getItem(
+            "uid"
+        );
+
     if (apiKey) {
 
         config.headers[
             "x-api-key"
         ] = apiKey;
+
+        config.headers[
+            "apiKey"
+        ] = apiKey;
+
+    }
+
+    if (uid) {
+
+        config.headers[
+            "x-uid"
+        ] = uid;
+
+        config.headers[
+            "uid"
+        ] = uid;
 
     }
 
@@ -114,6 +135,101 @@ async function apiFetch(
 
 
 // =====================================================
+// MOZ_API - CLIENTE CENTRALIZADO
+// Compatível com os outros ficheiros do MacVendas.
+// =====================================================
+
+const MOZ_API = {
+
+    async request(endpoint, options = {}) {
+        return apiFetch(endpoint, options);
+    },
+
+    async get(endpoint, options = {}) {
+        return apiFetch(endpoint, {
+            ...options,
+            method: "GET"
+        });
+    },
+
+    async post(endpoint, body = {}, options = {}) {
+        return apiFetch(endpoint, {
+            ...options,
+            method: "POST",
+            body: JSON.stringify(body)
+        });
+    },
+
+    async put(endpoint, body = {}, options = {}) {
+        return apiFetch(endpoint, {
+            ...options,
+            method: "PUT",
+            body: JSON.stringify(body)
+        });
+    },
+
+    async patch(endpoint, body = {}, options = {}) {
+        return apiFetch(endpoint, {
+            ...options,
+            method: "PATCH",
+            body: JSON.stringify(body)
+        });
+    },
+
+    async delete(endpoint, options = {}) {
+        return apiFetch(endpoint, {
+            ...options,
+            method: "DELETE"
+        });
+    },
+
+    definirCredenciais(uid, apiKey) {
+
+        if (uid) {
+            localStorage.setItem("uid", uid);
+        }
+
+        if (apiKey) {
+            localStorage.setItem("apiKey", apiKey);
+        }
+
+        const usuario = obterUsuarioLocal();
+
+        if (usuario) {
+
+            if (uid) {
+                usuario.uid = uid;
+            }
+
+            if (apiKey) {
+                usuario.apiKey = apiKey;
+            }
+
+            salvarUsuario(usuario);
+        }
+    },
+
+    obterCredenciais() {
+
+        return {
+
+            uid:
+                localStorage.getItem("uid") || null,
+
+            apiKey:
+                localStorage.getItem("apiKey") || null
+
+        };
+    },
+
+    limparCredenciais() {
+        limparSessao();
+    }
+
+};
+
+
+// =====================================================
 // TESTAR API
 // =====================================================
 
@@ -122,7 +238,7 @@ async function testarAPI() {
     try {
 
         const dados =
-            await apiFetch(
+            await MOZ_API.get(
                 "/status"
             );
 
@@ -699,7 +815,6 @@ async function loginUser(
 // =====================================================
 // GOOGLE LOGIN
 // =====================================================
-// Firebase foi removido.
 // A API atual ainda não possui Google OAuth.
 // =====================================================
 
@@ -920,7 +1035,7 @@ async function sair() {
 // ESTADO DE AUTENTICAÇÃO
 // =====================================================
 // Compatibilidade com o código antigo.
-// Não existe Firebase Auth.
+// Não existe autenticação externa.
 // =====================================================
 
 function onAuthState(
@@ -1363,6 +1478,9 @@ async function obterDashboard() {
 window.API_URL =
     API_URL;
 
+window.MOZ_API =
+    MOZ_API;
+
 window.apiFetch =
     apiFetch;
 
@@ -1441,6 +1559,8 @@ export {
 
     API_URL,
 
+    MOZ_API,
+
     apiFetch,
 
     testarAPI,
@@ -1508,7 +1628,7 @@ console.log(
 );
 
 console.log(
-    "[MACVENDAS] Firebase: DESATIVADO"
+    "[MACVENDAS] Autenticação: API própria"
 );
 
 console.log(
