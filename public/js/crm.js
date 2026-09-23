@@ -503,7 +503,7 @@
                 grid-template-columns: repeat(3, minmax(0, 1fr));
                 gap: 10px;
                 padding: 0 20px 18px;
-                background: #ffffff;
+                background: #0b1730 !important;
             }
 
             #crmDetalhesCliente .crm-info-item {
@@ -539,10 +539,10 @@
             #crmDetalhesCliente td {
                 padding: 11px;
                 text-align: left;
-                border-bottom: 1px solid #e5efff;
+                border-bottom: 1px solid #1e3a8a;
                 white-space: nowrap;
                 font-size: 13px;
-                color: #172033;
+                color: #f8fafc !important;
             }
 
             #crmDetalhesCliente th {
@@ -555,6 +555,46 @@
                 background: #0b1730;
             }
 
+            /* FORCA O TEMA ESCURO EM TODO O DETALHE */
+            #crmDetalhesCliente .crm-modal,
+            #crmDetalhesCliente .crm-modal * {
+                color: #f8fafc !important;
+            }
+
+            #crmDetalhesCliente .crm-modal,
+            #crmDetalhesCliente .crm-info,
+            #crmDetalhesCliente .crm-resumo,
+            #crmDetalhesCliente .crm-historico,
+            #crmDetalhesCliente .crm-card,
+            #crmDetalhesCliente .crm-info-item,
+            #crmDetalhesCliente .crm-historico-wrap,
+            #crmDetalhesCliente table,
+            #crmDetalhesCliente tbody,
+            #crmDetalhesCliente tr,
+            #crmDetalhesCliente td,
+            #crmDetalhesCliente th {
+                background-color: #0b1730 !important;
+            }
+
+            #crmDetalhesCliente .crm-modal-header,
+            #crmDetalhesCliente .crm-card,
+            #crmDetalhesCliente .crm-info-item,
+            #crmDetalhesCliente th,
+            #crmDetalhesCliente .crm-fechar,
+            #crmDetalhesCliente .crm-avatar,
+            #crmDetalhesCliente .crm-status {
+                background-color: #10264a !important;
+            }
+
+            #crmDetalhesCliente .crm-modal,
+            #crmDetalhesCliente .crm-card,
+            #crmDetalhesCliente .crm-info-item,
+            #crmDetalhesCliente .crm-historico-wrap,
+            #crmDetalhesCliente th,
+            #crmDetalhesCliente td {
+                border-color: #1e3a8a !important;
+            }
+
             /* status também segue a mesma cor das letras */
             #crmDetalhesCliente .crm-status {
                 display: inline-flex;
@@ -564,8 +604,8 @@
                 border-radius: 999px;
                 font-size: 12px;
                 font-weight: 700;
-                color: #172033;
-                background: #eff6ff;
+                color: #f8fafc !important;
+                background: #10264a !important;
                 border: 1px solid #1e3a8a;
             }
 
