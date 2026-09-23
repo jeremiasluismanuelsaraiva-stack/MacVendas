@@ -1,193 +1,687 @@
+"use strict";
+
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
+
 const router = express.Router();
 
-const { db } = require("../firebase-admin");
+const autenticarAPI = require("../auth");
 
-router.get("/", (req, res) => {
-    try {
-        const pedidos = db.ler("pedidos") || [];
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO DE DADOS
+|--------------------------------------------------------------------------
+*/
 
-        res.json({
-            success: true,
-            total: pedidos.length,
-            pedidos
-        });
+const DATA_DIR = path.join(__dirname, "../data");
+const ARQUIVO = path.join(
+    DATA_DIR,
+    "pedidos.json"
+);
 
-    } catch (err) {
-        console.error("Erro ao listar pedidos:", err);
+/*
+|--------------------------------------------------------------------------
+| GARANTIR ARQUIVO
+|--------------------------------------------------------------------------
+*/
 
-        res.status(500).json({
-            success: false,
-            error: err.message
+function garantirArquivo() {
+
+    if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, {
+            recursive: true
         });
     }
-});
 
-router.get("/:id", (req, res) => {
+    if (!fs.existsSync(ARQUIVO)) {
+        fs.writeFileSync(
+            ARQUIVO,
+            "[]",
+            "utf8"
+        );
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| LER PEDIDOS
+|--------------------------------------------------------------------------
+*/
+
+function lerPedidos() {
+
+    garantirArquivo();
+
     try {
-        const pedidos = db.ler("pedidos") || [];
 
-        const pedido = pedidos.find(
-            p => String(p.id) === String(req.params.id)
+        const conteudo =
+            fs.readFileSync(
+                ARQUIVO,
+                "utf8"
+            ).trim();
+
+        if (!conteudo) {
+            return [];
+        }
+
+        const dados =
+            JSON.parse(conteudo);
+
+        return Array.isArray(dados)
+            ? dados
+            : [];
+
+    } catch (err) {
+
+        console.error(
+            "Erro ao ler pedidos.json:",
+            err
         );
 
-        if (!pedido) {
-            return res.status(404).json({
+        return [];
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| SALVAR PEDIDOS
+|--------------------------------------------------------------------------
+*/
+
+function salvarPedidos(pedidos) {
+
+    garantirArquivo();
+
+    fs.writeFileSync(
+        ARQUIVO,
+        JSON.stringify(
+            pedidos,
+            null,
+            4
+        ),
+        "utf8"
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| CONVERTER NÚMERO
+|--------------------------------------------------------------------------
+*/
+
+function numero(valor) {
+
+    if (
+        valor === undefined ||
+        valor === null ||
+        valor === ""
+    ) {
+        return 0;
+    }
+
+    const numeroConvertido =
+        Number(valor);
+
+    return Number.isFinite(
+        numeroConvertido
+    )
+        ? numeroConvertido
+        : 0;
+}
+
+/*
+|--------------------------------------------------------------------------
+| GERAR ID
+|--------------------------------------------------------------------------
+*/
+
+function gerarId() {
+
+    return (
+        Date.now().toString() +
+        "-" +
+        Math.random()
+            .toString(36)
+            .substring(2, 8)
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| VERIFICAR PROPRIEDADE DO PEDIDO
+|--------------------------------------------------------------------------
+*/
+
+function pertenceAoUsuario(
+    pedido,
+    uid
+) {
+
+    return (
+        pedido &&
+        String(pedido.uid) ===
+            String(uid)
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| LISTAR PEDIDOS
+|--------------------------------------------------------------------------
+| GET /api/pedidos
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+    "/",
+    autenticarAPI,
+    (req, res) => {
+
+        try {
+
+            const uid =
+                req.usuario.uid;
+
+            const pedidos =
+                lerPedidos();
+
+            const pedidosUsuario =
+                pedidos.filter(
+                    pedido =>
+                        pertenceAoUsuario(
+                            pedido,
+                            uid
+                        )
+                );
+
+            res.json({
+
+                success: true,
+
+                total:
+                    pedidosUsuario.length,
+
+                pedidos:
+                    pedidosUsuario
+
+            });
+
+        } catch (err) {
+
+            console.error(
+                "Erro ao listar pedidos:",
+                err
+            );
+
+            res.status(500).json({
+
                 success: false,
-                error: "Pedido não encontrado."
+
+                error:
+                    err.message
+
             });
         }
-
-        res.json({
-            success: true,
-            pedido
-        });
-
-    } catch (err) {
-        console.error("Erro ao buscar pedido:", err);
-
-        res.status(500).json({
-            success: false,
-            error: err.message
-        });
     }
-});
+);
 
-router.post("/", (req, res) => {
-    try {
-        const pedidos = db.ler("pedidos") || [];
+/*
+|--------------------------------------------------------------------------
+| BUSCAR PEDIDO
+|--------------------------------------------------------------------------
+| GET /api/pedidos/:id
+|--------------------------------------------------------------------------
+*/
 
-        const pedido = {
-            id: Date.now().toString(),
-            cliente: req.body.cliente || "",
-            numero: req.body.numero || "",
-            pacote: req.body.pacote || "",
-            mb: Number(req.body.mb || 0),
-            gb: Number(req.body.gb || 0),
-            valor: Number(req.body.valor || 0),
-            grupo: req.body.grupo || "GERAL",
-            status: req.body.status || req.body.estado || "PENDENTE",
-            dispositivo: req.body.dispositivo || "",
-            observacao: req.body.observacao || "",
-            createdAt: new Date().toISOString()
-        };
+router.get(
+    "/:id",
+    autenticarAPI,
+    (req, res) => {
 
-        pedidos.unshift(pedido);
+        try {
 
-        db.salvar("pedidos", pedidos);
+            const uid =
+                req.usuario.uid;
 
-        res.json({
-            success: true,
-            pedido
-        });
+            const id =
+                String(
+                    req.params.id
+                );
 
-    } catch (err) {
-        console.error("Erro ao criar pedido:", err);
+            const pedidos =
+                lerPedidos();
 
-        res.status(500).json({
-            success: false,
-            error: err.message
-        });
-    }
-});
+            const pedido =
+                pedidos.find(
+                    p =>
+                        String(p.id) === id &&
+                        pertenceAoUsuario(
+                            p,
+                            uid
+                        )
+                );
 
-router.put("/:id", (req, res) => {
-    try {
-        const pedidos = db.ler("pedidos") || [];
+            if (!pedido) {
 
-        const indice = pedidos.findIndex(
-            p => String(p.id) === String(req.params.id)
-        );
+                return res.status(404).json({
 
-        if (indice === -1) {
-            return res.status(404).json({
+                    success: false,
+
+                    error:
+                        "Pedido não encontrado."
+
+                });
+            }
+
+            res.json({
+
+                success: true,
+
+                pedido
+
+            });
+
+        } catch (err) {
+
+            console.error(
+                "Erro ao buscar pedido:",
+                err
+            );
+
+            res.status(500).json({
+
                 success: false,
-                error: "Pedido não encontrado."
+
+                error:
+                    err.message
+
             });
         }
-
-        const atualizado = {
-            ...pedidos[indice],
-            ...req.body
-        };
-
-        if (req.body.mb !== undefined) {
-            atualizado.mb = Number(req.body.mb);
-        }
-
-        if (req.body.gb !== undefined) {
-            atualizado.gb = Number(req.body.gb);
-        }
-
-        if (req.body.valor !== undefined) {
-            atualizado.valor = Number(req.body.valor);
-        }
-
-        if (
-            req.body.estado !== undefined &&
-            req.body.status === undefined
-        ) {
-            atualizado.status = req.body.estado;
-        }
-
-        atualizado.atualizado = new Date().toISOString();
-
-        pedidos[indice] = atualizado;
-
-        db.salvar("pedidos", pedidos);
-
-        res.json({
-            success: true,
-            pedido: atualizado
-        });
-
-    } catch (err) {
-        console.error("Erro ao atualizar pedido:", err);
-
-        res.status(500).json({
-            success: false,
-            error: err.message
-        });
     }
-});
+);
 
-router.delete("/:id", (req, res) => {
-    try {
-        const pedidos = db.ler("pedidos") || [];
+/*
+|--------------------------------------------------------------------------
+| CRIAR PEDIDO
+|--------------------------------------------------------------------------
+| POST /api/pedidos
+|--------------------------------------------------------------------------
+*/
 
-        const id = String(req.params.id);
+router.post(
+    "/",
+    autenticarAPI,
+    (req, res) => {
 
-        const existe = pedidos.some(
-            pedido => String(pedido.id) === id
-        );
+        try {
 
-        if (!existe) {
-            return res.status(404).json({
+            const uid =
+                req.usuario.uid;
+
+            const pedido = {
+
+                id:
+                    gerarId(),
+
+                uid,
+
+                cliente:
+                    req.body.cliente ||
+                    "",
+
+                numero:
+                    req.body.numero ||
+                    "",
+
+                pacote:
+                    req.body.pacote ||
+                    "",
+
+                mb:
+                    numero(
+                        req.body.mb
+                    ),
+
+                gb:
+                    numero(
+                        req.body.gb
+                    ),
+
+                valor:
+                    numero(
+                        req.body.valor
+                    ),
+
+                grupo:
+                    req.body.grupo ||
+                    "GERAL",
+
+                status:
+                    req.body.status ||
+                    req.body.estado ||
+                    "PENDENTE",
+
+                dispositivo:
+                    req.body.dispositivo ||
+                    "",
+
+                observacao:
+                    req.body.observacao ||
+                    "",
+
+                createdAt:
+                    new Date()
+                        .toISOString()
+
+            };
+
+            const pedidos =
+                lerPedidos();
+
+            /*
+             * Novo pedido no início.
+             */
+
+            pedidos.unshift(
+                pedido
+            );
+
+            salvarPedidos(
+                pedidos
+            );
+
+            res.status(201).json({
+
+                success: true,
+
+                pedido
+
+            });
+
+        } catch (err) {
+
+            console.error(
+                "Erro ao criar pedido:",
+                err
+            );
+
+            res.status(500).json({
+
                 success: false,
-                error: "Pedido não encontrado."
+
+                error:
+                    err.message
+
             });
         }
-
-        const novosPedidos = pedidos.filter(
-            pedido => String(pedido.id) !== id
-        );
-
-        db.salvar("pedidos", novosPedidos);
-
-        res.json({
-            success: true,
-            message: "Pedido removido.",
-            id
-        });
-
-    } catch (err) {
-        console.error("Erro ao remover pedido:", err);
-
-        res.status(500).json({
-            success: false,
-            error: err.message
-        });
     }
-});
+);
 
-module.exports = router;
+/*
+|--------------------------------------------------------------------------
+| ATUALIZAR PEDIDO
+|--------------------------------------------------------------------------
+| PUT /api/pedidos/:id
+|--------------------------------------------------------------------------
+*/
+
+router.put(
+    "/:id",
+    autenticarAPI,
+    (req, res) => {
+
+        try {
+
+            const uid =
+                req.usuario.uid;
+
+            const id =
+                String(
+                    req.params.id
+                );
+
+            const pedidos =
+                lerPedidos();
+
+            const indice =
+                pedidos.findIndex(
+                    p =>
+                        String(p.id) === id &&
+                        pertenceAoUsuario(
+                            p,
+                            uid
+                        )
+                );
+
+            if (indice === -1) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    error:
+                        "Pedido não encontrado."
+
+                });
+            }
+
+            /*
+             * Atualizar mantendo
+             * ID e UID protegidos.
+             */
+
+            const atual =
+                pedidos[indice];
+
+            const atualizado = {
+
+                ...atual,
+
+                ...req.body,
+
+                id,
+
+                uid
+
+            };
+
+            /*
+             * MB
+             */
+
+            if (
+                req.body.mb !== undefined
+            ) {
+
+                atualizado.mb =
+                    numero(
+                        req.body.mb
+                    );
+            }
+
+            /*
+             * GB
+             */
+
+            if (
+                req.body.gb !== undefined
+            ) {
+
+                atualizado.gb =
+                    numero(
+                        req.body.gb
+                    );
+            }
+
+            /*
+             * VALOR
+             */
+
+            if (
+                req.body.valor !== undefined
+            ) {
+
+                atualizado.valor =
+                    numero(
+                        req.body.valor
+                    );
+            }
+
+            /*
+             * Compatibilidade:
+             * estado -> status
+             */
+
+            if (
+                req.body.estado !== undefined &&
+                req.body.status === undefined
+            ) {
+
+                atualizado.status =
+                    req.body.estado;
+            }
+
+            /*
+             * DATA DE ATUALIZAÇÃO
+             */
+
+            atualizado.atualizado =
+                new Date()
+                    .toISOString();
+
+            pedidos[indice] =
+                atualizado;
+
+            salvarPedidos(
+                pedidos
+            );
+
+            res.json({
+
+                success: true,
+
+                pedido:
+                    atualizado
+
+            });
+
+        } catch (err) {
+
+            console.error(
+                "Erro ao atualizar pedido:",
+                err
+            );
+
+            res.status(500).json({
+
+                success: false,
+
+                error:
+                    err.message
+
+            });
+        }
+    }
+);
+
+/*
+|--------------------------------------------------------------------------
+| REMOVER PEDIDO
+|--------------------------------------------------------------------------
+| DELETE /api/pedidos/:id
+|--------------------------------------------------------------------------
+*/
+
+router.delete(
+    "/:id",
+    autenticarAPI,
+    (req, res) => {
+
+        try {
+
+            const uid =
+                req.usuario.uid;
+
+            const id =
+                String(
+                    req.params.id
+                );
+
+            const pedidos =
+                lerPedidos();
+
+            const indice =
+                pedidos.findIndex(
+                    pedido =>
+                        String(pedido.id) === id &&
+                        pertenceAoUsuario(
+                            pedido,
+                            uid
+                        )
+                );
+
+            if (indice === -1) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    error:
+                        "Pedido não encontrado."
+
+                });
+            }
+
+            /*
+             * Remover somente
+             * o pedido deste usuário.
+             */
+
+            pedidos.splice(
+                indice,
+                1
+            );
+
+            salvarPedidos(
+                pedidos
+            );
+
+            res.json({
+
+                success: true,
+
+                message:
+                    "Pedido removido.",
+
+                id
+
+            });
+
+        } catch (err) {
+
+            console.error(
+                "Erro ao remover pedido:",
+                err
+            );
+
+            res.status(500).json({
+
+                success: false,
+
+                error:
+                    err.message
+
+            });
+        }
+    }
+);
+
+/*
+|--------------------------------------------------------------------------
+| EXPORTAR
+|--------------------------------------------------------------------------
+*/
+
+module.exports =
+    router;
