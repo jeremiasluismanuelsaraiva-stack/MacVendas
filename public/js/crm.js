@@ -97,21 +97,7 @@
         if (!t) return;
 
         const thead = t.querySelector("thead");
-        if (!thead) return;
-
-        thead.innerHTML = `
-            <tr>
-                <th>Cliente</th>
-                <th>Nº Cliente</th>
-                <th>Nº que recebeu</th>
-                <th>Total GB</th>
-                <th>Compras</th>
-                <th>Total gasto</th>
-                <th>Grupo</th>
-                <th>Última compra</th>
-                <th>Ações</th>
-            </tr>
-        `;
+        if (thead) thead.innerHTML = "";
     }
 
     function mensagem(texto, erro = false) {
@@ -169,6 +155,7 @@
                 "numeroDestino",
                 "numero_destino",
                 "destino",
+                "numero",
             ],
             "-"
         );
@@ -359,11 +346,10 @@
             cliente.totalGB += gb || (mb / 1000);
             cliente.totalMB += mb || (gb * 1000);
             cliente.totalGasto += obterValor(compra);
-            const custoCompra = numero(obterCampo(compra, ["custo", "valorCusto", "valor_custo"], 0));
-            cliente.totalCusto += custoCompra;
+            cliente.totalCusto += numero(obterCampo(compra, ["custo", "valorCusto", "valor_custo"], 0));
 
             const lucroInformado = numero(obterCampo(compra, ["lucro"], 0));
-            cliente.totalLucro += lucroInformado || (obterValor(compra) - custoCompra);
+            cliente.totalLucro += lucroInformado || (obterValor(compra) - numero(obterCampo(compra, ["custo", "valorCusto", "valor_custo"], 0)));
 
             const data = dataCompra(compra);
             if (data) {
@@ -387,6 +373,47 @@
         const style = document.createElement("style");
         style.id = "crmDetalhesStyle";
         style.textContent = `
+            /* ESTATISTICAS DO CRM */
+            .crm-stats-grid {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 18px;
+                margin-bottom: 24px;
+            }
+            .crm-stat-card {
+                min-height: 125px;
+                padding: 22px;
+                box-sizing: border-box;
+                border-radius: 20px;
+                background: rgba(20, 25, 40, .72);
+                border: 1px solid rgba(0, 102, 204, .35);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+            }
+            .crm-stat-icon {
+                font-size: 18px;
+                margin-bottom: 8px;
+                color: #f8fafc;
+            }
+            .crm-stat-value {
+                font-size: 30px;
+                line-height: 1.1;
+                font-weight: 800;
+                color: #f8fafc;
+            }
+            .crm-stat-label {
+                margin-top: 9px;
+                font-size: 12px;
+                font-weight: 700;
+                color: #f8fafc;
+                text-transform: uppercase;
+                letter-spacing: .04em;
+            }
+
+            /* DETALHES CRM — visual simples */
             #crmDetalhesCliente {
                 position: fixed;
                 inset: 0;
@@ -396,68 +423,57 @@
                 justify-content: center;
                 padding: 20px;
                 box-sizing: border-box;
-                background: rgba(2, 10, 25, .82);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
+
+                /* apenas o fundo atrás fica escuro e desfocado */
+                background: rgba(5, 25, 65, .68);
+                backdrop-filter: blur(9px);
+                -webkit-backdrop-filter: blur(9px);
             }
 
             #crmDetalhesCliente.ativo {
                 display: flex;
             }
 
+            /* fundo da janela de detalhes */
             #crmDetalhesCliente .crm-modal {
                 width: min(1050px, 100%);
                 max-height: 90vh;
                 overflow: auto;
-                background: #0b1730 !important;
-                color: #f8fafc !important;
-                border: 1px solid #1e3a8a !important;
+                background: #0b1730;
+                color: #f8fafc;
+                border: 1px solid #1e3a8a;
                 border-radius: 16px;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, .65);
+                box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
             }
 
-            /* TODAS AS LETRAS DO DETALHE: UMA ÚNICA COR */
-            #crmDetalhesCliente .crm-modal,
-            #crmDetalhesCliente .crm-modal * {
-                color: #f8fafc !important;
-            }
-
-            /* NENHUM ELEMENTO INTERNO PODE FICAR BRANCO */
-            #crmDetalhesCliente .crm-modal,
-            #crmDetalhesCliente .crm-modal-header,
-            #crmDetalhesCliente .crm-resumo,
-            #crmDetalhesCliente .crm-card,
-            #crmDetalhesCliente .crm-info,
-            #crmDetalhesCliente .crm-info-item,
-            #crmDetalhesCliente .crm-historico,
-            #crmDetalhesCliente .crm-historico-wrap,
-            #crmDetalhesCliente table,
-            #crmDetalhesCliente thead,
-            #crmDetalhesCliente tbody,
-            #crmDetalhesCliente tr,
-            #crmDetalhesCliente td,
-            #crmDetalhesCliente th {
-                background-color: #0b1730 !important;
-            }
-
-            /* ÁREAS DE DESTAQUE */
-            #crmDetalhesCliente .crm-modal-header,
-            #crmDetalhesCliente .crm-card,
-            #crmDetalhesCliente .crm-info-item,
+            /* TODAS as letras do detalhe usam a mesma cor */
+            #crmDetalhesCliente,
+            #crmDetalhesCliente h1,
+            #crmDetalhesCliente h2,
+            #crmDetalhesCliente h3,
+            #crmDetalhesCliente h4,
+            #crmDetalhesCliente p,
+            #crmDetalhesCliente span,
+            #crmDetalhesCliente small,
+            #crmDetalhesCliente strong,
             #crmDetalhesCliente th,
-            #crmDetalhesCliente .crm-fechar,
-            #crmDetalhesCliente .crm-avatar,
-            #crmDetalhesCliente .crm-status {
-                background-color: #10264a !important;
+            #crmDetalhesCliente td,
+            #crmDetalhesCliente .crm-card-label,
+            #crmDetalhesCliente .crm-card-value,
+            #crmDetalhesCliente .crm-subtitulo,
+            #crmDetalhesCliente .crm-info-item small {
+                color: #f8fafc;
             }
 
+            /* cabeçalho do detalhe */
             #crmDetalhesCliente .crm-modal-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 gap: 15px;
                 padding: 18px 20px;
-                border-bottom: 1px solid #1e3a8a !important;
+                background: #10264a;
+                border-bottom: 1px solid #1e3a8a;
             }
 
             #crmDetalhesCliente .crm-identidade {
@@ -472,6 +488,8 @@
                 border-radius: 50%;
                 display: grid;
                 place-items: center;
+                background: #16345f;
+                color: #f8fafc;
                 font-weight: 700;
             }
 
@@ -481,13 +499,14 @@
             }
 
             #crmDetalhesCliente .crm-fechar {
-                border: 1px solid #1e3a8a !important;
+                border: 0;
+                background: #16345f;
+                color: #f8fafc;
                 width: 40px;
                 height: 40px;
                 border-radius: 10px;
                 cursor: pointer;
                 font-size: 20px;
-                padding: 0;
             }
 
             #crmDetalhesCliente .crm-resumo {
@@ -495,22 +514,14 @@
                 grid-template-columns: repeat(4, minmax(0, 1fr));
                 gap: 12px;
                 padding: 18px 20px;
+                background: #0b1730;
             }
 
             #crmDetalhesCliente .crm-card {
-                border: 1px solid #1e3a8a !important;
+                border: 1px solid #1e3a8a;
                 border-radius: 12px;
                 padding: 14px;
-            }
-
-            #crmDetalhesCliente .crm-card-label {
-                font-size: 12px;
-                margin-bottom: 6px;
-            }
-
-            #crmDetalhesCliente .crm-card-value {
-                font-size: 18px;
-                font-weight: 700;
+                background: #10264a;
             }
 
             #crmDetalhesCliente .crm-info {
@@ -518,12 +529,14 @@
                 grid-template-columns: repeat(3, minmax(0, 1fr));
                 gap: 10px;
                 padding: 0 20px 18px;
+                background: #0b1730 !important;
             }
 
             #crmDetalhesCliente .crm-info-item {
                 padding: 12px;
-                border: 1px solid #1e3a8a !important;
+                border: 1px solid #1e3a8a;
                 border-radius: 10px;
+                background: #10264a;
             }
 
             #crmDetalhesCliente .crm-info-item small {
@@ -533,11 +546,12 @@
 
             #crmDetalhesCliente .crm-historico {
                 padding: 0 20px 20px;
+                background: #0b1730;
             }
 
             #crmDetalhesCliente .crm-historico-wrap {
                 overflow-x: auto;
-                border: 1px solid #1e3a8a !important;
+                border: 1px solid #1e3a8a;
                 border-radius: 12px;
             }
 
@@ -551,15 +565,63 @@
             #crmDetalhesCliente td {
                 padding: 11px;
                 text-align: left;
-                border-bottom: 1px solid #1e3a8a !important;
+                border-bottom: 1px solid #1e3a8a;
                 white-space: nowrap;
                 font-size: 13px;
+                color: #f8fafc !important;
             }
 
             #crmDetalhesCliente th {
+                background: #10264a;
+                color: #f8fafc;
                 font-weight: 700;
             }
 
+            #crmDetalhesCliente td {
+                background: #0b1730;
+            }
+
+            /* FORCA O TEMA ESCURO EM TODO O DETALHE */
+            #crmDetalhesCliente .crm-modal,
+            #crmDetalhesCliente .crm-modal * {
+                color: #f8fafc !important;
+            }
+
+            #crmDetalhesCliente .crm-modal,
+            #crmDetalhesCliente .crm-info,
+            #crmDetalhesCliente .crm-resumo,
+            #crmDetalhesCliente .crm-historico,
+            #crmDetalhesCliente .crm-card,
+            #crmDetalhesCliente .crm-info-item,
+            #crmDetalhesCliente .crm-historico-wrap,
+            #crmDetalhesCliente table,
+            #crmDetalhesCliente tbody,
+            #crmDetalhesCliente tr,
+            #crmDetalhesCliente td,
+            #crmDetalhesCliente th {
+                background-color: #0b1730 !important;
+            }
+
+            #crmDetalhesCliente .crm-modal-header,
+            #crmDetalhesCliente .crm-card,
+            #crmDetalhesCliente .crm-info-item,
+            #crmDetalhesCliente th,
+            #crmDetalhesCliente .crm-fechar,
+            #crmDetalhesCliente .crm-avatar,
+            #crmDetalhesCliente .crm-status {
+                background-color: #10264a !important;
+            }
+
+            #crmDetalhesCliente .crm-modal,
+            #crmDetalhesCliente .crm-card,
+            #crmDetalhesCliente .crm-info-item,
+            #crmDetalhesCliente .crm-historico-wrap,
+            #crmDetalhesCliente th,
+            #crmDetalhesCliente td {
+                border-color: #1e3a8a !important;
+            }
+
+            /* status também segue a mesma cor das letras */
             #crmDetalhesCliente .crm-status {
                 display: inline-flex;
                 align-items: center;
@@ -568,12 +630,99 @@
                 border-radius: 999px;
                 font-size: 12px;
                 font-weight: 700;
-                border: 1px solid #1e3a8a !important;
+                color: #f8fafc !important;
+                background: #10264a !important;
+                border: 1px solid #1e3a8a;
+            }
+
+            /* CARDS DOS CLIENTES NO CRM */
+            #tabelaClientes thead { display: none !important; }
+            #tabelaClientes,
+            #tabelaClientes tbody {
+                width: 100%;
+                border-collapse: separate !important;
+                border-spacing: 0 14px !important;
+            }
+            #tabelaClientes tbody tr,
+            #tabelaClientes tbody td {
+                background: transparent !important;
+                border: 0 !important;
+            }
+            .crm-cliente-card {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 20px;
+                min-height: 108px;
+                padding: 22px 24px;
+                box-sizing: border-box;
+                background: rgba(20, 25, 40, .72);
+                border: 1px solid rgba(0, 102, 204, .35);
+                border-radius: 20px;
+                cursor: pointer;
+                transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+            }
+            .crm-cliente-card:hover,
+            .crm-cliente-card:focus {
+                transform: translateY(-2px);
+                border-color: rgba(59, 130, 246, .8);
+                box-shadow: 0 12px 30px rgba(0,0,0,.18);
+                outline: none;
+            }
+            .crm-cliente-card-top {
+                display: flex;
+                flex-direction: column;
+                gap: 9px;
+                min-width: 0;
+            }
+            .crm-cliente-nome {
+                font-size: 18px;
+                font-weight: 800;
+                color: #f8fafc;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .crm-cliente-dados {
+                font-size: 15px;
+                font-weight: 700;
+                color: #f8fafc;
+            }
+            .crm-ver-detalhes {
+                flex: 0 0 auto;
+                border: 1px solid #1e3a8a;
+                background: #10264a;
+                color: #f8fafc;
+                padding: 11px 18px;
+                border-radius: 10px;
+                cursor: pointer;
+                font-weight: 700;
+            }
+            .crm-ver-detalhes:hover {
+                background: #16345f;
             }
 
             @media (max-width: 700px) {
                 #crmDetalhesCliente {
                     padding: 10px;
+                }
+
+                .crm-stats-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+
+                .crm-cliente-card {
+                    min-height: 96px;
+                    padding: 18px;
+                }
+
+                .crm-cliente-nome {
+                    font-size: 16px;
+                }
+
+                .crm-ver-detalhes {
+                    padding: 9px 12px;
+                    font-size: 12px;
                 }
 
                 #crmDetalhesCliente .crm-resumo {
@@ -584,7 +733,7 @@
                     grid-template-columns: 1fr;
                 }
             }
-        `
+        `;
         document.head.appendChild(style);
 
         const modal = document.createElement("div");
@@ -759,6 +908,61 @@
         });
     }
 
+    function prepararPainelEstatisticas() {
+        const grid = document.querySelector("#panelCRM .crm-stats-grid");
+        if (!grid) return;
+
+        grid.innerHTML = `
+            <div class="crm-stat-card"><div class="crm-stat-icon"><i class="fas fa-users"></i></div><div class="crm-stat-value" id="totalClientes">0</div><div class="crm-stat-label">Clientes</div></div>
+            <div class="crm-stat-card"><div class="crm-stat-icon"><i class="fas fa-user-check"></i></div><div class="crm-stat-value" id="clientesAtivos">0</div><div class="crm-stat-label">Ativos</div></div>
+            <div class="crm-stat-card"><div class="crm-stat-icon"><i class="fas fa-user-plus"></i></div><div class="crm-stat-value" id="clientesRecentes">0</div><div class="crm-stat-label">Novos</div></div>
+            <div class="crm-stat-card"><div class="crm-stat-icon"><i class="fas fa-money-bill-wave"></i></div><div class="crm-stat-value" id="totalGastoCRM">0 MT</div><div class="crm-stat-label">Total gasto</div></div>
+            <div class="crm-stat-card"><div class="crm-stat-icon"><i class="fas fa-shopping-cart"></i></div><div class="crm-stat-value" id="totalComprasCRM">0</div><div class="crm-stat-label">Compras</div></div>
+            <div class="crm-stat-card"><div class="crm-stat-icon"><i class="fas fa-database"></i></div><div class="crm-stat-value" id="totalGBCRM">0 GB</div><div class="crm-stat-label">Total GB</div></div>
+            <div class="crm-stat-card"><div class="crm-stat-icon"><i class="fas fa-calculator"></i></div><div class="crm-stat-value" id="ticketMedioGeral">0 MT</div><div class="crm-stat-label">Ticket médio</div></div>
+            <div class="crm-stat-card"><div class="crm-stat-icon"><i class="fas fa-chart-line"></i></div><div class="crm-stat-value" id="lucroTotalCRM">0 MT</div><div class="crm-stat-label">Lucro</div></div>
+        `;
+    }
+
+    function atualizarEstatisticasCRM(clientes) {
+        prepararPainelEstatisticas();
+        const compras = clientes.flatMap(c => c.compras || []);
+        const agora = Date.now();
+        const trintaDias = 30 * 24 * 60 * 60 * 1000;
+        const seteDias = 7 * 24 * 60 * 60 * 1000;
+
+        const ativos = clientes.filter(c => {
+            const d = new Date(c.ultimaCompra || 0).getTime();
+            return Number.isFinite(d) && agora - d <= trintaDias;
+        }).length;
+
+        const recentes = clientes.filter(c => {
+            const d = new Date(c.primeiraCompra || 0).getTime();
+            return Number.isFinite(d) && agora - d <= seteDias;
+        }).length;
+
+        const totalGasto = clientes.reduce((s, c) => s + numero(c.totalGasto), 0);
+        const totalGB = clientes.reduce((s, c) => s + numero(c.totalGB), 0);
+        const totalLucro = clientes.reduce((s, c) => s + numero(c.totalLucro), 0);
+        const ticket = compras.length ? totalGasto / compras.length : 0;
+
+        const valores = {
+            totalClientes: clientes.length,
+            clientesAtivos: ativos,
+            clientesRecentes: recentes,
+            totalGastoCRM: formatarMT(totalGasto),
+            totalComprasCRM: compras.length,
+            totalGBCRM: `${totalGB.toLocaleString("pt-MZ", { maximumFractionDigits: 2 })} GB`,
+            ticketMedioGeral: formatarMT(ticket),
+            lucroTotalCRM: formatarMT(totalLucro)
+        };
+
+        Object.entries(valores).forEach(([id, valor]) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = valor;
+        });
+    }
+
     function renderizarClientes(clientes) {
         const t = tabela();
 
@@ -767,11 +971,9 @@
         }
 
         const tbody = t.querySelector("tbody");
+        if (!tbody) throw new Error("tbody do CRM não encontrado.");
 
-        if (!tbody) {
-            throw new Error("tbody da tabela de clientes não encontrado.");
-        }
-
+        atualizarEstatisticasCRM(clientes);
         configurarCabecalho();
 
         if (!clientes.length) {
@@ -783,29 +985,28 @@
 
         clientes.forEach((cliente) => {
             const tr = document.createElement("tr");
-
-            tr.style.cursor = "pointer";
-            tr.title = "Clique para ver os detalhes deste cliente";
-
             tr.innerHTML = `
-                <td>${escapar(cliente.nome || "-")}</td>
-                <td>${escapar(cliente.numeroCliente || "-")}</td>
-                <td>${escapar(cliente.numeroRecebeu || "-")}</td>
-                <td>${numero(cliente.totalGB).toLocaleString("pt-MZ", { maximumFractionDigits: 2 })} GB</td>
-                <td>${cliente.compras.length}</td>
-                <td>${formatarMT(cliente.totalGasto)}</td>
-                <td>${escapar(cliente.grupo || "-")}</td>
-                <td>${formatarDataHora(cliente.ultimaCompra)}</td>
-                <td>
-                    <button type="button" class="crm-ver-detalhes">
-                        Ver detalhes
-                    </button>
+                <td colspan="9" style="padding:0;border:0;background:transparent;">
+                    <article class="crm-cliente-card" tabindex="0" role="button" aria-label="Ver detalhes de ${escapar(cliente.nome || "cliente")}">
+                        <div class="crm-cliente-card-top">
+                            <div class="crm-cliente-nome">${escapar(cliente.nome || "-")}</div>
+                            <div class="crm-cliente-dados">${numero(cliente.totalGB).toLocaleString("pt-MZ", { maximumFractionDigits: 2 })} GB</div>
+                        </div>
+                        <button type="button" class="crm-ver-detalhes">Ver detalhes</button>
+                    </article>
                 </td>
             `;
 
-            tr.addEventListener("click", () => abrirDetalhesCRM(cliente));
-
+            const card = tr.querySelector(".crm-cliente-card");
             const botao = tr.querySelector(".crm-ver-detalhes");
+
+            card.addEventListener("click", () => abrirDetalhesCRM(cliente));
+            card.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    abrirDetalhesCRM(cliente);
+                }
+            });
             botao.addEventListener("click", (event) => {
                 event.stopPropagation();
                 abrirDetalhesCRM(cliente);
@@ -870,3 +1071,17 @@
 
     console.log("[CRM] CRM de vendas com detalhes carregado.");
 })();
+
+document.addEventListener("keydown", function (evento) {
+    if (evento.key !== "Escape") return;
+
+    const modal = document.getElementById("crmDetalhesCliente");
+    if (modal && modal.classList.contains("ativo")) {
+        if (typeof fecharDetalhesCRM === "function") {
+            fecharDetalhesCRM();
+        } else {
+            modal.classList.remove("ativo");
+            document.body.classList.remove("crm-detalhes-aberto");
+        }
+    }
+});
