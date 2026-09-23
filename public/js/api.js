@@ -1194,5 +1194,10 @@ window.limparCredenciais =
     } catch (erro) {
 
         console.error(
-            "[API] Err
+            "[API] Erro na inicialização:",
+            erro
+        );
+    }
+
+})();
 
