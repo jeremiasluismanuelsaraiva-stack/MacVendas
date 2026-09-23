@@ -1,525 +1,354 @@
-// ============================================================
-// MOZ TECH - GRÁFICOS
-// 1) Colunas empilhadas - vendas semanal
-// 2) Linhas múltiplas - vendas + faturamento (MT)
-// 3) Rosca concêntrica/radial - vendas semanal
-// ============================================================
+"use strict";
 
-let graficoVendasEmpilhadas = null;
-let graficoVendasFaturamento = null;
-let graficoSemanalRadial = null;
+(function () {
 
-const CORES_MOZ = {
-    azul: "#3b82f6",
-    laranja: "#f59e0b",
-    vermelho: "#ef4444",
-    cinza: "#64748b"
-};
+    let graficoDiario24h = null;
+    let graficoFaturamentoMensal = null;
+    let graficoSemanalRadial = null;
+    let intervaloGraficos = null;
 
-function numero(v) {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : 0;
-}
-
-function destruir(grafico) {
-    if (!grafico) return;
-    try {
-        grafico.destroy();
-    } catch (_) {}
-}
-
-function compraConcluida(compra) {
-    const status = String(compra?.status || "concluida")
-        .trim()
-        .toLowerCase();
-
-    return [
-        "concluida",
-        "concluido",
-        "concluída",
-        "concluído",
-        "finalizada",
-        "finalizado",
-        "sucesso",
-        "success"
-    ].includes(status);
-}
-
-function dataCompra(compra) {
-    return (
-        compra?.criadoEm ||
-        compra?.criado_em ||
-        compra?.data ||
-        compra?.dataCompra ||
-        compra?.createdAt ||
-        compra?.created_at ||
-        ""
-    );
-}
-
-function dataLocal(valor) {
-    const d = new Date(valor);
-
-    if (Number.isNaN(d.getTime())) {
-        return "";
-    }
-
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function formatarDia(valor) {
-    const p = String(valor).split("-");
-
-    if (p.length !== 3) {
-        return valor;
-    }
-
-    return `${p[2]}/${p[1]}`;
-}
-
-function valorCompra(compra) {
-    return numero(compra?.valor);
-}
-
-function obterSemanaAtual() {
-    const hoje = new Date();
-    const resultado = [];
-
-    // Segunda-feira até domingo
-    const diaSemana = hoje.getDay();
-    const deslocamento = diaSemana === 0 ? -6 : 1 - diaSemana;
-
-    const segunda = new Date(hoje);
-    segunda.setDate(hoje.getDate() + deslocamento);
-    segunda.setHours(0, 0, 0, 0);
-
-    for (let i = 0; i < 7; i++) {
-        const dia = new Date(segunda);
-        dia.setDate(segunda.getDate() + i);
-        resultado.push(dataLocal(dia));
-    }
-
-    return resultado;
-}
-
-function calcularDadosSemanais(compras) {
-    const dias = obterSemanaAtual();
-
-    const vendas = {};
-    const faturamento = {};
-
-    dias.forEach(dia => {
-        vendas[dia] = 0;
-        faturamento[dia] = 0;
-    });
-
-    compras.forEach(compra => {
-        const dia = dataLocal(dataCompra(compra));
-
-        if (!dia || !(dia in vendas)) {
-            return;
-        }
-
-        vendas[dia] += 1;
-        faturamento[dia] += valorCompra(compra);
-    });
-
-    return {
-        dias,
-        vendas: dias.map(dia => vendas[dia]),
-        faturamento: dias.map(dia => faturamento[dia])
+    const CORES = {
+        azul: "#2563eb",
+        laranja: "#f59e0b",
+        vermelho: "#ef4444",
+        cinza: "rgba(148,163,184,.16)"
     };
-}
 
-// ============================================================
-// 1. COLUNAS EMPILHADAS - VENDAS SEMANAL
-// ============================================================
-
-function criarGraficoVendasEmpilhadas(dados) {
-    const canvas = document.getElementById("graficoVendasEmpilhadas");
-
-    if (!canvas) {
-        console.warn(
-            "[MOZ TECH] Canvas #graficoVendasEmpilhadas não encontrado."
-        );
-        return;
+    function numero(valor) {
+        const n = Number(valor);
+        return Number.isFinite(n) ? n : 0;
     }
 
-    destruir(graficoVendasEmpilhadas);
+    function dataCompra(compra) {
+        return compra?.criadoEm || compra?.data || compra?.createdAt || compra?.created_at || null;
+    }
 
-    // Cada dia fica dividido em vendas concluídas e restante da escala.
-    // A coluna continua sendo uma visualização semanal de vendas.
-    const maximo = Math.max(...dados.vendas, 1);
+    function obterDataLocal(compra) {
+        const valor = dataCompra(compra);
+        if (!valor) return null;
+        const d = new Date(valor);
+        return Number.isNaN(d.getTime()) ? null : d;
+    }
 
-    const altas = dados.vendas.map(v => v >= maximo * 0.75 ? v : 0);
-    const normais = dados.vendas.map(v =>
-        v > 0 && v < maximo * 0.75 ? v : 0
-    );
+    function formatarMT(valor) {
+        return `${numero(valor).toLocaleString("pt-MZ", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        })} MT`;
+    }
 
-    graficoVendasEmpilhadas = new Chart(canvas, {
-        type: "bar",
+    function destruirGrafico(grafico) {
+        if (grafico) {
+            try { grafico.destroy(); } catch (_) {}
+        }
+    }
 
-        data: {
-            labels: dados.dias.map(formatarDia),
+    function obterCompras(resposta) {
+        if (!resposta) return [];
+        if (Array.isArray(resposta.compras)) return resposta.compras;
+        if (Array.isArray(resposta.data?.compras)) return resposta.data.compras;
+        if (Array.isArray(resposta.vendas?.compras)) return resposta.vendas.compras;
+        return [];
+    }
 
-            datasets: [
-                {
-                    label: "Vendas altas",
-                    data: altas,
-                    backgroundColor: CORES_MOZ.vermelho,
-                    stack: "vendas",
-                    borderRadius: 5
-                },
-                {
-                    label: "Vendas normais/baixas",
-                    data: normais,
-                    backgroundColor: CORES_MOZ.laranja,
-                    stack: "vendas",
-                    borderRadius: 5
-                }
-            ]
-        },
+    // ---------------------------------------------------------
+    // 1. MOVIMENTOS DE HOJE POR HORA - 00h ... 23h
+    // ---------------------------------------------------------
+    function criarGraficoDiario24h(compras) {
+        const canvas = document.getElementById("graficoDiario24h");
+        if (!canvas) return;
 
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
+        destruirGrafico(graficoDiario24h);
 
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        footer: function(items) {
-                            const index = items[0]?.dataIndex ?? 0;
+        const agora = new Date();
+        const ano = agora.getFullYear();
+        const mes = agora.getMonth();
+        const dia = agora.getDate();
 
-                            return `Total: ${dados.vendas[index] || 0} venda(s)`;
+        const movimentos = Array(24).fill(0);
+        const faturamento = Array(24).fill(0);
+
+        compras.forEach(compra => {
+            const d = obterDataLocal(compra);
+            if (!d) return;
+
+            if (
+                d.getFullYear() === ano &&
+                d.getMonth() === mes &&
+                d.getDate() === dia
+            ) {
+                const hora = d.getHours();
+                movimentos[hora] += 1;
+                faturamento[hora] += numero(compra.valor);
+            }
+        });
+
+        const maior = Math.max(...movimentos, 1);
+
+        const cores = movimentos.map(valor => {
+            if (valor === 0) return CORES.azul;
+            if (valor >= maior * 0.75) return CORES.vermelho;
+            return CORES.laranja;
+        });
+
+        graficoDiario24h = new Chart(canvas, {
+            type: "bar",
+            data: {
+                labels: Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, "0")}h`),
+                datasets: [{
+                    label: "Movimentos",
+                    data: movimentos,
+                    backgroundColor: cores,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                    maxBarThickness: 34
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 450 },
+                interaction: { mode: "index", intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: items => items.length ? items[0].label : "",
+                            label: context => ` Movimentos: ${movimentos[context.dataIndex]}`,
+                            afterLabel: context => ` Faturamento: ${formatarMT(faturamento[context.dataIndex])}`
                         }
                     }
-                }
-            },
-
-            scales: {
-                x: {
-                    stacked: true
                 },
-
-                y: {
-                    stacked: true,
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { maxRotation: 0, autoSkip: false, font: { size: 10 } }
                     },
-
-                    title: {
-                        display: true,
-                        text: "Vendas"
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 },
+                        title: { display: true, text: "Movimentos" }
                     }
                 }
             }
-        }
-    });
-}
-
-// ============================================================
-// 2. LINHAS MÚLTIPLAS - VENDAS + FATURAMENTO
-// ============================================================
-
-function criarGraficoVendasFaturamento(dados) {
-    const canvas = document.getElementById("graficoVendasFaturamento");
-
-    if (!canvas) {
-        console.warn(
-            "[MOZ TECH] Canvas #graficoVendasFaturamento não encontrado."
-        );
-        return;
+        });
     }
 
-    destruir(graficoVendasFaturamento);
+    // ---------------------------------------------------------
+    // 2. FATURAMENTO MENSAL - DIA 01 ... ÚLTIMO DIA
+    // ---------------------------------------------------------
+    function criarGraficoFaturamentoMensal(compras) {
+        const canvas = document.getElementById("graficoFaturamentoMensal");
+        if (!canvas) return;
 
-    graficoVendasFaturamento = new Chart(canvas, {
-        type: "line",
+        destruirGrafico(graficoFaturamentoMensal);
 
-        data: {
-            labels: dados.dias.map(formatarDia),
+        const agora = new Date();
+        const ano = agora.getFullYear();
+        const mes = agora.getMonth();
+        const ultimoDia = new Date(ano, mes + 1, 0).getDate();
 
-            datasets: [
-                {
-                    label: "Vendas",
-                    data: dados.vendas,
-                    borderColor: CORES_MOZ.azul,
-                    backgroundColor: CORES_MOZ.azul,
-                    borderWidth: 3,
-                    tension: 0.35,
-                    pointRadius: 5,
-                    pointHoverRadius: 7,
-                    yAxisID: "yVendas"
-                },
+        const faturamento = Array(ultimoDia).fill(0);
 
-                {
+        compras.forEach(compra => {
+            const d = obterDataLocal(compra);
+            if (!d) return;
+
+            if (d.getFullYear() === ano && d.getMonth() === mes) {
+                faturamento[d.getDate() - 1] += numero(compra.valor);
+            }
+        });
+
+        graficoFaturamentoMensal = new Chart(canvas, {
+            type: "line",
+            data: {
+                labels: Array.from({ length: ultimoDia }, (_, i) => String(i + 1).padStart(2, "0")),
+                datasets: [{
                     label: "Faturamento",
-                    data: dados.faturamento,
-                    borderColor: CORES_MOZ.laranja,
-                    backgroundColor: CORES_MOZ.laranja,
-                    borderWidth: 3,
+                    data: faturamento,
+                    borderColor: CORES.laranja,
+                    backgroundColor: "rgba(245,158,11,.12)",
+                    fill: true,
                     tension: 0.35,
-                    pointRadius: 5,
-                    pointHoverRadius: 7,
-                    yAxisID: "yMT"
-                }
-            ]
-        },
-
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-
-            interaction: {
-                mode: "index",
-                intersect: false
+                    borderWidth: 3,
+                    pointRadius: 3,
+                    pointHoverRadius: 6
+                }]
             },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 450 },
+                interaction: { mode: "index", intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: items => items.length ? `Dia ${items[0].label}` : "",
+                            label: context => ` Faturamento: ${formatarMT(context.parsed.y)}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { maxRotation: 0 }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: value => formatarMT(value)
+                        },
+                        title: { display: true, text: "Faturamento (MT)" }
+                    }
+                }
+            }
+        });
+    }
 
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const valor = context.parsed.y;
+    // ---------------------------------------------------------
+    // 3. ROSCA RADIAL SEMANAL - 7 ANÉIS
+    // ---------------------------------------------------------
+    function criarGraficoSemanalRadial(compras) {
+        const canvas = document.getElementById("graficoSemanalRadial");
+        if (!canvas) return;
 
-                            if (context.dataset.label === "Faturamento") {
-                                return ` Faturamento: ${numero(valor).toLocaleString("pt-MZ")} MT`;
+        destruirGrafico(graficoSemanalRadial);
+
+        const agora = new Date();
+        const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+
+        // Segunda = 0 ... Domingo = 6
+        const diaSemanaHoje = (hoje.getDay() + 6) % 7;
+        const inicioSemana = new Date(hoje);
+        inicioSemana.setDate(hoje.getDate() - diaSemanaHoje);
+
+        const dias = [
+            "Segunda", "Terça", "Quarta", "Quinta",
+            "Sexta", "Sábado", "Domingo"
+        ];
+
+        const vendas = Array(7).fill(0);
+
+        compras.forEach(compra => {
+            const d = obterDataLocal(compra);
+            if (!d) return;
+
+            const data = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            const diferenca = Math.floor((data - inicioSemana) / 86400000);
+
+            if (diferenca >= 0 && diferenca < 7) {
+                vendas[diferenca] += 1;
+            }
+        });
+
+        const maior = Math.max(...vendas, 1);
+
+        const datasets = vendas.map((valor, index) => {
+            const raioExterno = 100 - index * 13;
+            const raioInterno = raioExterno - 10;
+
+            let cor = CORES.azul;
+            if (valor > 0) {
+                if (valor >= maior * 0.75) cor = CORES.vermelho;
+                else cor = CORES.laranja;
+            }
+
+            return {
+                label: dias[index],
+                data: [valor, Math.max(maior - valor, 0)],
+                backgroundColor: [cor, CORES.cinza],
+                borderWidth: 1,
+                borderColor: "rgba(255,255,255,.35)",
+                radius: `${raioExterno}%`,
+                cutout: `${raioInterno}%`
+            };
+        });
+
+        graficoSemanalRadial = new Chart(canvas, {
+            type: "doughnut",
+            data: {
+                labels: dias,
+                datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 500 },
+                plugins: {
+                    legend: {
+                        position: "right",
+                        labels: {
+                            usePointStyle: true,
+                            padding: 14
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: context => {
+                                const index = context.datasetIndex;
+                                return ` ${dias[index]}: ${vendas[index]} venda(s)`;
                             }
-
-                            return ` Vendas: ${numero(valor)}`;
-                        }
-                    }
-                }
-            },
-
-            scales: {
-                yVendas: {
-                    type: "linear",
-                    position: "left",
-                    beginAtZero: true,
-
-                    ticks: {
-                        precision: 0
-                    },
-
-                    title: {
-                        display: true,
-                        text: "Vendas"
-                    }
-                },
-
-                yMT: {
-                    type: "linear",
-                    position: "right",
-                    beginAtZero: true,
-
-                    grid: {
-                        drawOnChartArea: false
-                    },
-
-                    ticks: {
-                        callback: value =>
-                            `${numero(value).toLocaleString("pt-MZ")} MT`
-                    },
-
-                    title: {
-                        display: true,
-                        text: "Faturamento (MT)"
-                    }
-                }
-            }
-        }
-    });
-}
-
-// ============================================================
-// 3. ROSCA CONCÊNTRICA / RADIAL - SEMANAL
-// ============================================================
-
-function criarGraficoSemanalRadial(dados) {
-    const canvas = document.getElementById("graficoSemanalRadial");
-
-    if (!canvas) {
-        console.warn(
-            "[MOZ TECH] Canvas #graficoSemanalRadial não encontrado."
-        );
-        return;
-    }
-
-    destruir(graficoSemanalRadial);
-
-    // Cada anel representa um dia da semana.
-    // O valor preenchido representa as vendas daquele dia.
-    const maior = Math.max(...dados.vendas, 1);
-
-    const datasets = dados.dias.map((dia, index) => {
-
-        const vendas = dados.vendas[index];
-
-        return {
-            label: formatarDia(dia),
-            data: [
-                vendas,
-                Math.max(maior - vendas, 0)
-            ],
-            backgroundColor: [
-                vendas >= maior * 0.75
-                    ? CORES_MOZ.vermelho
-                    : vendas === 0
-                        ? CORES_MOZ.azul
-                        : CORES_MOZ.laranja,
-
-                "rgba(148, 163, 184, 0.12)"
-            ],
-            borderWidth: 2
-        };
-    });
-
-    graficoSemanalRadial = new Chart(canvas, {
-        type: "doughnut",
-
-        data: {
-            labels: dados.dias.map(formatarDia),
-            datasets
-        },
-
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-
-            cutout: "35%",
-
-            plugins: {
-                legend: {
-                    position: "right"
-                },
-
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-
-                            const datasetIndex =
-                                context.datasetIndex;
-
-                            const valor =
-                                dados.vendas[datasetIndex] || 0;
-
-                            const dia =
-                                formatarDia(
-                                    dados.dias[datasetIndex]
-                                );
-
-                            return ` ${dia}: ${valor} venda(s)`;
                         }
                     }
                 }
             }
-        }
-    });
-}
-
-// ============================================================
-// CARREGAR
-// ============================================================
-
-async function carregarGraficos() {
-
-    try {
-
-        if (typeof Chart === "undefined") {
-            console.error("[MOZ TECH] Chart.js não foi carregado.");
-            return;
-        }
-
-        if (
-            !window.MOZ_API ||
-            typeof window.MOZ_API.get !== "function"
-        ) {
-            console.error("[MOZ TECH] MOZ_API não está disponível.");
-            return;
-        }
-
-        console.log(
-            "[MOZ TECH] Carregando gráficos semanais..."
-        );
-
-        const resposta =
-            await window.MOZ_API.get("/relatorios");
-
-        if (
-            !resposta ||
-            resposta.success !== true
-        ) {
-            throw new Error(
-                resposta?.message ||
-                resposta?.error ||
-                "Erro ao carregar relatórios."
-            );
-        }
-
-        const compras =
-            Array.isArray(resposta.compras)
-                ? resposta.compras.filter(compraConcluida)
-                : [];
-
-        const dadosSemanais =
-            calcularDadosSemanais(compras);
-
-        console.log(
-            "[MOZ TECH] Dados semanais:",
-            dadosSemanais
-        );
-
-        criarGraficoVendasEmpilhadas(
-            dadosSemanais
-        );
-
-        criarGraficoVendasFaturamento(
-            dadosSemanais
-        );
-
-        criarGraficoSemanalRadial(
-            dadosSemanais
-        );
-
-        console.log(
-            "[MOZ TECH] Gráficos semanais carregados."
-        );
-
-    } catch (erro) {
-
-        console.error(
-            "[MOZ TECH] Erro nos gráficos:",
-            erro
-        );
+        });
     }
-}
 
-window.carregarGraficos = carregarGraficos;
+    async function carregarGraficos() {
+        try {
+            if (typeof Chart === "undefined") {
+                console.error("[MOZ TECH] Chart.js não foi carregado.");
+                return;
+            }
 
-function iniciarGraficos() {
+            if (!window.MOZ_API || typeof window.MOZ_API.get !== "function") {
+                console.error("[MOZ TECH] MOZ_API não está disponível.");
+                return;
+            }
 
-    console.log(
-        "[MOZ TECH] charts.js iniciado."
-    );
+            const resposta = await window.MOZ_API.get("/relatorios");
 
-    carregarGraficos();
-}
+            if (!resposta || resposta.success !== true) {
+                throw new Error(resposta?.message || resposta?.error || "Erro ao carregar relatórios.");
+            }
 
-if (document.readyState === "loading") {
+            const compras = obterCompras(resposta);
 
-    document.addEventListener(
-        "DOMContentLoaded",
-        iniciarGraficos,
-        { once: true }
-    );
+            criarGraficoDiario24h(compras);
+            criarGraficoFaturamentoMensal(compras);
+            criarGraficoSemanalRadial(compras);
 
-} else {
+            console.log("[MOZ TECH] Gráficos atualizados:", {
+                compras: compras.length,
+                movimentosHoje: compras.filter(c => {
+                    const d = obterDataLocal(c);
+                    if (!d) return false;
+                    const agora = new Date();
+                    return d.getFullYear() === agora.getFullYear() &&
+                        d.getMonth() === agora.getMonth() &&
+                        d.getDate() === agora.getDate();
+                }).length
+            });
+        } catch (erro) {
+            console.error("[MOZ TECH] Erro nos gráficos:", erro);
+        }
+    }
 
-    iniciarGraficos();
-}
+    function iniciar() {
+        carregarGraficos();
 
-setInterval(
-    carregarGraficos,
-    10000
-);
+        if (intervaloGraficos) clearInterval(intervaloGraficos);
+        intervaloGraficos = setInterval(carregarGraficos, 10000);
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", iniciar, { once: true });
+    } else {
+        iniciar();
+    }
+
+    window.carregarGraficos = carregarGraficos;
+
+})();
