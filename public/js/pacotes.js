@@ -12,7 +12,7 @@
  * - Personalizado
  */
 
-const PACOTES_API = "http://br1.bronxyshost.com:4234";
+const PACOTES_API = "/api";
 let pacotesData = [];
 let pacoteEditando = null;
 let filtroPacoteAtual = "todos";
