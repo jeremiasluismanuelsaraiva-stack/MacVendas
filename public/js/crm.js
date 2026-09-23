@@ -1,704 +1,86 @@
 // =====================================================
 // MOZ TECH
-// CRM - CLIENTES
-// Local: public/js/clientes.js
+// CRM - CONTROLADOR
+// Local: public/js/crm.js
 // =====================================================
 
 (function () {
-
     "use strict";
 
-
-    // =================================================
-    // API
-    // =================================================
-
-    const API = "http://br1.bronxyshost.com:4234";
-
-    // =================================================
-    // API CENTRAL
-    // =================================================
-    // Usa MOZ_API quando disponível.
-    // Caso MOZ_API ainda não tenha sido inicializado,
-    // faz a requisição diretamente para o backend.
-    // =================================================
-
-    async function chamarAPI(endpoint, options = {}) {
-
-        if (
-            window.MOZ_API &&
-            typeof window.MOZ_API.get === "function"
-        ) {
-
-            const metodo =
-                String(options.method || "GET").toUpperCase();
-
-            if (metodo === "GET") {
-                return await window.MOZ_API.get(endpoint);
-            }
-
-            if (
-                metodo === "POST" &&
-                typeof window.MOZ_API.post === "function"
-            ) {
-                return await window.MOZ_API.post(
-                    endpoint,
-                    options.body || {}
-                );
-            }
-
-            if (
-                metodo === "PUT" &&
-                typeof window.MOZ_API.put === "function"
-            ) {
-                return await window.MOZ_API.put(
-                    endpoint,
-                    options.body || {}
-                );
-            }
-
-            if (
-                metodo === "DELETE" &&
-                typeof window.MOZ_API.delete === "function"
-            ) {
-                return await window.MOZ_API.delete(endpoint);
-            }
-        }
-
-        const apiKey =
-            localStorage.getItem("apiKey") || "";
-
-        const config = {
-            method:
-                String(options.method || "GET").toUpperCase(),
-
-            headers: {
-                "Content-Type": "application/json"
-            }
-        };
-
-        if (apiKey) {
-            config.headers["x-api-key"] = apiKey;
-        }
-
-        if (
-            options.body !== undefined &&
-            config.method !== "GET"
-        ) {
-            config.body = JSON.stringify(options.body);
-        }
-
-        const resposta =
-            await fetch(
-                API + endpoint,
-                config
-            );
-
-        let json = {};
-
-        try {
-            json = await resposta.json();
-        }
-        catch {
-            json = {};
-        }
-
-        if (!resposta.ok) {
-            throw new Error(
-                json.error ||
-                json.message ||
-                "HTTP " + resposta.status
-            );
-        }
-
-        return json;
+    function elemento(id) {
+        return document.getElementById(id);
     }
 
-
-    // =================================================
-    // CARREGAR CLIENTES
-    // GET /clientes
-    // =================================================
-
-    async function carregarClientes() {
-
-        const tabela =
-            document.getElementById("tabelaClientes");
-
-
-        if (!tabela) {
-
-            console.warn(
-                "[MOZ TECH] #tabelaClientes não encontrado."
-            );
-
-            return;
-
-        }
-
-
+    async function abrirCRM() {
         try {
+            const painel =
+                elemento("panelCRM") ||
+                elemento("painelCRM") ||
+                elemento("crm");
 
-            tabela.innerHTML = `
-                <tr>
-                    <td
-                        colspan="7"
-                        style="text-align:center;padding:20px;"
-                    >
-                        Carregando clientes...
-                    </td>
-                </tr>
-            `;
-
-            if (typeof window.garantirCredenciaisAPI === "function") {
-                const autenticado = await window.garantirCredenciaisAPI();
-                if (!autenticado) {
-                    throw new Error("Usuário não autenticado ou credenciais da API não encontradas.");
-                }
+            if (painel) {
+                painel.style.display = "";
+                painel.classList.add("active");
             }
 
-            const json =
-                await chamarAPI("/clientes");
+            if (typeof window.carregarClientes === "function") {
+                await window.carregarClientes();
+                return true;
+            }
 
+            if (typeof window.iniciarCRM === "function") {
+                return window.iniciarCRM();
+            }
 
-            console.log(
-                "[MOZ TECH] Clientes recebidos:",
-                json
+            console.error(
+                "[MOZ TECH] clientes.js não foi carregado antes do crm.js."
             );
 
+            return false;
+        } catch (erro) {
+            console.error("[MOZ TECH] Erro ao abrir CRM:", erro);
+            return false;
+        }
+    }
 
-            if (!json.success) {
+    function configurarBotaoCRM() {
+        const seletores = [
+            "[data-painel='crm']",
+            "[data-panel='crm']",
+            "[data-menu='crm']",
+            "#menuCRM",
+            "#btnCRM",
+            ".menu-crm"
+        ];
 
-                throw new Error(
-                    json.error ||
-                    "A API não retornou sucesso."
-                );
+        seletores.forEach(seletor => {
+            document.querySelectorAll(seletor).forEach(botao => {
+                if (botao.dataset.crmConfigurado === "1") return;
 
-            }
+                botao.dataset.crmConfigurado = "1";
 
-
-            const clientes =
-                Array.isArray(json.clientes)
-                    ? json.clientes
-                    : [];
-
-
-            tabela.innerHTML = "";
-
-
-            if (clientes.length === 0) {
-
-                tabela.innerHTML = `
-                    <tr>
-
-                        <td
-                            colspan="7"
-                            style="
-                                text-align:center;
-                                padding:25px;
-                            "
-                        >
-
-                            <i
-                                class="fas fa-users"
-                                style="
-                                    font-size:25px;
-                                    margin-bottom:10px;
-                                    display:block;
-                                "
-                            ></i>
-
-                            Nenhum cliente encontrado.
-
-                        </td>
-
-                    </tr>
-                `;
-
-                return;
-
-            }
-
-
-            clientes.forEach(cliente => {
-
-                const tr =
-                    document.createElement("tr");
-
-
-                tr.innerHTML = `
-
-                    <td>
-                        ${escaparHTML(
-                            cliente.id ?? "-"
-                        )}
-                    </td>
-
-                    <td>
-                        ${escaparHTML(
-                            cliente.nome || "-"
-                        )}
-                    </td>
-
-                    <td>
-                        ${escaparHTML(
-                            cliente.telefone ||
-                            cliente.numero ||
-                            "-"
-                        )}
-                    </td>
-
-                    <td>
-                        ${escaparHTML(
-                            cliente.email || "-"
-                        )}
-                    </td>
-
-                    <td>
-                        ${escaparHTML(
-                            cliente.grupo || "-"
-                        )}
-                    </td>
-
-                    <td>
-                        ${formatarSaldo(
-                            cliente.saldo
-                        )}
-                    </td>
-
-                    <td>
-
-                        <button
-                            type="button"
-                            class="btn btn-outline"
-                            data-editar-cliente="${escaparAtributo(
-                                cliente.id
-                            )}"
-                        >
-
-                            <i
-                                class="fas fa-edit"
-                            ></i>
-
-                            Editar
-
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="btn btn-danger"
-                            data-remover-cliente="${escaparAtributo(
-                                cliente.id
-                            )}"
-                        >
-
-                            <i
-                                class="fas fa-trash"
-                            ></i>
-
-                            Remover
-
-                        </button>
-
-                    </td>
-
-                `;
-
-
-                tabela.appendChild(tr);
-
+                botao.addEventListener("click", function (evento) {
+                    evento.preventDefault();
+                    abrirCRM();
+                });
             });
-
-
-            // =================================================
-            // EDITAR
-            // =================================================
-
-            tabela
-                .querySelectorAll(
-                    "[data-editar-cliente]"
-                )
-                .forEach(botao => {
-
-                    botao.addEventListener(
-                        "click",
-                        function () {
-
-                            const id =
-                                this.getAttribute(
-                                    "data-editar-cliente"
-                                );
-
-
-                            editarCliente(id);
-
-                        }
-                    );
-
-                });
-
-
-            // =================================================
-            // REMOVER
-            // =================================================
-
-            tabela
-                .querySelectorAll(
-                    "[data-remover-cliente]"
-                )
-                .forEach(botao => {
-
-                    botao.addEventListener(
-                        "click",
-                        function () {
-
-                            const id =
-                                this.getAttribute(
-                                    "data-remover-cliente"
-                                );
-
-
-                            removerCliente(id);
-
-                        }
-                    );
-
-                });
-
-        }
-        catch (erro) {
-
-            console.error(
-                "[MOZ TECH] Erro ao carregar clientes:",
-                erro
-            );
-
-
-            tabela.innerHTML = `
-                <tr>
-
-                    <td
-                        colspan="7"
-                        style="
-                            text-align:center;
-                            padding:25px;
-                        "
-                    >
-
-                        <i
-                            class="fas fa-circle-exclamation"
-                        ></i>
-
-                        Não foi possível carregar os clientes.
-
-                        <br>
-
-                        <small>
-                            ${escaparHTML(
-                                erro.message
-                            )}
-                        </small>
-
-                    </td>
-
-                </tr>
-            `;
-
-        }
-
+        });
     }
 
+    window.abrirCRM = abrirCRM;
+    window.iniciarCRM = abrirCRM;
 
-    // =================================================
-    // FORMATAR SALDO
-    // =================================================
+    document.addEventListener("DOMContentLoaded", function () {
+        setTimeout(configurarBotaoCRM, 300);
 
-    function formatarSaldo(saldo) {
-
-        const valor =
-            Number(saldo);
-
-
-        if (!Number.isFinite(valor)) {
-
-            return "0 GB";
-
-        }
-
-
-        return valor + " GB";
-
-    }
-
-
-    // =================================================
-    // ESCAPAR HTML
-    // =================================================
-
-    function escaparHTML(valor) {
-
-        return String(valor ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-
-    }
-
-
-    // =================================================
-    // ESCAPAR ATRIBUTO
-    // =================================================
-
-    function escaparAtributo(valor) {
-
-        return escaparHTML(valor);
-
-    }
-
-
-    // =================================================
-    // ADICIONAR CLIENTE
-    // POST /clientes
-    // =================================================
-
-    async function adicionarCliente(dados) {
-
-        try {
-
-            if (typeof window.garantirCredenciaisAPI === "function") {
-                const autenticado = await window.garantirCredenciaisAPI();
-                if (!autenticado) {
-                    throw new Error("Usuário não autenticado ou credenciais da API não encontradas.");
-                }
+        setTimeout(function () {
+            if (
+                elemento("tabelaClientes") &&
+                typeof window.carregarClientes === "function"
+            ) {
+                window.carregarClientes();
             }
-
-            const json =
-                await chamarAPI(
-                    "/clientes",
-                    {
-                        method: "POST",
-                        body: dados
-                    }
-                );
-
-            if (!json || json.success !== true) {
-                throw new Error(json?.error || "Erro ao adicionar cliente.");
-            }
-
-
-            await carregarClientes();
-
-
-            return json;
-
-        }
-        catch (erro) {
-
-            console.error(
-                "[MOZ TECH] Erro ao adicionar cliente:",
-                erro
-            );
-
-
-            alert(
-                "Não foi possível adicionar o cliente."
-            );
-
-
-            return {
-
-                success: false,
-
-                error:
-                    erro.message
-
-            };
-
-        }
-
-    }
-
-
-    // =================================================
-    // EDITAR CLIENTE
-    // =================================================
-
-    async function editarCliente(id) {
-
-        const nome =
-            prompt(
-                "Digite o novo nome do cliente:"
-            );
-
-
-        if (nome === null) {
-
-            return;
-
-        }
-
-
-        const nomeLimpo =
-            nome.trim();
-
-
-        if (!nomeLimpo) {
-
-            alert(
-                "O nome não pode ficar vazio."
-            );
-
-            return;
-
-        }
-
-
-        try {
-
-            if (typeof window.garantirCredenciaisAPI === "function") {
-                const autenticado = await window.garantirCredenciaisAPI();
-                if (!autenticado) {
-                    throw new Error("Usuário não autenticado ou credenciais da API não encontradas.");
-                }
-            }
-
-            const json =
-                await chamarAPI(
-                    "/clientes/" + encodeURIComponent(id),
-                    {
-                        method: "PUT",
-                        body: {
-                            nome: nomeLimpo
-                        }
-                    }
-                );
-
-            if (!json || json.success !== true) {
-                throw new Error(json?.error || "Erro ao editar cliente.");
-            }
-
-
-            await carregarClientes();
-
-
-            alert(
-                "Cliente atualizado com sucesso!"
-            );
-
-        }
-        catch (erro) {
-
-            console.error(
-                "[MOZ TECH] Erro ao editar cliente:",
-                erro
-            );
-
-
-            alert(
-                "Não foi possível editar o cliente."
-            );
-
-        }
-
-    }
-
-
-    // =================================================
-    // REMOVER CLIENTE
-    // =================================================
-
-    async function removerCliente(id) {
-
-        const confirmar =
-            confirm(
-                "Tem certeza que deseja remover este cliente?"
-            );
-
-
-        if (!confirmar) {
-
-            return;
-
-        }
-
-
-        try {
-
-            if (typeof window.garantirCredenciaisAPI === "function") {
-                const autenticado = await window.garantirCredenciaisAPI();
-                if (!autenticado) {
-                    throw new Error("Usuário não autenticado ou credenciais da API não encontradas.");
-                }
-            }
-
-            const json =
-                await chamarAPI(
-                    "/clientes/" + encodeURIComponent(id),
-                    {
-                        method: "DELETE"
-                    }
-                );
-
-            if (!json || json.success !== true) {
-                throw new Error(json?.error || "Erro ao remover cliente.");
-            }
-
-
-            await carregarClientes();
-
-
-            alert(
-                "Cliente removido com sucesso!"
-            );
-
-        }
-        catch (erro) {
-
-            console.error(
-                "[MOZ TECH] Erro ao remover cliente:",
-                erro
-            );
-
-
-            alert(
-                "Não foi possível remover o cliente."
-            );
-
-        }
-
-    }
-
-
-    // =================================================
-    // DISPONIBILIZAR FUNÇÕES
-    // =================================================
-
-    window.carregarClientes =
-        carregarClientes;
-
-    window.adicionarCliente =
-        adicionarCliente;
-
-    window.editarCliente =
-        editarCliente;
-
-    window.removerCliente =
-        removerCliente;
-
-
-    // =================================================
-    // INICIALIZAÇÃO
-    // =================================================
-
-    /*
-     * NÃO chamar carregarClientes()
-     * automaticamente.
-     *
-     * O app.js chama a função quando
-     * o painel CRM é aberto.
-     */
+        }, 500);
+    });
 
 })();
