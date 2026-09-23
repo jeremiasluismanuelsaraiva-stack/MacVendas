@@ -75,7 +75,7 @@
 
             console.log(
                 "[MOZ TECH] Dispositivos HTTP:",
-                resposta.status
+                json?.success === true ? 200 : "resposta recebida"
             );
 
 
