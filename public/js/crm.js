@@ -395,7 +395,10 @@
                 align-items: center;
                 justify-content: center;
                 padding: 20px;
-                background: rgba(0,0,0,.65);
+                background: rgba(5, 25, 65, .72);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                animation: crmFundoEntrada .18s ease-out;
             }
 
             #crmDetalhesCliente.ativo {
@@ -406,9 +409,10 @@
                 width: min(1050px, 100%);
                 max-height: 90vh;
                 overflow: auto;
-                background: #fff;
-                color: #111827;
+                background: #ffffff;
+                color: #0f172a;
                 border-radius: 16px;
+                border: 1px solid #bfdbfe;
                 box-shadow: 0 20px 60px rgba(0,0,0,.35);
             }
 
@@ -423,7 +427,8 @@
 
             #crmDetalhesCliente .crm-fechar {
                 border: 0;
-                background: #f3f4f6;
+                background: #1e3a8a;
+                color: #fff;
                 width: 40px;
                 height: 40px;
                 border-radius: 10px;
@@ -443,7 +448,7 @@
                 border-radius: 50%;
                 display: grid;
                 place-items: center;
-                background: #111827;
+                background: #1e3a8a;
                 color: #fff;
                 font-weight: 700;
             }
@@ -465,7 +470,7 @@
                 border: 1px solid #e5e7eb;
                 border-radius: 12px;
                 padding: 14px;
-                background: #f9fafb;
+                background: #eff6ff;
             }
 
             #crmDetalhesCliente .crm-card-label {
@@ -523,7 +528,7 @@
             }
 
             #crmDetalhesCliente th {
-                background: #f9fafb;
+                background: #eff6ff;
                 font-weight: 700;
             }
 
@@ -608,7 +613,6 @@
     }
 
     function abrirDetalhesCRM(cliente) {
-    abrirOverlayDetalhesCRM();
         instalarModal();
 
         const modal = document.getElementById("crmDetalhesCliente");
@@ -729,8 +733,7 @@
     }
 
     function fecharDetalhesCRM() {
-    fecharOverlayDetalhesCRM();
-        const modal = document.getElementById("crmDetalhesCliente");
+            const modal = document.getElementById("crmDetalhesCliente");
         if (modal) modal.classList.remove("ativo");
     }
 
@@ -867,8 +870,7 @@ document.addEventListener("keydown", function (evento) {
             if (typeof fecharDetalhesCRM === "function") {
                 fecharDetalhesCRM();
             } else {
-                fecharOverlayDetalhesCRM();
-            }
+                            }
         }
     }
 });
