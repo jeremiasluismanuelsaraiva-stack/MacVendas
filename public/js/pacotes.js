@@ -126,14 +126,14 @@ function normalizarPacote(p) {
 
 function iconeTipo(tipo) {
     return {
-        internet: "🌐",
-        ilimitado: "♾️",
-        diario: "☀️",
-        semanal: "📅",
-        mensal: "📆",
-        social: "📱",
-        personalizado: "⚙️"
-    }[tipo] || "📦";
+        internet: "",
+        ilimitado: "",
+        diario: "",
+        semanal: "",
+        mensal: "",
+        social: "",
+        personalizado: ""
+    }[tipo] || "";
 }
 
 function nomeTipo(tipo) {
@@ -177,7 +177,7 @@ function criarInterfacePacotes() {
         <div class="pacotes-macvendas">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
                 <div>
-                    <h3 style="margin:0;">📦 Gestão de Pacotes</h3>
+                    <h3 style="margin:0;"> Gestão de Pacotes</h3>
                     <small style="opacity:.7;">Crie pacotes de Internet, ilimitados, diários, semanais, mensais e personalizados.</small>
                 </div>
                 <button type="button" class="btn btn-primary" id="novoPacoteMacBtn">
@@ -188,13 +188,13 @@ function criarInterfacePacotes() {
             <div id="pacoteFiltrosMac" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
                 ${[
                     ["todos", "Todos"],
-                    ["internet", "🌐 Internet"],
-                    ["ilimitado", "♾️ Ilimitado"],
-                    ["diario", "☀️ Diário"],
-                    ["semanal", "📅 Semanal"],
-                    ["mensal", "📆 Mensal"],
-                    ["social", "📱 Social"],
-                    ["personalizado", "⚙️ Personalizado"]
+                    ["internet", " Internet"],
+                    ["ilimitado", " Ilimitado"],
+                    ["diario", " Diário"],
+                    ["semanal", " Semanal"],
+                    ["mensal", " Mensal"],
+                    ["social", " Social"],
+                    ["personalizado", " Personalizado"]
                 ].map(([v, t]) => `
                     <button type="button"
                         class="rank-filter-btn ${v === "todos" ? "active" : ""}"
@@ -211,7 +211,7 @@ function criarInterfacePacotes() {
 
         <div id="modalPacoteMac" class="modal" style="display:none;">
             <div class="modal-content" style="max-width:620px;">
-                <h3 id="modalPacoteMacTitulo">📦 Novo Pacote</h3>
+                <h3 id="modalPacoteMacTitulo"> Novo Pacote</h3>
 
                 <div class="form-group">
                     <label>Nome do pacote</label>
@@ -222,13 +222,13 @@ function criarInterfacePacotes() {
                     <div class="form-group">
                         <label>Tipo</label>
                         <select id="macPacoteTipo">
-                            <option value="internet">🌐 Internet</option>
-                            <option value="ilimitado">♾️ Ilimitado</option>
-                            <option value="diario">☀️ Diário</option>
-                            <option value="semanal">📅 Semanal</option>
-                            <option value="mensal">📆 Mensal</option>
-                            <option value="social">📱 Social</option>
-                            <option value="personalizado">⚙️ Personalizado</option>
+                            <option value="internet"> Internet</option>
+                            <option value="ilimitado"> Ilimitado</option>
+                            <option value="diario"> Diário</option>
+                            <option value="semanal"> Semanal</option>
+                            <option value="mensal"> Mensal</option>
+                            <option value="social"> Social</option>
+                            <option value="personalizado"> Personalizado</option>
                         </select>
                     </div>
 
@@ -360,7 +360,7 @@ function abrirModalPacoteMac(id = null) {
 
         if (!p) return;
 
-        titulo.textContent = "✏️ Editar Pacote";
+        titulo.textContent = " Editar Pacote";
         document.getElementById("macPacoteNome").value = p.nome;
         document.getElementById("macPacoteTipo").value = p.tipo;
         document.getElementById("macPacoteValidade").value = p.validade;
@@ -372,7 +372,7 @@ function abrirModalPacoteMac(id = null) {
         document.getElementById("macPacoteGrupo").value = p.grupoId;
         document.getElementById("macPacoteAtivo").checked = p.ativo;
     } else {
-        titulo.textContent = "📦 Novo Pacote";
+        titulo.textContent = " Novo Pacote";
 
         document.getElementById("macPacoteNome").value = "";
         document.getElementById("macPacoteTipo").value = "internet";
@@ -482,7 +482,7 @@ async function salvarPacoteMac() {
 
 function formatarQuantidade(p) {
     if (p.tipo === "ilimitado" || p.unidade === "ilimitado") {
-        return "∞ Ilimitado";
+        return " Ilimitado";
     }
 
     const q = Number(p.quantidade || p.gb || 0);
@@ -567,13 +567,13 @@ function renderizarPacotesMac() {
 
                     ${p.vantagem ? `
                         <div style="font-size:13px;margin-bottom:12px;">
-                            ⭐ ${escapar(p.vantagem)}
+                             ${escapar(p.vantagem)}
                         </div>
                     ` : ""}
 
                     ${p.grupoId ? `
                         <div style="font-size:12px;opacity:.7;margin-bottom:12px;">
-                            👥 ${escapar(p.grupoId)}
+                             ${escapar(p.grupoId)}
                         </div>
                     ` : ""}
 
