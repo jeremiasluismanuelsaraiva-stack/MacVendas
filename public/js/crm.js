@@ -155,7 +155,6 @@
                 "numeroDestino",
                 "numero_destino",
                 "destino",
-                "numero",
             ],
             "-"
         );
@@ -963,30 +962,81 @@
         });
     }
 
-    function renderizarClientes(clientes) {
-    const tbody =
-        document.querySelector("#tabelaClientes tbody") ||
-        document.querySelector("#tabelaClientes");
 
-    if (!tbody) return;
+    function aplicarEstiloTabelaCRM() {
+        if (document.getElementById("crmTabelaStyle")) return;
 
-    const linhas = [];
-
-    if (!Array.isArray(clientes) || clientes.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="9" style="text-align:center;padding:28px;">
-                    Nenhum cliente encontrado.
-                </td>
-            </tr>
+        const style = document.createElement("style");
+        style.id = "crmTabelaStyle";
+        style.textContent = `
+#panelCRM #tabelaClientes {
+    width: 100%;
+    min-width: 1050px;
+    border-collapse: collapse;
+}
+#panelCRM #tabelaClientes th,
+#panelCRM #tabelaClientes td {
+    padding: 12px 14px;
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+#panelCRM #tabelaClientes tbody tr {
+    cursor: pointer;
+}
+#panelCRM #tabelaClientes tbody tr:hover {
+    background: rgba(56, 189, 248, 0.08);
+}
+#panelCRM .crm-acoes {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+#panelCRM .crm-ver-detalhes,
+#panelCRM .crm-gestao-cliente {
+    border: 0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-weight: 700;
+    color: #fff;
+}
+#panelCRM .crm-ver-detalhes {
+    background: #2563eb;
+}
+#panelCRM .crm-gestao-cliente {
+    background: #0ea5e9;
+}
+#panelCRM .crm-ver-detalhes:hover,
+#panelCRM .crm-gestao-cliente:hover {
+    filter: brightness(1.08);
+}
         `;
-        return;
+        document.head.appendChild(style);
     }
 
-    clientes.forEach((cliente) => {
-        const numero = (valor) => {
-            const n = Number(valor);
-            return Number.isFinite(n) ? n : 0;
+    function renderizarClientes(clientes) {
+        aplicarEstiloTabelaCRM();
+        const t = tabela();
+        if (!t) {
+            throw new Error("#tabelaClientes não encontrado.");
+        }
+
+        const tbody = t.querySelector("tbody");
+        if (!tbody) {
+            throw new Error("tbody do CRM não encontrado.");
+        }
+
+        garantirEstatisticasCRM();
+        atualizarEstatisticasCRM(clientes);
+
+        const escapar = (valor) => {
+            return String(valor ?? "-")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         };
 
         const formatarMTLocal = (valor) => {
@@ -998,6 +1048,7 @@
 
         const formatarDataLocal = (valor) => {
             if (!valor) return "-";
+
             const data = new Date(valor);
             if (Number.isNaN(data.getTime())) return String(valor);
 
@@ -1010,105 +1061,166 @@
             });
         };
 
-        const escapar = (valor) => {
-            return String(valor ?? "-")
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        };
+        tbody.innerHTML = "";
 
-        const compras = Array.isArray(cliente.compras)
-            ? cliente.compras
-            : [];
+        if (!Array.isArray(clientes) || clientes.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" style="text-align:center;padding:28px;">
+                        Nenhum cliente encontrado.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
 
-        const totalGB = numero(cliente.totalGB);
-        const totalGasto = numero(cliente.totalGasto);
-        const nome = cliente.nome || cliente.nomeCliente || "-";
-        const numeroCliente =
-            cliente.numeroCliente ||
-            cliente.telefone ||
-            cliente.numero ||
-            "-";
+        clientes.forEach((cliente) => {
+            const compras = Array.isArray(cliente.compras)
+                ? cliente.compras
+                : [];
 
-        const numeroRecebeu =
-            cliente.numeroRecebeu ||
-            cliente.numeroDestino ||
-            cliente.destino ||
-            "-";
+            const totalGB = numero(cliente.totalGB);
+            const totalGasto = numero(cliente.totalGasto);
 
-        const grupo = cliente.grupo || "-";
-        const ultimaCompra =
-            cliente.ultimaCompra ||
-            cliente.ultimaCompraEm ||
-            cliente.atualizadoEm ||
-            compras.at(-1)?.criadoEm ||
-            compras.at(-1)?.data ||
-            null;
+            const nome =
+                cliente.nome ||
+                cliente.nomeCliente ||
+                "-";
 
-        const tr = document.createElement("tr");
+            const numeroCliente =
+                cliente.numeroCliente ||
+                cliente.telefone ||
+                cliente.numero ||
+                "-";
 
-        tr.innerHTML = `
-            <td>${escapar(nome)}</td>
-            <td>${escapar(numeroCliente)}</td>
-            <td>${escapar(numeroRecebeu)}</td>
-            <td>${totalGB.toLocaleString("pt-MZ", {
-                maximumFractionDigits: 2
-            })} GB</td>
-            <td>${compras.length}</td>
-            <td>${formatarMTLocal(totalGasto)}</td>
-            <td>${escapar(grupo)}</td>
-            <td>${escapar(formatarDataLocal(ultimaCompra))}</td>
-            <td>
-                <div class="crm-acoes">
-                    <button
-                        type="button"
-                        class="crm-ver-detalhes"
-                        data-crm-action="detalhes"
-                    >
-                        Ver detalhes
-                    </button>
-                    <button
-                        type="button"
-                        class="crm-gestao-cliente"
-                        data-crm-action="gestao"
-                    >
-                        Gestão
-                    </button>
-                </div>
-            </td>
-        `;
+            const numeroRecebeu =
+                cliente.numeroRecebeu ||
+                cliente.numeroDestino ||
+                cliente.numero_destino ||
+                cliente.destino ||
+                "-";
 
-        const abrir = (evento) => {
-            evento.preventDefault();
-            evento.stopPropagation();
+            const grupo = cliente.grupo || "-";
 
-            if (typeof abrirDetalhesCRM === "function") {
-                abrirDetalhesCRM(cliente);
-            } else if (typeof window.abrirDetalhesCRM === "function") {
-                window.abrirDetalhesCRM(cliente);
-            }
-        };
+            const ultimaCompra =
+                cliente.ultimaCompra ||
+                cliente.ultimaCompraEm ||
+                cliente.atualizadoEm ||
+                compras.at(-1)?.criadoEm ||
+                compras.at(-1)?.data ||
+                null;
 
-        tr.querySelector('[data-crm-action="detalhes"]')
-            ?.addEventListener("click", abrir);
+            const tr = document.createElement("tr");
 
-        tr.querySelector('[data-crm-action="gestao"]')
-            ?.addEventListener("click", abrir);
+            tr.innerHTML = `
+                <td>${escapar(nome)}</td>
+                <td>${escapar(numeroCliente)}</td>
+                <td>${escapar(numeroRecebeu)}</td>
+                <td>${totalGB.toLocaleString("pt-MZ", {
+                    maximumFractionDigits: 2
+                })} GB</td>
+                <td>${compras.length}</td>
+                <td>${formatarMTLocal(totalGasto)}</td>
+                <td>${escapar(grupo)}</td>
+                <td>${escapar(formatarDataLocal(ultimaCompra))}</td>
+                <td>
+                    <div class="crm-acoes">
+                        <button
+                            type="button"
+                            class="crm-ver-detalhes"
+                            data-crm-action="detalhes"
+                        >
+                            Ver detalhes
+                        </button>
 
-        tr.addEventListener("dblclick", abrir);
+                        <button
+                            type="button"
+                            class="crm-gestao-cliente"
+                            data-crm-action="gestao"
+                        >
+                            Gestão
+                        </button>
+                    </div>
+                </td>
+            `;
 
-        linhas.push(tr);
-    });
+            const abrir = (evento) => {
+                evento.preventDefault();
+                evento.stopPropagation();
 
-    tbody.innerHTML = "";
-    linhas.forEach((tr) => tbody.appendChild(tr));
+                if (typeof abrirDetalhesCRM === "function") {
+                    abrirDetalhesCRM(cliente);
+                } else if (typeof window.abrirDetalhesCRM === "function") {
+                    window.abrirDetalhesCRM(cliente);
+                }
+            };
 
-    // Atualiza estatísticas do CRM sem recriar outro painel.
-    if (typeof atualizarEstatisticasCRM === "function") {
-        atualizarEstatisticasCRM(clientes);
+            tr.querySelector('[data-crm-action="detalhes"]')
+                ?.addEventListener("click", abrir);
+
+            tr.querySelector('[data-crm-action="gestao"]')
+                ?.addEventListener("click", abrir);
+
+            tr.addEventListener("dblclick", abrir);
+
+            tbody.appendChild(tr);
+        });
     }
+
+    async function carregarClientes() {
+        if (carregando) return;
+        carregando = true;
+
+        try {
+            mensagem("Carregando clientes...");
+            configurarCabecalho();
+
+            const dadosCompras = await requisicao(`${API_URL}/compras`);
+            const compras = Array.isArray(dadosCompras?.compras)
+                ? dadosCompras.compras
+                : (Array.isArray(dadosCompras) ? dadosCompras : []);
+
+            const clientes = agruparClientes(compras);
+
+            console.log("[CRM] Compras recebidas:", compras.length);
+            console.log("[CRM] Clientes agrupados:", clientes.length);
+
+            renderizarClientes(clientes);
+            return clientes;
+        } catch (erro) {
+            console.error("[CRM] ERRO AO CARREGAR CLIENTES:", erro);
+            mensagem(`Não foi possível carregar os clientes.<br><small>${escapar(erro.message)}</small><br><button type="button" onclick="carregarClientes()">Tentar novamente</button>`, true);
+            throw erro;
+        } finally {
+            carregando = false;
+        }
+    }
+
+    async function abrirCRM() {
+        const painel = document.getElementById("panelCRM") || document.getElementById("painelCRM") || document.getElementById("crm");
+        if (painel) {
+            painel.style.display = "";
+            painel.classList.add("active");
+        }
+        return carregarClientes();
+    }
+
+    async function iniciarCRM() {
+        return carregarClientes();
+    }
+
+    function verClienteCRM(id) {
+        alert(`Cliente: ${id}`);
+    }
+
+    window.carregarClientes = carregarClientes;
+    window.abrirCRM = abrirCRM;
+    window.iniciarCRM = iniciarCRM;
+    window.verClienteCRM = verClienteCRM;
+    window.abrirDetalhesCRM = abrirDetalhesCRM;
+    window.fecharDetalhesCRM = fecharDetalhesCRM;
+
+    console.log("[CRM] CRM de vendas com detalhes carregado.");
 })();
 
 document.addEventListener("keydown", function (evento) {
@@ -1126,51 +1238,3 @@ document.addEventListener("keydown", function (evento) {
 });
 
 
-/* ===== CRM TABELA CORRIGIDA ===== */
-#panelCRM #tabelaClientes {
-    width: 100%;
-    min-width: 1050px;
-    border-collapse: collapse;
-}
-
-#panelCRM #tabelaClientes th,
-#panelCRM #tabelaClientes td {
-    padding: 12px 14px;
-    text-align: left;
-    vertical-align: middle;
-    white-space: nowrap;
-}
-
-#panelCRM #tabelaClientes tbody tr {
-    cursor: pointer;
-}
-
-#panelCRM .crm-acoes {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-#panelCRM .crm-ver-detalhes,
-#panelCRM .crm-gestao-cliente {
-    border: 0;
-    border-radius: 8px;
-    padding: 8px 12px;
-    cursor: pointer;
-    font-weight: 700;
-}
-
-#panelCRM .crm-ver-detalhes {
-    background: #2563eb;
-    color: #fff;
-}
-
-#panelCRM .crm-gestao-cliente {
-    background: #0ea5e9;
-    color: #fff;
-}
-
-#panelCRM .crm-ver-detalhes:hover,
-#panelCRM .crm-gestao-cliente:hover {
-    filter: brightness(1.08);
-}
