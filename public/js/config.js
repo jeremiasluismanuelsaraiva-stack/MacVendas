@@ -45,6 +45,21 @@
     // =================================================
 
     async function obterConfiguracao() {
+
+        // Garantir UID + API Key antes da chamada
+        if (
+            typeof window.garantirCredenciaisAPI === "function"
+        ) {
+            const autenticado =
+                await window.garantirCredenciaisAPI();
+
+            if (!autenticado) {
+                throw new Error(
+                    "Usuário não autenticado ou credenciais da API não encontradas."
+                );
+            }
+        }
+
         if (
             window.MOZ_API &&
             typeof window.MOZ_API.get === "function"
@@ -374,6 +389,20 @@
 
         try {
 
+            // Garantir UID + API Key antes da gravação
+            if (
+                typeof window.garantirCredenciaisAPI === "function"
+            ) {
+                const autenticado =
+                    await window.garantirCredenciaisAPI();
+
+                if (!autenticado) {
+                    throw new Error(
+                        "Usuário não autenticado ou credenciais da API não encontradas."
+                    );
+                }
+            }
+
             aplicarTema(
                 dados.tema
             );
@@ -407,9 +436,16 @@
             // CONFIGURAÇÃO REALMENTE SALVA
             // =========================================
 
+            const configuracaoSalva =
+                json.configuracao || {};
+
             window.MOZ_TERMINAL_CONFIG =
-                json.configuracao?.terminal ||
+                configuracaoSalva.terminal ||
                 dados.terminal;
+
+            if (configuracaoSalva.tema) {
+                aplicarTema(configuracaoSalva.tema);
+            }
 
             const terminalSalvo =
                 window.MOZ_TERMINAL_CONFIG || {};
