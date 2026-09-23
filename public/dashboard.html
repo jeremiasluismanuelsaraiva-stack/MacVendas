@@ -612,32 +612,6 @@
                 var(--success);
         }
 
-        .status.concluido {
-            background: rgba(0, 204, 102, 0.12);
-            color: var(--success);
-        }
-
-        .status.processando {
-            background: rgba(59, 130, 246, 0.12);
-            color: var(--accent-color);
-        }
-
-        .status.pendente {
-            background: rgba(245, 158, 11, 0.12);
-            color: #d97706;
-        }
-
-        .status.falhou {
-            background: rgba(239, 68, 68, 0.12);
-            color: #dc2626;
-        }
-
-        .status.cancelado {
-            background: rgba(107, 114, 128, 0.12);
-            color: var(--text-secondary);
-        }
-
-
         .panel {
             width: 100%;
         }
@@ -773,22 +747,59 @@
             }
         }
 
+        /* =====================================================
+           MOZ TECH - ÁREA DOS GRÁFICOS
+           ===================================================== */
 
-        /* Gráficos de vendas */
         .graficos-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
-        .grafico-card { min-width: 0; margin-bottom: 0; }
-        .grafico-card h2 { margin: 0 0 16px; font-size: 19px; }
-        .grafico-area { position: relative; width: 100%; height: 260px; }
-        .grafico-area canvas { width: 100% !important; height: 100% !important; }
-        .grafico-card.meses { grid-column: 1 / -1; }
-        @media (max-width: 768px) {
-            .graficos-grid { grid-template-columns: 1fr; }
-            .grafico-card.meses { grid-column: auto; }
+
+        .grafico-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            min-width: 0;
+        }
+
+        .grafico-card h3 {
+            margin: 0 0 5px;
+            color: var(--text-primary);
+            font-size: 17px;
+        }
+
+        .grafico-card p {
+            margin: 0 0 15px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .grafico-container {
+            position: relative;
+            width: 100%;
+            height: 310px;
+        }
+
+        .grafico-card.radial .grafico-container {
+            height: 340px;
+        }
+
+        @media (max-width: 900px) {
+            .graficos-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .grafico-container,
+            .grafico-card.radial .grafico-container {
+                height: 280px;
+            }
         }
 
     </style>
@@ -1227,19 +1238,36 @@
 
             </div>
 
+            <!-- =====================================================
+                 GRÁFICOS MOZ TECH
+                 ===================================================== -->
+
             <div class="graficos-grid">
-                <div class="section grafico-card">
-                    <h2><i class="fas fa-chart-column"></i> Vendas de Hoje</h2>
-                    <div class="grafico-area"><canvas id="graficoHoje" aria-label="Gráfico de vendas de hoje" role="img"></canvas></div>
+
+                <div class="grafico-card">
+                    <h3>📊 Vendas semanal</h3>
+                    <p>Vendas de segunda a domingo. Vermelho = alta, laranja = normal, azul = baixa.</p>
+                    <div class="grafico-container">
+                        <canvas id="graficoVendasEmpilhadas"></canvas>
+                    </div>
                 </div>
-                <div class="section grafico-card">
-                    <h2><i class="fas fa-chart-line"></i> Vendas por Dia</h2>
-                    <div class="grafico-area"><canvas id="graficoDias" aria-label="Gráfico de vendas por dia" role="img"></canvas></div>
+
+                <div class="grafico-card">
+                    <h3>📈 Vendas × Faturamento</h3>
+                    <p>Comparação semanal entre quantidade de vendas e faturamento em MT.</p>
+                    <div class="grafico-container">
+                        <canvas id="graficoVendasFaturamento"></canvas>
+                    </div>
                 </div>
-                <div class="section grafico-card meses">
-                    <h2><i class="fas fa-chart-bar"></i> Vendas por Mês</h2>
-                    <div class="grafico-area"><canvas id="graficoMeses" aria-label="Gráfico de vendas por mês" role="img"></canvas></div>
+
+                <div class="grafico-card radial">
+                    <h3>🌀 Vendas semanais — radial</h3>
+                    <p>Cada anel representa um dia da semana.</p>
+                    <div class="grafico-container">
+                        <canvas id="graficoSemanalRadial"></canvas>
+                    </div>
                 </div>
+
             </div>
 
             <div class="section">
@@ -1261,15 +1289,7 @@
                             <tr>
 
                                 <th>
-                                    Cliente
-                                </th>
-
-                                <th>
-                                    Nº Cliente
-                                </th>
-
-                                <th>
-                                    Nº que recebeu
+                                    Número
                                 </th>
 
                                 <th>
@@ -1293,7 +1313,7 @@
                             <tr>
 
                                 <td
-                                    colspan="6"
+                                    colspan="4"
                                     style="
                                         text-align:center;
                                         padding:20px;
