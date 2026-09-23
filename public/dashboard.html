@@ -612,6 +612,32 @@
                 var(--success);
         }
 
+        .status.concluido {
+            background: rgba(0, 204, 102, 0.12);
+            color: var(--success);
+        }
+
+        .status.processando {
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--accent-color);
+        }
+
+        .status.pendente {
+            background: rgba(245, 158, 11, 0.12);
+            color: #d97706;
+        }
+
+        .status.falhou {
+            background: rgba(239, 68, 68, 0.12);
+            color: #dc2626;
+        }
+
+        .status.cancelado {
+            background: rgba(107, 114, 128, 0.12);
+            color: var(--text-secondary);
+        }
+
+
         .panel {
             width: 100%;
         }
@@ -1202,7 +1228,15 @@
                             <tr>
 
                                 <th>
-                                    Número
+                                    Cliente
+                                </th>
+
+                                <th>
+                                    Nº Cliente
+                                </th>
+
+                                <th>
+                                    Nº que recebeu
                                 </th>
 
                                 <th>
@@ -1226,7 +1260,7 @@
                             <tr>
 
                                 <td
-                                    colspan="4"
+                                    colspan="6"
                                     style="
                                         text-align:center;
                                         padding:20px;
