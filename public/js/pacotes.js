@@ -13,6 +13,7 @@
  */
 
 const PACOTES_API = "/api";
+const PACOTES_VERSAO = "pacotes-final-20260923";
 let pacotesData = [];
 let pacoteEditando = null;
 let filtroPacoteAtual = "todos";
@@ -133,54 +134,82 @@ async function garantirPacotesAPI() {
 }
 
 async function chamarPacotesAPI(endpoint, options = {}) {
-    await garantirPacotesAPI();
-
     const metodo = String(options.method || "GET").toUpperCase();
 
-    if (window.MOZ_API) {
-        if (metodo === "GET" && typeof window.MOZ_API.get === "function") {
-            return window.MOZ_API.get(endpoint);
-        }
-
-        if (metodo === "POST" && typeof window.MOZ_API.post === "function") {
-            return window.MOZ_API.post(endpoint, options.body || {});
-        }
-
-        if (metodo === "PUT" && typeof window.MOZ_API.put === "function") {
-            return window.MOZ_API.put(endpoint, options.body || {});
-        }
-
-        if (metodo === "DELETE" && typeof window.MOZ_API.delete === "function") {
-            return window.MOZ_API.delete(endpoint);
-        }
-    }
-
-    const apiKey = localStorage.getItem("apiKey") || "";
-    const resposta = await fetch(PACOTES_API + endpoint, {
-        method: metodo,
-        headers: {
-            "Content-Type": "application/json",
-            ...(apiKey ? { "x-api-key": apiKey } : {})
-        },
-        body: metodo === "GET"
-            ? undefined
-            : JSON.stringify(options.body || {})
-    });
-
-    let json = {};
     try {
-        json = await resposta.json();
-    } catch (_) {}
+        if (typeof window.garantirCredenciaisAPI === "function") {
+            try {
+                await window.garantirCredenciaisAPI();
+            } catch (e) {
+                console.warn("[PACOTES] Credenciais:", e.message);
+            }
+        }
 
-    if (!resposta.ok) {
-        throw new Error(
-            json.error ||
-            json.message ||
-            `HTTP ${resposta.status}`
-        );
+        if (window.MOZ_API) {
+            if (metodo === "GET" && typeof window.MOZ_API.get === "function") {
+                return await window.MOZ_API.get(endpoint);
+            }
+
+            if (metodo === "POST" && typeof window.MOZ_API.post === "function") {
+                return await window.MOZ_API.post(endpoint, options.body || {});
+            }
+
+            if (metodo === "PUT" && typeof window.MOZ_API.put === "function") {
+                return await window.MOZ_API.put(endpoint, options.body || {});
+            }
+
+            if (metodo === "DELETE" && typeof window.MOZ_API.delete === "function") {
+                return await window.MOZ_API.delete(endpoint);
+            }
+        }
+
+        const apiKey = localStorage.getItem("apiKey") || "";
+        const uid = localStorage.getItem("uid") || "";
+
+        const url = PACOTES_API + endpoint +
+            (metodo === "GET"
+                ? (endpoint.includes("?") ? "&" : "?") + "_v=" + Date.now()
+                : "");
+
+        console.log("[PACOTES] Requisição:", metodo, url);
+
+        const resposta = await fetch(url, {
+            method: metodo,
+            cache: "no-store",
+            headers: {
+                "Content-Type": "application/json",
+                ...(apiKey ? { "x-api-key": apiKey } : {}),
+                ...(uid ? { "x-uid": uid } : {})
+            },
+            body: metodo === "GET"
+                ? undefined
+                : JSON.stringify(options.body || {})
+        });
+
+        const texto = await resposta.text();
+
+        let json = {};
+        try {
+            json = texto ? JSON.parse(texto) : {};
+        } catch (_) {
+            json = { message: texto };
+        }
+
+        console.log("[PACOTES] HTTP:", resposta.status, json);
+
+        if (!resposta.ok) {
+            throw new Error(
+                json.error ||
+                json.message ||
+                `HTTP ${resposta.status}`
+            );
+        }
+
+        return json;
+    } catch (erro) {
+        console.error("[PACOTES] API ERROR:", erro);
+        throw erro;
     }
-
-    return json;
 }
 
 function normalizarPacote(p) {
@@ -734,8 +763,14 @@ async function carregarPacotes() {
         if (container) {
             container.innerHTML = `
                 <div class="empty-state" style="color:#ef4444;">
-                    Não foi possível carregar os pacotes.<br>
-                    <small>${escapar(erro.message)}</small>
+                    <strong>Não foi possível carregar os pacotes.</strong>
+                    <br>
+                    <small>${escapar(erro.message || "Erro desconhecido")}</small>
+                    <br><br>
+                    <button type="button" class="btn btn-outline"
+                        onclick="carregarPacotes()">
+                        Tentar novamente
+                    </button>
                 </div>
             `;
         }
@@ -745,6 +780,3 @@ async function carregarPacotes() {
 window.carregarPacotes = carregarPacotes;
 window.abrirModalPacote = abrirModalPacoteMac;
 window.salvarPacote = salvarPacoteMac;
-window.excluirPacote = excluirPacoteMac;
-
-console.log("[MACVENDAS] pacotes.js iniciado.");
