@@ -1,20 +1,151 @@
-// =====================================================
-// MACVENDAS
-// API DE VENDAS - FIREBASE
-// =====================================================
-
 "use strict";
 
+// =====================================================
+// MACVENDAS
+// API DE VENDAS
+// ARMAZENAMENTO JSON
+// =====================================================
+
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 
 const router = express.Router();
-
-const { db } =
-    require("./firebase-admin");
 
 const autenticarAPI =
     require("./auth");
 
+// =====================================================
+// DIRETÓRIO DE DADOS
+// =====================================================
+
+const DATA_DIR =
+    path.join(
+        __dirname,
+        "data"
+    );
+
+const ARQUIVO_COMPRAS =
+    path.join(
+        DATA_DIR,
+        "compras.json"
+    );
+
+const ARQUIVO_CLIENTES =
+    path.join(
+        DATA_DIR,
+        "clientes.json"
+    );
+
+// =====================================================
+// GARANTIR DIRETÓRIO E ARQUIVOS
+// =====================================================
+
+function garantirArquivos() {
+
+    if (
+        !fs.existsSync(
+            DATA_DIR
+        )
+    ) {
+
+        fs.mkdirSync(
+            DATA_DIR,
+            {
+                recursive: true
+            }
+        );
+    }
+
+    if (
+        !fs.existsSync(
+            ARQUIVO_COMPRAS
+        )
+    ) {
+
+        fs.writeFileSync(
+            ARQUIVO_COMPRAS,
+            "[]",
+            "utf8"
+        );
+    }
+
+    if (
+        !fs.existsSync(
+            ARQUIVO_CLIENTES
+        )
+    ) {
+
+        fs.writeFileSync(
+            ARQUIVO_CLIENTES,
+            "[]",
+            "utf8"
+        );
+    }
+}
+
+// =====================================================
+// LER JSON
+// =====================================================
+
+function lerJSON(arquivo) {
+
+    garantirArquivos();
+
+    try {
+
+        const conteudo =
+            fs.readFileSync(
+                arquivo,
+                "utf8"
+            ).trim();
+
+        if (!conteudo) {
+            return [];
+        }
+
+        const dados =
+            JSON.parse(
+                conteudo
+            );
+
+        return Array.isArray(dados)
+            ? dados
+            : [];
+
+    } catch (erro) {
+
+        console.error(
+            "[API VENDAS] Erro ao ler:",
+            arquivo,
+            erro
+        );
+
+        return [];
+    }
+}
+
+// =====================================================
+// SALVAR JSON
+// =====================================================
+
+function salvarJSON(
+    arquivo,
+    dados
+) {
+
+    garantirArquivos();
+
+    fs.writeFileSync(
+        arquivo,
+        JSON.stringify(
+            dados,
+            null,
+            4
+        ),
+        "utf8"
+    );
+}
 
 // =====================================================
 // FUNÇÕES AUXILIARES
@@ -29,7 +160,6 @@ function numeroValor(valor) {
     ) {
 
         return 0;
-
     }
 
     const n =
@@ -38,25 +168,33 @@ function numeroValor(valor) {
     return Number.isFinite(n)
         ? n
         : 0;
-
 }
-
 
 function limparNumero(numero) {
 
     return String(numero)
-        .replace(/\D/g, "");
-
+        .replace(
+            /\D/g,
+            ""
+        );
 }
-
 
 function agora() {
 
     return new Date()
         .toISOString();
-
 }
 
+function gerarId() {
+
+    return (
+        Date.now().toString() +
+        "-" +
+        Math.random()
+            .toString(36)
+            .substring(2, 8)
+    );
+}
 
 // =====================================================
 // LISTAR VENDAS
@@ -73,44 +211,25 @@ router.get(
             const uid =
                 req.usuario.uid;
 
-
-            // =============================================
-            // BUSCAR VENDAS DO USUÁRIO
-            // =============================================
-
-            const snapshot =
-                await db
-                    .ref(
-                        "vendas/" + uid
-                    )
-                    .once("value");
-
-
             const dados =
-                snapshot.val() || {};
+                lerJSON(
+                    ARQUIVO_COMPRAS
+                );
 
-
-            // =============================================
-            // TRANSFORMAR EM ARRAY
-            // =============================================
+            /*
+             * Somente vendas do usuário.
+             */
 
             const vendas =
-                Object.entries(dados)
-                    .map(
-                        ([id, venda]) => ({
-
-                            id,
-
-                            ...venda
-
-                        })
+                dados
+                    .filter(
+                        venda =>
+                            String(
+                                venda.uid
+                            ) ===
+                            String(uid)
                     )
                     .reverse();
-
-
-            // =============================================
-            // RESPOSTA
-            // =============================================
 
             return res.json({
 
@@ -120,14 +239,12 @@ router.get(
 
             });
 
-        }
-        catch (err) {
+        } catch (err) {
 
             console.error(
                 "[API VENDAS] Erro ao listar:",
                 err
             );
-
 
             return res.status(500).json({
 
@@ -138,12 +255,9 @@ router.get(
                     "Erro ao listar vendas."
 
             });
-
         }
-
     }
 );
-
 
 // =====================================================
 // BUSCAR VENDA
@@ -160,39 +274,29 @@ router.get(
             const uid =
                 req.usuario.uid;
 
-
             const id =
                 String(
                     req.params.id
                 );
 
+            const vendas =
+                lerJSON(
+                    ARQUIVO_COMPRAS
+                );
 
-            // =============================================
-            // REFERÊNCIA
-            // =============================================
+            const venda =
+                vendas.find(
+                    item =>
+                        String(
+                            item.id
+                        ) === id &&
+                        String(
+                            item.uid
+                        ) ===
+                        String(uid)
+                );
 
-            const vendaRef =
-                db
-                    .ref(
-                        "vendas/" +
-                        uid +
-                        "/" +
-                        id
-                    );
-
-
-            const snapshot =
-                await vendaRef
-                    .once("value");
-
-
-            // =============================================
-            // NÃO ENCONTRADA
-            // =============================================
-
-            if (
-                !snapshot.exists()
-            ) {
+            if (!venda) {
 
                 return res.status(404).json({
 
@@ -202,40 +306,22 @@ router.get(
                         "Venda não encontrada."
 
                 });
-
             }
-
-
-            // =============================================
-            // VENDA
-            // =============================================
-
-            const venda =
-                snapshot.val();
-
 
             return res.json({
 
                 success: true,
 
-                venda: {
-
-                    id,
-
-                    ...venda
-
-                }
+                venda
 
             });
 
-        }
-        catch (err) {
+        } catch (err) {
 
             console.error(
                 "[API VENDAS] Erro ao buscar:",
                 err
             );
-
 
             return res.status(500).json({
 
@@ -246,12 +332,9 @@ router.get(
                     "Erro ao buscar venda."
 
             });
-
         }
-
     }
 );
-
 
 // =====================================================
 // ADICIONAR VENDA
@@ -268,7 +351,6 @@ router.post(
             const uid =
                 req.usuario.uid;
 
-
             // =============================================
             // DADOS RECEBIDOS
             // =============================================
@@ -277,19 +359,16 @@ router.post(
                 req.body.numero ||
                 "";
 
-
             const mb =
                 numeroValor(
                     req.body.mb
                 );
-
 
             const gbPacote =
                 numeroValor(
                     req.body.gbPacote ??
                     req.body.gb_pacote
                 );
-
 
             const valorPacote =
                 numeroValor(
@@ -298,40 +377,32 @@ router.post(
                     req.body.valor
                 );
 
-
             const custo =
                 numeroValor(
                     req.body.custo
                 );
 
-
             const grupo =
                 req.body.grupo ||
                 "GRUPO_PADRAO";
-
 
             const tipo =
                 req.body.tipo ||
                 "normal";
 
-
             const vantagem =
                 req.body.vantagem ||
                 "";
-
 
             const status =
                 req.body.status ||
                 "Concluído";
 
-
             // =============================================
             // VALIDAR NÚMERO
             // =============================================
 
-            if (
-                !numero
-            ) {
+            if (!numero) {
 
                 return res.status(400).json({
 
@@ -341,9 +412,7 @@ router.post(
                         "Número do cliente é obrigatório."
 
                 });
-
             }
-
 
             // =============================================
             // CALCULAR GB
@@ -354,7 +423,6 @@ router.post(
                     ? gbPacote
                     : mb / 1024;
 
-
             // =============================================
             // CALCULAR LUCRO
             // =============================================
@@ -363,23 +431,15 @@ router.post(
                 valorPacote -
                 custo;
 
-
             // =============================================
-            // CRIAR REFERÊNCIA FIREBASE
+            // GERAR ID
             // =============================================
-
-            const vendaRef =
-                db
-                    .ref(
-                        "vendas/" +
-                        uid
-                    )
-                    .push();
-
 
             const id =
-                vendaRef.key;
+                gerarId();
 
+            const data =
+                agora();
 
             // =============================================
             // CRIAR VENDA
@@ -427,22 +487,34 @@ router.post(
                 status,
 
                 createdAt:
-                    agora(),
+                    data,
 
                 criadoEm:
-                    agora()
+                    data
 
             };
 
+            // =============================================
+            // LER COMPRAS
+            // =============================================
+
+            const vendas =
+                lerJSON(
+                    ARQUIVO_COMPRAS
+                );
 
             // =============================================
             // GUARDAR VENDA
             // =============================================
 
-            await vendaRef.set(
+            vendas.unshift(
                 venda
             );
 
+            salvarJSON(
+                ARQUIVO_COMPRAS,
+                vendas
+            );
 
             // =============================================
             // ATUALIZAR CLIENTE
@@ -453,36 +525,94 @@ router.post(
                     numero
                 );
 
-
             if (
                 numeroLimpo
             ) {
 
-                const clienteRef =
-                    db
-                        .ref(
-                            "clientes/" +
-                            uid +
-                            "/" +
+                const clientes =
+                    lerJSON(
+                        ARQUIVO_CLIENTES
+                    );
+
+                const indiceCliente =
+                    clientes.findIndex(
+                        cliente =>
+                            String(
+                                cliente.uid
+                            ) ===
+                            String(uid) &&
+                            limparNumero(
+                                cliente.numero ||
+                                cliente.telefone ||
+                                cliente.id ||
+                                ""
+                            ) ===
                             numeroLimpo
-                        );
+                    );
 
+                /*
+                 * Se o cliente já existir,
+                 * atualizar os dados da compra.
+                 */
 
-                await clienteRef.update({
+                if (
+                    indiceCliente !== -1
+                ) {
 
-                    numero:
-                        String(numero),
+                    clientes[
+                        indiceCliente
+                    ] = {
 
-                    ultimaCompra:
-                        agora(),
+                        ...clientes[
+                            indiceCliente
+                        ],
 
-                    ultimaVenda:
-                        id
+                        numero:
+                            String(numero),
 
-                });
+                        ultimaCompra:
+                            agora(),
 
+                        ultimaVenda:
+                            id
+
+                    };
+
+                }
+                /*
+                 * Se ainda não existir,
+                 * criar automaticamente.
+                 */
+
+                else {
+
+                    clientes.unshift({
+
+                        id:
+                            numeroLimpo,
+
+                        uid,
+
+                        numero:
+                            String(numero),
+
+                        ultimaCompra:
+                            agora(),
+
+                        ultimaVenda:
+                            id,
+
+                        createdAt:
+                            agora()
+
+                    });
+                }
+
+                salvarJSON(
+                    ARQUIVO_CLIENTES,
+                    clientes
+                );
             }
-
 
             // =============================================
             // RESPOSTA
@@ -499,14 +629,12 @@ router.post(
 
             });
 
-        }
-        catch (err) {
+        } catch (err) {
 
             console.error(
                 "[API VENDAS] Erro ao adicionar:",
                 err
             );
-
 
             return res.status(500).json({
 
@@ -517,12 +645,9 @@ router.post(
                     "Erro ao adicionar venda."
 
             });
-
         }
-
     }
 );
-
 
 // =====================================================
 // APAGAR VENDA
@@ -539,38 +664,30 @@ router.delete(
             const uid =
                 req.usuario.uid;
 
-
             const id =
                 String(
                     req.params.id
                 );
 
+            const vendas =
+                lerJSON(
+                    ARQUIVO_COMPRAS
+                );
 
-            // =============================================
-            // REFERÊNCIA
-            // =============================================
-
-            const vendaRef =
-                db
-                    .ref(
-                        "vendas/" +
-                        uid +
-                        "/" +
-                        id
-                    );
-
-
-            const snapshot =
-                await vendaRef
-                    .once("value");
-
-
-            // =============================================
-            // VERIFICAR
-            // =============================================
+            const indice =
+                vendas.findIndex(
+                    venda =>
+                        String(
+                            venda.id
+                        ) === id &&
+                        String(
+                            venda.uid
+                        ) ===
+                        String(uid)
+                );
 
             if (
-                !snapshot.exists()
+                indice === -1
             ) {
 
                 return res.status(404).json({
@@ -581,20 +698,22 @@ router.delete(
                         "Venda não encontrada."
 
                 });
-
             }
 
+            /*
+             * Remover somente
+             * a venda do usuário.
+             */
 
-            // =============================================
-            // APAGAR
-            // =============================================
+            vendas.splice(
+                indice,
+                1
+            );
 
-            await vendaRef.remove();
-
-
-            // =============================================
-            // RESPOSTA
-            // =============================================
+            salvarJSON(
+                ARQUIVO_COMPRAS,
+                vendas
+            );
 
             return res.json({
 
@@ -607,14 +726,12 @@ router.delete(
 
             });
 
-        }
-        catch (err) {
+        } catch (err) {
 
             console.error(
                 "[API VENDAS] Erro ao apagar:",
                 err
             );
-
 
             return res.status(500).json({
 
@@ -625,12 +742,9 @@ router.delete(
                     "Erro ao apagar venda."
 
             });
-
         }
-
     }
 );
-
 
 // =====================================================
 // EXPORTAR
@@ -638,3 +752,4 @@ router.delete(
 
 module.exports =
     router;
+
