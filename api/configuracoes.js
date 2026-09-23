@@ -1,11 +1,96 @@
 "use strict";
 
 const express = require("express");
-const router = express.Router();
+const fs = require("fs");
+const path = require("path");
 
-const { db } = require("./firebase-admin");
+const router = express.Router();
 const autenticarAPI = require("./auth");
 
+// =====================================================
+// ARQUIVO DE CONFIGURAÇÕES
+// =====================================================
+
+const DATA_DIR = path.join(__dirname, "data");
+const ARQUIVO = path.join(DATA_DIR, "configuracoes.json");
+
+// =====================================================
+// GARANTIR DIRETÓRIO E ARQUIVO
+// =====================================================
+
+function garantirArquivo() {
+
+    if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, {
+            recursive: true
+        });
+    }
+
+    if (!fs.existsSync(ARQUIVO)) {
+        fs.writeFileSync(
+            ARQUIVO,
+            JSON.stringify([], null, 2),
+            "utf8"
+        );
+    }
+}
+
+// =====================================================
+// LER CONFIGURAÇÕES
+// =====================================================
+
+function lerConfiguracoes() {
+
+    garantirArquivo();
+
+    try {
+
+        const conteudo =
+            fs.readFileSync(
+                ARQUIVO,
+                "utf8"
+            );
+
+        if (!conteudo.trim()) {
+            return [];
+        }
+
+        const dados =
+            JSON.parse(conteudo);
+
+        return Array.isArray(dados)
+            ? dados
+            : [];
+
+    } catch (erro) {
+
+        console.error(
+            "[CONFIGURAÇÕES] Erro ao ler arquivo:",
+            erro
+        );
+
+        return [];
+    }
+}
+
+// =====================================================
+// SALVAR CONFIGURAÇÕES
+// =====================================================
+
+function salvarConfiguracoes(configuracoes) {
+
+    garantirArquivo();
+
+    fs.writeFileSync(
+        ARQUIVO,
+        JSON.stringify(
+            configuracoes,
+            null,
+            2
+        ),
+        "utf8"
+    );
+}
 
 // =====================================================
 // VALOR NUMÉRICO
@@ -18,9 +103,7 @@ function numero(valor) {
     return Number.isFinite(n)
         ? n
         : 0;
-
 }
-
 
 // =====================================================
 // DATA ATUAL
@@ -29,28 +112,7 @@ function numero(valor) {
 function agora() {
 
     return new Date().toISOString();
-
 }
-
-
-// =====================================================
-// REFERÊNCIA DA CONFIGURAÇÃO
-// =====================================================
-//
-// Cada usuário possui apenas uma configuração:
-//
-// configuracoes/{uid}
-//
-// =====================================================
-
-function configuracaoRef(uid) {
-
-    return db.ref(
-        "configuracoes/" + uid
-    );
-
-}
-
 
 // =====================================================
 // CONFIGURAÇÃO PADRÃO
@@ -58,18 +120,18 @@ function configuracaoRef(uid) {
 
 function configuracaoPadrao(uid, usuario) {
 
+    const data = agora();
+
     return {
 
         // =================================================
         // IDENTIFICAÇÃO
         // =================================================
 
-        uid:
-            uid,
+        uid: uid,
 
         apiKey:
             usuario.apiKey || "",
-
 
         // =================================================
         // EMPRESA
@@ -77,6 +139,7 @@ function configuracaoPadrao(uid, usuario) {
 
         nomeEmpresa:
             usuario.fullName ||
+            usuario.nome ||
             "MACVENDAS",
 
         telefone:
@@ -86,14 +149,12 @@ function configuracaoPadrao(uid, usuario) {
             usuario.email ||
             "",
 
-
         // =================================================
         // MOEDA
         // =================================================
 
         moeda:
             "MT",
-
 
         // =================================================
         // VALORES
@@ -105,7 +166,6 @@ function configuracaoPadrao(uid, usuario) {
         custoGB:
             21,
 
-
         // =================================================
         // TEMA
         // =================================================
@@ -113,14 +173,12 @@ function configuracaoPadrao(uid, usuario) {
         tema:
             "dark",
 
-
         // =================================================
         // IDIOMA
         // =================================================
 
         idioma:
             "pt",
-
 
         // =================================================
         // TERMINAL / SERVIDOR
@@ -142,24 +200,19 @@ function configuracaoPadrao(uid, usuario) {
 
             token:
                 ""
-
         },
-
 
         // =================================================
         // DATAS
         // =================================================
 
         criadoEm:
-            agora(),
+            data,
 
         atualizado:
-            agora()
-
+            data
     };
-
 }
-
 
 // =====================================================
 // NORMALIZAR CONFIGURAÇÃO DO TERMINAL
@@ -173,7 +226,6 @@ function normalizarTerminal(terminal) {
             ? terminal
             : {};
 
-
     const metodosPermitidos = [
         "GET",
         "POST",
@@ -182,21 +234,17 @@ function normalizarTerminal(terminal) {
         "DELETE"
     ];
 
-
     let metodo =
         String(
-            terminal.metodo || "POST"
+            terminal.metodo ||
+            "POST"
         )
-        .trim()
-        .toUpperCase();
-
+            .trim()
+            .toUpperCase();
 
     if (!metodosPermitidos.includes(metodo)) {
-
         metodo = "POST";
-
     }
-
 
     return {
 
@@ -220,21 +268,32 @@ function normalizarTerminal(terminal) {
             String(
                 terminal.token || ""
             ).trim()
-
     };
-
 }
-
 
 // =====================================================
 // NORMALIZAR CONFIGURAÇÃO COMPLETA
 // =====================================================
 
-function normalizarConfiguracao(configuracao, uid, usuario) {
+function normalizarConfiguracao(
+    configuracao,
+    uid,
+    usuario
+) {
+
+    configuracao =
+        configuracao &&
+        typeof configuracao === "object"
+            ? configuracao
+            : {};
 
     const resultado = {
 
         ...configuracao,
+
+        // =================================================
+        // IDENTIFICAÇÃO
+        // =================================================
 
         uid:
             uid,
@@ -244,11 +303,16 @@ function normalizarConfiguracao(configuracao, uid, usuario) {
             configuracao.apiKey ||
             "",
 
+        // =================================================
+        // EMPRESA
+        // =================================================
+
         nomeEmpresa:
             configuracao.nomeEmpresa !== undefined
                 ? configuracao.nomeEmpresa
                 : (
                     usuario.fullName ||
+                    usuario.nome ||
                     "MACVENDAS"
                 ),
 
@@ -265,33 +329,61 @@ function normalizarConfiguracao(configuracao, uid, usuario) {
                     ""
                 ),
 
+        // =================================================
+        // MOEDA
+        // =================================================
+
         moeda:
             configuracao.moeda !== undefined
                 ? configuracao.moeda
                 : "MT",
+
+        // =================================================
+        // VENDA POR GB
+        // =================================================
 
         vendaGB:
             configuracao.vendaGB !== undefined
                 ? numero(configuracao.vendaGB)
                 : 28,
 
+        // =================================================
+        // CUSTO POR GB
+        // =================================================
+
         custoGB:
             configuracao.custoGB !== undefined
                 ? numero(configuracao.custoGB)
                 : 21,
 
+        // =================================================
+        // TEMA
+        // =================================================
+
         tema:
             configuracao.tema ||
             "dark",
+
+        // =================================================
+        // IDIOMA
+        // =================================================
 
         idioma:
             configuracao.idioma ||
             "pt",
 
+        // =================================================
+        // TERMINAL
+        // =================================================
+
         terminal:
             normalizarTerminal(
                 configuracao.terminal
             ),
+
+        // =================================================
+        // DATAS
+        // =================================================
 
         criadoEm:
             configuracao.criadoEm ||
@@ -299,16 +391,13 @@ function normalizarConfiguracao(configuracao, uid, usuario) {
 
         atualizado:
             agora()
-
     };
-
 
     // =================================================
     // REMOVER CONFIGURAÇÃO USSD ANTIGA
     // =================================================
 
     delete resultado.ussd;
-
 
     // =================================================
     // REMOVER CAMPOS ANTIGOS DO TERMINAL
@@ -321,14 +410,26 @@ function normalizarConfiguracao(configuracao, uid, usuario) {
         delete resultado.terminal.porta;
 
         delete resultado.terminal.protocolo;
-
     }
 
-
     return resultado;
-
 }
 
+// =====================================================
+// ENCONTRAR CONFIGURAÇÃO DO USUÁRIO
+// =====================================================
+
+function encontrarConfiguracao(
+    configuracoes,
+    uid
+) {
+
+    return configuracoes.find(
+        item =>
+            item &&
+            String(item.uid) === String(uid)
+    );
+}
 
 // =====================================================
 // GET /api/configuracoes
@@ -341,13 +442,8 @@ router.get(
 
         try {
 
-            // =================================================
-            // UID DO USUÁRIO
-            // =================================================
-
             const uid =
                 req.usuario?.uid;
-
 
             if (!uid) {
 
@@ -357,63 +453,47 @@ router.get(
 
                     error:
                         "Usuário não autenticado."
-
                 });
-
             }
-
 
             console.log(
                 "[CONFIGURAÇÕES] GET:",
                 uid
             );
 
+            const configuracoes =
+                lerConfiguracoes();
 
-            // =================================================
-            // REFERÊNCIA FIREBASE
-            // =================================================
-
-            const referencia =
-                configuracaoRef(uid);
-
-
-            // =================================================
-            // BUSCAR CONFIGURAÇÃO
-            // =================================================
-
-            const snapshot =
-                await referencia.once(
-                    "value"
+            let configuracao =
+                encontrarConfiguracao(
+                    configuracoes,
+                    uid
                 );
 
-
             // =================================================
-            // SE NÃO EXISTIR
+            // SE NÃO EXISTIR, CRIAR PADRÃO
             // =================================================
 
-            if (!snapshot.exists()) {
+            if (!configuracao) {
 
-                const configuracao =
+                configuracao =
                     configuracaoPadrao(
                         uid,
                         req.usuario
                     );
 
-
-                // =================================================
-                // CRIAR CONFIGURAÇÃO PADRÃO
-                // =================================================
-
-                await referencia.set(
+                configuracoes.push(
                     configuracao
                 );
 
+                salvarConfiguracoes(
+                    configuracoes
+                );
 
                 console.log(
                     "[CONFIGURAÇÕES] Configuração padrão criada:",
                     uid
                 );
-
 
                 return res.json({
 
@@ -421,50 +501,46 @@ router.get(
 
                     configuracao:
                         configuracao
-
                 });
-
             }
-
-
-            // =================================================
-            // CONFIGURAÇÃO EXISTENTE
-            // =================================================
-
-            const configuracaoAtual =
-                snapshot.val() || {};
-
 
             // =================================================
             // NORMALIZAR
             // =================================================
 
-            const configuracao =
+            configuracao =
                 normalizarConfiguracao(
-                    configuracaoAtual,
+                    configuracao,
                     uid,
                     req.usuario
                 );
 
-
             // =================================================
-            // SALVAR CORREÇÕES
+            // ATUALIZAR NO ARRAY
             // =================================================
 
-            await referencia.set(
-                configuracao
-            );
+            const indice =
+                configuracoes.findIndex(
+                    item =>
+                        item &&
+                        String(item.uid) ===
+                            String(uid)
+                );
 
+            if (indice !== -1) {
+
+                configuracoes[indice] =
+                    configuracao;
+
+                salvarConfiguracoes(
+                    configuracoes
+                );
+            }
 
             console.log(
                 "[CONFIGURAÇÕES] Configuração carregada:",
                 uid
             );
-
-
-            // =================================================
-            // RESPOSTA
-            // =================================================
 
             return res.json({
 
@@ -472,17 +548,14 @@ router.get(
 
                 configuracao:
                     configuracao
-
             });
 
-        }
-        catch (erro) {
+        } catch (erro) {
 
             console.error(
                 "[CONFIGURAÇÕES GET] Erro:",
                 erro
             );
-
 
             return res.status(500).json({
 
@@ -490,14 +563,10 @@ router.get(
 
                 error:
                     "Erro ao carregar configurações."
-
             });
-
         }
-
     }
 );
-
 
 // =====================================================
 // PUT /api/configuracoes
@@ -510,13 +579,8 @@ router.put(
 
         try {
 
-            // =================================================
-            // UID DO USUÁRIO
-            // =================================================
-
             const uid =
                 req.usuario?.uid;
-
 
             if (!uid) {
 
@@ -526,46 +590,35 @@ router.put(
 
                     error:
                         "Usuário não autenticado."
-
                 });
-
             }
-
 
             console.log(
                 "[CONFIGURAÇÕES] PUT:",
                 uid
             );
 
-
-            // =================================================
-            // REFERÊNCIA FIREBASE
-            // =================================================
-
-            const referencia =
-                configuracaoRef(uid);
-
+            const configuracoes =
+                lerConfiguracoes();
 
             // =================================================
             // BUSCAR CONFIGURAÇÃO ATUAL
             // =================================================
 
-            const snapshot =
-                await referencia.once(
-                    "value"
+            let atual =
+                encontrarConfiguracao(
+                    configuracoes,
+                    uid
                 );
 
-
-            let atual = {};
-
-
-            if (snapshot.exists()) {
+            if (!atual) {
 
                 atual =
-                    snapshot.val() || {};
-
+                    configuracaoPadrao(
+                        uid,
+                        req.usuario
+                    );
             }
-
 
             // =================================================
             // CONFIGURAÇÃO RECEBIDA
@@ -574,9 +627,8 @@ router.put(
             const terminalRecebido =
                 req.body?.terminal || {};
 
-
             // =================================================
-            // CONFIGURAÇÃO DO TERMINAL
+            // CONFIGURAÇÃO ATUAL DO TERMINAL
             // =================================================
 
             const terminalAtual =
@@ -584,6 +636,9 @@ router.put(
                     atual.terminal
                 );
 
+            // =================================================
+            // NOVO TERMINAL
+            // =================================================
 
             const terminal = {
 
@@ -610,8 +665,8 @@ router.put(
                         terminalAtual.metodo ??
                         "POST"
                     )
-                    .trim()
-                    .toUpperCase(),
+                        .trim()
+                        .toUpperCase(),
 
                 token:
                     String(
@@ -619,9 +674,7 @@ router.put(
                         terminalAtual.token ??
                         ""
                     ).trim()
-
             };
-
 
             // =================================================
             // VALIDAR MÉTODO
@@ -635,7 +688,6 @@ router.put(
                 "DELETE"
             ];
 
-
             if (
                 !metodosPermitidos.includes(
                     terminal.metodo
@@ -644,9 +696,7 @@ router.put(
 
                 terminal.metodo =
                     "POST";
-
             }
-
 
             // =================================================
             // NOVA CONFIGURAÇÃO
@@ -655,7 +705,6 @@ router.put(
             const configuracao = {
 
                 ...atual,
-
 
                 // =================================================
                 // IDENTIFICAÇÃO
@@ -669,7 +718,6 @@ router.put(
                     atual.apiKey ||
                     "",
 
-
                 // =================================================
                 // EMPRESA
                 // =================================================
@@ -678,6 +726,7 @@ router.put(
                     req.body.nomeEmpresa ??
                     atual.nomeEmpresa ??
                     req.usuario.fullName ??
+                    req.usuario.nome ??
                     "MACVENDAS",
 
                 telefone:
@@ -691,7 +740,6 @@ router.put(
                     req.usuario.email ??
                     "",
 
-
                 // =================================================
                 // MOEDA
                 // =================================================
@@ -701,23 +749,19 @@ router.put(
                     atual.moeda ??
                     "MT",
 
-
                 // =================================================
                 // VENDA POR GB
                 // =================================================
 
                 vendaGB:
                     req.body.vendaGB !== undefined
-
                         ? numero(
                             req.body.vendaGB
                         )
-
                         : numero(
                             atual.vendaGB ??
                             28
                         ),
-
 
                 // =================================================
                 // CUSTO POR GB
@@ -725,16 +769,13 @@ router.put(
 
                 custoGB:
                     req.body.custoGB !== undefined
-
                         ? numero(
                             req.body.custoGB
                         )
-
                         : numero(
                             atual.custoGB ??
                             21
                         ),
-
 
                 // =================================================
                 // TEMA
@@ -745,7 +786,6 @@ router.put(
                     atual.tema ??
                     "dark",
 
-
                 // =================================================
                 // IDIOMA
                 // =================================================
@@ -755,14 +795,12 @@ router.put(
                     atual.idioma ??
                     "pt",
 
-
                 // =================================================
-                // TERMINAL / SERVIDOR
+                // TERMINAL
                 // =================================================
 
                 terminal:
                     terminal,
-
 
                 // =================================================
                 // DATAS
@@ -774,16 +812,13 @@ router.put(
 
                 atualizado:
                     agora()
-
             };
-
 
             // =================================================
             // REMOVER USSD ANTIGO
             // =================================================
 
             delete configuracao.ussd;
-
 
             // =================================================
             // REMOVER CAMPOS ANTIGOS DO TERMINAL
@@ -795,21 +830,38 @@ router.put(
 
             delete configuracao.terminal.protocolo;
 
-
             // =================================================
-            // SALVAR NO FIREBASE
+            // SALVAR NO JSON
             // =================================================
 
-            await referencia.set(
-                configuracao
+            const indice =
+                configuracoes.findIndex(
+                    item =>
+                        item &&
+                        String(item.uid) ===
+                            String(uid)
+                );
+
+            if (indice === -1) {
+
+                configuracoes.push(
+                    configuracao
+                );
+
+            } else {
+
+                configuracoes[indice] =
+                    configuracao;
+            }
+
+            salvarConfiguracoes(
+                configuracoes
             );
-
 
             console.log(
                 "[CONFIGURAÇÕES] Configuração atualizada:",
                 uid
             );
-
 
             // =================================================
             // RESPOSTA
@@ -824,17 +876,14 @@ router.put(
 
                 configuracao:
                     configuracao
-
             });
 
-        }
-        catch (erro) {
+        } catch (erro) {
 
             console.error(
                 "[CONFIGURAÇÕES PUT] Erro:",
                 erro
             );
-
 
             return res.status(500).json({
 
@@ -842,14 +891,10 @@ router.put(
 
                 error:
                     "Erro ao atualizar configurações."
-
             });
-
         }
-
     }
 );
-
 
 // =====================================================
 // GET /api/configuracoes/:id
@@ -857,9 +902,10 @@ router.put(
 //
 // Mantido para compatibilidade.
 //
-// O ID recebido na URL não é utilizado para acessar
-// outro usuário. A configuração pertence sempre ao
-// usuário autenticado.
+// O ID recebido na URL NÃO é utilizado para acessar
+// outro usuário.
+//
+// A configuração pertence sempre ao usuário autenticado.
 //
 // =====================================================
 
@@ -870,13 +916,8 @@ router.get(
 
         try {
 
-            // =================================================
-            // UID DO USUÁRIO
-            // =================================================
-
             const uid =
                 req.usuario?.uid;
-
 
             if (!uid) {
 
@@ -886,26 +927,27 @@ router.get(
 
                     error:
                         "Usuário não autenticado."
-
                 });
-
             }
-
 
             // =================================================
             // BUSCAR CONFIGURAÇÃO
             // =================================================
 
-            const snapshot =
-                await configuracaoRef(uid)
-                    .once("value");
+            const configuracoes =
+                lerConfiguracoes();
 
+            const configuracaoAtual =
+                encontrarConfiguracao(
+                    configuracoes,
+                    uid
+                );
 
             // =================================================
             // NÃO ENCONTRADA
             // =================================================
 
-            if (!snapshot.exists()) {
+            if (!configuracaoAtual) {
 
                 return res.status(404).json({
 
@@ -913,19 +955,8 @@ router.get(
 
                     error:
                         "Configuração não encontrada."
-
                 });
-
             }
-
-
-            // =================================================
-            // CONFIGURAÇÃO ATUAL
-            // =================================================
-
-            const configuracaoAtual =
-                snapshot.val() || {};
-
 
             // =================================================
             // NORMALIZAR
@@ -938,14 +969,27 @@ router.get(
                     req.usuario
                 );
 
-
             // =================================================
             // SALVAR CORREÇÕES
             // =================================================
 
-            await configuracaoRef(uid)
-                .set(configuracao);
+            const indice =
+                configuracoes.findIndex(
+                    item =>
+                        item &&
+                        String(item.uid) ===
+                            String(uid)
+                );
 
+            if (indice !== -1) {
+
+                configuracoes[indice] =
+                    configuracao;
+
+                salvarConfiguracoes(
+                    configuracoes
+                );
+            }
 
             // =================================================
             // RESPOSTA
@@ -957,17 +1001,14 @@ router.get(
 
                 configuracao:
                     configuracao
-
             });
 
-        }
-        catch (erro) {
+        } catch (erro) {
 
             console.error(
                 "[CONFIGURAÇÃO ID] Erro:",
                 erro
             );
-
 
             return res.status(500).json({
 
@@ -975,14 +1016,10 @@ router.get(
 
                 error:
                     "Erro ao buscar configuração."
-
             });
-
         }
-
     }
 );
-
 
 // =====================================================
 // REGENERAR API KEY
@@ -999,12 +1036,9 @@ router.post(
 
             error:
                 "A regeneração da API Key deve ser feita pelo sistema de autenticação do usuário."
-
         });
-
     }
 );
-
 
 // =====================================================
 // EXPORTAR
@@ -1012,3 +1046,4 @@ router.post(
 
 module.exports =
     router;
+
