@@ -516,7 +516,7 @@
             lista.innerHTML = `
                 <tr>
                     <td
-                        colspan="6"
+                        colspan="10"
                         style="text-align:center; padding:20px;"
                     >
                         Nenhuma venda encontrada.
@@ -636,6 +636,56 @@
                             )
                         );
 
+                    const pacote =
+                        primeiroValor(
+                            venda,
+                            [
+                                "pacote",
+                                "nomePacote",
+                                "nome_pacote",
+                                "tipoPacote",
+                                "tipo_pacote"
+                            ]
+                        ) || "-";
+
+                    const metodoPagamento =
+                        primeiroValor(
+                            venda,
+                            [
+                                "metodoPagamento",
+                                "metodo_pagamento",
+                                "metodo",
+                                "formaPagamento",
+                                "forma_pagamento"
+                            ]
+                        ) || "-";
+
+                    const dispositivo =
+                        primeiroValor(
+                            venda,
+                            [
+                                "dispositivoUsado",
+                                "dispositivo_usado",
+                                "dispositivo",
+                                "aparelho",
+                                "nomeDispositivo",
+                                "nome_dispositivo",
+                                "device"
+                            ]
+                        ) || "-";
+
+                    const grupo =
+                        primeiroValor(
+                            venda,
+                            [
+                                "grupo",
+                                "nomeGrupo",
+                                "nome_grupo",
+                                "grupoNome",
+                                "grupo_nome"
+                            ]
+                        ) || "-";
+
                     return `
                         <tr>
                             <td>
@@ -655,7 +705,23 @@
                             </td>
 
                             <td>
+                                ${escapar(pacote)}
+                            </td>
+
+                            <td>
                                 ${escapar(dinheiro(valor))}
+                            </td>
+
+                            <td>
+                                ${escapar(metodoPagamento)}
+                            </td>
+
+                            <td>
+                                ${escapar(dispositivo)}
+                            </td>
+
+                            <td>
+                                ${escapar(grupo)}
                             </td>
 
                             <td>
