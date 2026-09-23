@@ -169,7 +169,6 @@
                 "numeroDestino",
                 "numero_destino",
                 "destino",
-                "numero",
             ],
             "-"
         );
@@ -360,10 +359,11 @@
             cliente.totalGB += gb || (mb / 1000);
             cliente.totalMB += mb || (gb * 1000);
             cliente.totalGasto += obterValor(compra);
-            cliente.totalCusto += numero(obterCampo(compra, ["custo", "valorCusto", "valor_custo"], 0));
+            const custoCompra = numero(obterCampo(compra, ["custo", "valorCusto", "valor_custo"], 0));
+            cliente.totalCusto += custoCompra;
 
             const lucroInformado = numero(obterCampo(compra, ["lucro"], 0));
-            cliente.totalLucro += lucroInformado || (obterValor(compra) - cliente.totalCusto);
+            cliente.totalLucro += lucroInformado || (obterValor(compra) - custoCompra);
 
             const data = dataCompra(compra);
             if (data) {
@@ -387,7 +387,6 @@
         const style = document.createElement("style");
         style.id = "crmDetalhesStyle";
         style.textContent = `
-            /* DETALHES CRM — visual simples */
             #crmDetalhesCliente {
                 position: fixed;
                 inset: 0;
@@ -397,57 +396,68 @@
                 justify-content: center;
                 padding: 20px;
                 box-sizing: border-box;
-
-                /* apenas o fundo atrás fica escuro e desfocado */
-                background: rgba(5, 25, 65, .68);
-                backdrop-filter: blur(9px);
-                -webkit-backdrop-filter: blur(9px);
+                background: rgba(2, 10, 25, .82);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
             }
 
             #crmDetalhesCliente.ativo {
                 display: flex;
             }
 
-            /* fundo da janela de detalhes */
             #crmDetalhesCliente .crm-modal {
                 width: min(1050px, 100%);
                 max-height: 90vh;
                 overflow: auto;
-                background: #0b1730;
-                color: #f8fafc;
-                border: 1px solid #1e3a8a;
+                background: #0b1730 !important;
+                color: #f8fafc !important;
+                border: 1px solid #1e3a8a !important;
                 border-radius: 16px;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
+                box-shadow: 0 20px 60px rgba(0, 0, 0, .65);
             }
 
-            /* TODAS as letras do detalhe usam a mesma cor */
-            #crmDetalhesCliente,
-            #crmDetalhesCliente h1,
-            #crmDetalhesCliente h2,
-            #crmDetalhesCliente h3,
-            #crmDetalhesCliente h4,
-            #crmDetalhesCliente p,
-            #crmDetalhesCliente span,
-            #crmDetalhesCliente small,
-            #crmDetalhesCliente strong,
-            #crmDetalhesCliente th,
+            /* TODAS AS LETRAS DO DETALHE: UMA ÚNICA COR */
+            #crmDetalhesCliente .crm-modal,
+            #crmDetalhesCliente .crm-modal * {
+                color: #f8fafc !important;
+            }
+
+            /* NENHUM ELEMENTO INTERNO PODE FICAR BRANCO */
+            #crmDetalhesCliente .crm-modal,
+            #crmDetalhesCliente .crm-modal-header,
+            #crmDetalhesCliente .crm-resumo,
+            #crmDetalhesCliente .crm-card,
+            #crmDetalhesCliente .crm-info,
+            #crmDetalhesCliente .crm-info-item,
+            #crmDetalhesCliente .crm-historico,
+            #crmDetalhesCliente .crm-historico-wrap,
+            #crmDetalhesCliente table,
+            #crmDetalhesCliente thead,
+            #crmDetalhesCliente tbody,
+            #crmDetalhesCliente tr,
             #crmDetalhesCliente td,
-            #crmDetalhesCliente .crm-card-label,
-            #crmDetalhesCliente .crm-card-value,
-            #crmDetalhesCliente .crm-subtitulo,
-            #crmDetalhesCliente .crm-info-item small {
-                color: #f8fafc;
+            #crmDetalhesCliente th {
+                background-color: #0b1730 !important;
             }
 
-            /* cabeçalho do detalhe */
+            /* ÁREAS DE DESTAQUE */
+            #crmDetalhesCliente .crm-modal-header,
+            #crmDetalhesCliente .crm-card,
+            #crmDetalhesCliente .crm-info-item,
+            #crmDetalhesCliente th,
+            #crmDetalhesCliente .crm-fechar,
+            #crmDetalhesCliente .crm-avatar,
+            #crmDetalhesCliente .crm-status {
+                background-color: #10264a !important;
+            }
+
             #crmDetalhesCliente .crm-modal-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 gap: 15px;
                 padding: 18px 20px;
-                background: #10264a;
-                border-bottom: 1px solid #1e3a8a;
+                border-bottom: 1px solid #1e3a8a !important;
             }
 
             #crmDetalhesCliente .crm-identidade {
@@ -462,8 +472,6 @@
                 border-radius: 50%;
                 display: grid;
                 place-items: center;
-                background: #16345f;
-                color: #f8fafc;
                 font-weight: 700;
             }
 
@@ -473,14 +481,13 @@
             }
 
             #crmDetalhesCliente .crm-fechar {
-                border: 0;
-                background: #16345f;
-                color: #f8fafc;
+                border: 1px solid #1e3a8a !important;
                 width: 40px;
                 height: 40px;
                 border-radius: 10px;
                 cursor: pointer;
                 font-size: 20px;
+                padding: 0;
             }
 
             #crmDetalhesCliente .crm-resumo {
@@ -488,14 +495,22 @@
                 grid-template-columns: repeat(4, minmax(0, 1fr));
                 gap: 12px;
                 padding: 18px 20px;
-                background: #0b1730;
             }
 
             #crmDetalhesCliente .crm-card {
-                border: 1px solid #1e3a8a;
+                border: 1px solid #1e3a8a !important;
                 border-radius: 12px;
                 padding: 14px;
-                background: #10264a;
+            }
+
+            #crmDetalhesCliente .crm-card-label {
+                font-size: 12px;
+                margin-bottom: 6px;
+            }
+
+            #crmDetalhesCliente .crm-card-value {
+                font-size: 18px;
+                font-weight: 700;
             }
 
             #crmDetalhesCliente .crm-info {
@@ -503,14 +518,12 @@
                 grid-template-columns: repeat(3, minmax(0, 1fr));
                 gap: 10px;
                 padding: 0 20px 18px;
-                background: #0b1730 !important;
             }
 
             #crmDetalhesCliente .crm-info-item {
                 padding: 12px;
-                border: 1px solid #1e3a8a;
+                border: 1px solid #1e3a8a !important;
                 border-radius: 10px;
-                background: #10264a;
             }
 
             #crmDetalhesCliente .crm-info-item small {
@@ -520,12 +533,11 @@
 
             #crmDetalhesCliente .crm-historico {
                 padding: 0 20px 20px;
-                background: #0b1730;
             }
 
             #crmDetalhesCliente .crm-historico-wrap {
                 overflow-x: auto;
-                border: 1px solid #1e3a8a;
+                border: 1px solid #1e3a8a !important;
                 border-radius: 12px;
             }
 
@@ -539,63 +551,15 @@
             #crmDetalhesCliente td {
                 padding: 11px;
                 text-align: left;
-                border-bottom: 1px solid #1e3a8a;
+                border-bottom: 1px solid #1e3a8a !important;
                 white-space: nowrap;
                 font-size: 13px;
-                color: #f8fafc !important;
             }
 
             #crmDetalhesCliente th {
-                background: #10264a;
-                color: #f8fafc;
                 font-weight: 700;
             }
 
-            #crmDetalhesCliente td {
-                background: #0b1730;
-            }
-
-            /* FORCA O TEMA ESCURO EM TODO O DETALHE */
-            #crmDetalhesCliente .crm-modal,
-            #crmDetalhesCliente .crm-modal * {
-                color: #f8fafc !important;
-            }
-
-            #crmDetalhesCliente .crm-modal,
-            #crmDetalhesCliente .crm-info,
-            #crmDetalhesCliente .crm-resumo,
-            #crmDetalhesCliente .crm-historico,
-            #crmDetalhesCliente .crm-card,
-            #crmDetalhesCliente .crm-info-item,
-            #crmDetalhesCliente .crm-historico-wrap,
-            #crmDetalhesCliente table,
-            #crmDetalhesCliente tbody,
-            #crmDetalhesCliente tr,
-            #crmDetalhesCliente td,
-            #crmDetalhesCliente th {
-                background-color: #0b1730 !important;
-            }
-
-            #crmDetalhesCliente .crm-modal-header,
-            #crmDetalhesCliente .crm-card,
-            #crmDetalhesCliente .crm-info-item,
-            #crmDetalhesCliente th,
-            #crmDetalhesCliente .crm-fechar,
-            #crmDetalhesCliente .crm-avatar,
-            #crmDetalhesCliente .crm-status {
-                background-color: #10264a !important;
-            }
-
-            #crmDetalhesCliente .crm-modal,
-            #crmDetalhesCliente .crm-card,
-            #crmDetalhesCliente .crm-info-item,
-            #crmDetalhesCliente .crm-historico-wrap,
-            #crmDetalhesCliente th,
-            #crmDetalhesCliente td {
-                border-color: #1e3a8a !important;
-            }
-
-            /* status também segue a mesma cor das letras */
             #crmDetalhesCliente .crm-status {
                 display: inline-flex;
                 align-items: center;
@@ -604,9 +568,7 @@
                 border-radius: 999px;
                 font-size: 12px;
                 font-weight: 700;
-                color: #f8fafc !important;
-                background: #10264a !important;
-                border: 1px solid #1e3a8a;
+                border: 1px solid #1e3a8a !important;
             }
 
             @media (max-width: 700px) {
@@ -622,7 +584,7 @@
                     grid-template-columns: 1fr;
                 }
             }
-        `;
+        `
         document.head.appendChild(style);
 
         const modal = document.createElement("div");
@@ -908,17 +870,3 @@
 
     console.log("[CRM] CRM de vendas com detalhes carregado.");
 })();
-
-document.addEventListener("keydown", function (evento) {
-    if (evento.key !== "Escape") return;
-
-    const modal = document.getElementById("crmDetalhesCliente");
-    if (modal && modal.classList.contains("ativo")) {
-        if (typeof fecharDetalhesCRM === "function") {
-            fecharDetalhesCRM();
-        } else {
-            modal.classList.remove("ativo");
-            document.body.classList.remove("crm-detalhes-aberto");
-        }
-    }
-});
