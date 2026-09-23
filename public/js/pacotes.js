@@ -17,6 +17,95 @@ let pacotesData = [];
 let pacoteEditando = null;
 let filtroPacoteAtual = "todos";
 
+
+/* CARDS DE PACOTES */
+.pacotes-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+    width: 100%;
+}
+
+.pacote-card {
+    padding: 20px;
+    border: 1px solid rgba(128,128,128,.20);
+    border-radius: 16px;
+    background: var(--card-bg, rgba(255,255,255,.03));
+    box-shadow: 0 6px 20px rgba(0,0,0,.08);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.pacote-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 28px rgba(0,0,0,.14);
+}
+
+.pacote-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.pacote-card-title {
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.pacote-card-type {
+    margin-top: 5px;
+    font-size: 13px;
+    opacity: .65;
+}
+
+.pacote-card-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.pacote-info-item {
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(128,128,128,.08);
+}
+
+.pacote-info-item small {
+    display: block;
+    opacity: .6;
+    margin-bottom: 5px;
+}
+
+.pacote-info-item strong {
+    font-size: 15px;
+}
+
+.pacote-card-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+@media (max-width: 600px) {
+    .pacotes-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pacote-card-info {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .pacote-card-actions {
+        flex-direction: column;
+    }
+
+    .pacote-card-actions button {
+        width: 100%;
+    }
+}
+
 function escapar(valor) {
     return String(valor ?? "")
         .replace(/&/g, "&amp;")
@@ -267,16 +356,6 @@ function criarInterfacePacotes() {
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Vantagem / descrição</label>
-                    <input id="macPacoteVantagem" type="text" placeholder="Ex: WhatsApp + Facebook">
-                </div>
-
-                <div class="form-group">
-                    <label>Grupo</label>
-                    <input id="macPacoteGrupo" type="text" placeholder="ID ou nome do grupo (opcional)">
-                </div>
-
                 <div class="form-group" style="display:flex;align-items:center;gap:8px;">
                     <input id="macPacoteAtivo" type="checkbox" checked>
                     <label for="macPacoteAtivo" style="margin:0;">Pacote ativo</label>
@@ -368,8 +447,6 @@ function abrirModalPacoteMac(id = null) {
         document.getElementById("macPacoteUnidade").value = p.unidade;
         document.getElementById("macPacotePreco").value = p.preco;
         document.getElementById("macPacoteCusto").value = p.custo;
-        document.getElementById("macPacoteVantagem").value = p.vantagem;
-        document.getElementById("macPacoteGrupo").value = p.grupoId;
         document.getElementById("macPacoteAtivo").checked = p.ativo;
     } else {
         titulo.textContent = " Novo Pacote";
@@ -381,8 +458,6 @@ function abrirModalPacoteMac(id = null) {
         document.getElementById("macPacoteUnidade").value = "GB";
         document.getElementById("macPacotePreco").value = "";
         document.getElementById("macPacoteCusto").value = "";
-        document.getElementById("macPacoteVantagem").value = "";
-        document.getElementById("macPacoteGrupo").value = "";
         document.getElementById("macPacoteAtivo").checked = true;
     }
 
@@ -405,8 +480,8 @@ async function salvarPacoteMac() {
         const unidade = document.getElementById("macPacoteUnidade").value;
         const preco = Number(document.getElementById("macPacotePreco").value || 0);
         const custo = Number(document.getElementById("macPacoteCusto").value || 0);
-        const vantagem = document.getElementById("macPacoteVantagem").value.trim();
-        const grupoId = document.getElementById("macPacoteGrupo").value.trim();
+        const vantagem = "";
+        const grupoId = "";
         const ativo = document.getElementById("macPacoteAtivo").checked;
 
         if (!nome) {
@@ -525,15 +600,15 @@ function renderizarPacotesMac() {
     }
 
     container.innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:15px;">
+        <div class="pacotes-cards-grid">
             ${lista.map(p => `
-                <div class="pacote-item" style="padding:18px;border:1px solid rgba(128,128,128,.2);border-radius:14px;">
-                    <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+                <div class="pacote-item pacote-card">
+                    <div class="pacote-card-header">
                         <div>
-                            <div style="font-size:18px;font-weight:700;">
-                                ${iconeTipo(p.tipo)} ${escapar(p.nome)}
+                            <div class="pacote-card-title">
+                                ${escapar(p.nome)}
                             </div>
-                            <div style="font-size:12px;opacity:.65;margin-top:4px;">
+                            <div class="pacote-card-type">
                                 ${escapar(nomeTipo(p.tipo))}
                             </div>
                         </div>
@@ -543,41 +618,29 @@ function renderizarPacotesMac() {
                         </span>
                     </div>
 
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0;">
-                        <div>
-                            <small style="opacity:.6;">Quantidade</small>
-                            <div><strong>${formatarQuantidade(p)}</strong></div>
+                    <div class="pacote-card-info">
+                        <div class="pacote-info-item">
+                            <small>Quantidade</small>
+                            <strong>${formatarQuantidade(p)}</strong>
                         </div>
 
-                        <div>
-                            <small style="opacity:.6;">Validade</small>
-                            <div><strong>${escapar(p.validade || "Não definida")}</strong></div>
+                        <div class="pacote-info-item">
+                            <small>Validade</small>
+                            <strong>${escapar(p.validade || "Não definida")}</strong>
                         </div>
 
-                        <div>
-                            <small style="opacity:.6;">Preço</small>
-                            <div><strong>${Number(p.preco).toLocaleString("pt-MZ")} MT</strong></div>
+                        <div class="pacote-info-item">
+                            <small>Preço</small>
+                            <strong>${Number(p.preco).toLocaleString("pt-MZ")} MT</strong>
                         </div>
 
-                        <div>
-                            <small style="opacity:.6;">Lucro</small>
-                            <div><strong>${formatarLucro(p)}</strong></div>
+                        <div class="pacote-info-item">
+                            <small>Lucro</small>
+                            <strong>${formatarLucro(p)}</strong>
                         </div>
                     </div>
 
-                    ${p.vantagem ? `
-                        <div style="font-size:13px;margin-bottom:12px;">
-                             ${escapar(p.vantagem)}
-                        </div>
-                    ` : ""}
-
-                    ${p.grupoId ? `
-                        <div style="font-size:12px;opacity:.7;margin-bottom:12px;">
-                             ${escapar(p.grupoId)}
-                        </div>
-                    ` : ""}
-
-                    <div style="display:flex;justify-content:flex-end;gap:8px;">
+                    <div class="pacote-card-actions">
                         <button type="button"
                             class="btn btn-outline"
                             data-editar-pacote="${escapar(p.id)}">
@@ -587,7 +650,7 @@ function renderizarPacotesMac() {
                         <button type="button"
                             class="btn btn-danger"
                             data-excluir-pacote="${escapar(p.id)}">
-                            <i class="fas fa-trash"></i>
+                            <i class="fas fa-trash"></i> Excluir
                         </button>
                     </div>
                 </div>
