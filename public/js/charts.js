@@ -1,13 +1,14 @@
 // ==========================================
 // GRÁFICOS DO SISTEMA
 // Arquivo: charts.js
+// API: MACVENDAS API + MOZ_API
 // ==========================================
 
 let graficoHoje = null;
 let graficoDias = null;
 let graficoMeses = null;
 
-const API_CHARTS = window.location.origin;
+const API_CHARTS = "http://br1.bronxyshost.com:4234/api";
 
 
 // ==========================================
@@ -104,67 +105,57 @@ async function carregarGraficos() {
         // BUSCAR RELATÓRIOS
         // --------------------------------------
 
-        const resposta =
-            await fetch(
-                API_CHARTS + "/relatorios",
-                {
+        // --------------------------------------
+        // USAR A API CENTRAL DO SISTEMA
+        // --------------------------------------
 
-                    method: "GET",
+        let resposta;
 
-                    headers: {
+        if (
+            window.MOZ_API &&
+            typeof window.MOZ_API.get === "function"
+        ) {
 
-                        "Accept":
-                            "application/json"
+            resposta =
+                await window.MOZ_API.get(
+                    "/relatorios"
+                );
 
-                    },
+            // MOZ_API.get() já devolve JSON.
+            // Mantemos o mesmo formato abaixo.
+            if (
+                !resposta ||
+                resposta.success !== true
+            ) {
 
-                    cache: "no-store"
+                throw new Error(
+                    resposta?.error ||
+                    "Erro ao carregar relatórios."
+                );
 
-                }
-            );
+            }
 
-
-        console.log(
-            "[MOZ TECH] Relatórios HTTP:",
-            resposta.status
-        );
-
-
-        if (!resposta.ok) {
+        }
+        else {
 
             throw new Error(
-                "Erro HTTP: " +
-                resposta.status
+                "MOZ_API não está disponível."
             );
 
         }
-
-
-        const json =
-            await resposta.json();
 
 
         console.log(
             "[MOZ TECH] Resposta relatórios:",
-            json
+            resposta
         );
 
 
         // --------------------------------------
-        // VALIDAR RESPOSTA
+        // RESPOSTA DA API
         // --------------------------------------
 
-        if (
-            !json ||
-            json.success !== true
-        ) {
-
-            throw new Error(
-                json?.error ||
-                "Resposta inválida da API de relatórios."
-            );
-
-        }
+        const json = resposta;
 
 
         const vendasPorDia =
