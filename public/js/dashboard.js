@@ -135,26 +135,6 @@
         return null;
     }
 
-    function headersAPI() {
-        const credenciais = obterCredenciais();
-
-        const headers = {
-            "Accept": "application/json"
-        };
-
-        if (
-            credenciais &&
-            credenciais.uid &&
-            credenciais.apiKey
-        ) {
-            headers.uid = credenciais.uid;
-            headers["x-api-key"] = credenciais.apiKey;
-            headers.apiKey = credenciais.apiKey;
-        }
-
-        return headers;
-    }
-
     function verificarCredenciais() {
         const credenciais = obterCredenciais();
 
@@ -176,9 +156,6 @@
     async function carregarDashboard() {
 
         if (carregandoDashboard) {
-            console.log(
-                "[MOZ TECH] Dashboard já está carregando."
-            );
             return null;
         }
 
@@ -189,10 +166,6 @@
         carregandoDashboard = true;
 
         try {
-
-            console.log(
-                "[MOZ TECH] GET /api/dashboard"
-            );
 
             if (typeof window.garantirCredenciaisAPI === "function") {
                 const autenticado =
@@ -230,35 +203,11 @@
                 );
             }
 
-            // =================================================
-            // DADOS DO DASHBOARD
-            // A API atual retorna os indicadores dentro de:
-            // json.vendas
-            // =================================================
-
             const d =
                 json.dashboard ||
                 json.data ||
                 json.vendas ||
                 json;
-
-            console.log(
-                "[MOZ TECH] Dados usados nos indicadores:",
-                d
-            );
-
-            if (
-                !d ||
-                typeof d !== "object"
-            ) {
-                throw new Error(
-                    "Dados do dashboard inválidos."
-                );
-            }
-
-            // =================================================
-            // VENDAS
-            // =================================================
 
             atualizar(
                 "vendas",
@@ -274,10 +223,6 @@
                 )
             );
 
-            // =================================================
-            // FATURAMENTO
-            // =================================================
-
             atualizar(
                 "valor",
                 dinheiro(
@@ -291,10 +236,6 @@
                     )
                 )
             );
-
-            // =================================================
-            // CLIENTES
-            // =================================================
 
             atualizar(
                 "clientes",
@@ -310,10 +251,6 @@
                 )
             );
 
-            // =================================================
-            // DISPOSITIVOS
-            // =================================================
-
             atualizar(
                 "disp",
                 numero(
@@ -327,10 +264,6 @@
                     )
                 )
             );
-
-            // =================================================
-            // TOTAL GB
-            // =================================================
 
             atualizar(
                 "totalGB",
@@ -347,10 +280,6 @@
                 ) + " GB"
             );
 
-            // =================================================
-            // LUCRO
-            // =================================================
-
             atualizar(
                 "lucro",
                 dinheiro(
@@ -364,10 +293,6 @@
                     )
                 )
             );
-
-            // =================================================
-            // CUSTO
-            // =================================================
 
             atualizar(
                 "custo",
@@ -383,10 +308,6 @@
                 )
             );
 
-            // =================================================
-            // PEDIDOS
-            // =================================================
-
             atualizar(
                 "pedidos",
                 numero(
@@ -401,10 +322,6 @@
                 )
             );
 
-            // =================================================
-            // DATA
-            // =================================================
-
             const data = elemento("data");
 
             if (data) {
@@ -412,10 +329,6 @@
                     "Atualizado em " +
                     new Date().toLocaleString("pt-MZ");
             }
-
-            console.log(
-                "[MOZ TECH] Dashboard carregado com sucesso."
-            );
 
             return json;
 
@@ -427,13 +340,6 @@
                 erro
             );
 
-            const data = elemento("data");
-
-            if (data) {
-                data.textContent =
-                    "Não foi possível atualizar agora";
-            }
-
             return null;
 
         }
@@ -442,12 +348,64 @@
         }
     }
 
+    function textoStatus(status) {
+
+        const valor =
+            String(status || "pendente")
+                .trim()
+                .toLowerCase();
+
+        const mapa = {
+            concluida: {
+                texto: "Concluído",
+                classe: "concluido"
+            },
+            concluido: {
+                texto: "Concluído",
+                classe: "concluido"
+            },
+            processando: {
+                texto: "Processando",
+                classe: "processando"
+            },
+            processamento: {
+                texto: "Processando",
+                classe: "processando"
+            },
+            pendente: {
+                texto: "Pendente",
+                classe: "pendente"
+            },
+            falhou: {
+                texto: "Falhou",
+                classe: "falhou"
+            },
+            erro: {
+                texto: "Falhou",
+                classe: "falhou"
+            },
+            cancelado: {
+                texto: "Cancelado",
+                classe: "cancelado"
+            },
+            cancelada: {
+                texto: "Cancelado",
+                classe: "cancelado"
+            }
+        };
+
+        return mapa[valor] || {
+            texto:
+                status
+                    ? String(status)
+                    : "Pendente",
+            classe: "pendente"
+        };
+    }
+
     async function carregarVendas() {
 
         if (carregandoVendas) {
-            console.log(
-                "[MOZ TECH] Vendas já estão carregando."
-            );
             return [];
         }
 
@@ -458,10 +416,6 @@
         carregandoVendas = true;
 
         try {
-
-            console.log(
-                "[MOZ TECH] GET /api/compras"
-            );
 
             if (typeof window.garantirCredenciaisAPI === "function") {
                 const autenticado =
@@ -524,11 +478,6 @@
 
             renderizarVendas(vendas);
 
-            console.log(
-                "[MOZ TECH] Total de vendas:",
-                vendas.length
-            );
-
             return vendas;
 
         }
@@ -549,7 +498,8 @@
 
     function renderizarVendas(vendas) {
 
-        const lista = elemento("lista");
+        const lista =
+            elemento("lista");
 
         if (!lista) {
             console.warn(
@@ -566,11 +516,8 @@
             lista.innerHTML = `
                 <tr>
                     <td
-                        colspan="4"
-                        style="
-                            text-align:center;
-                            padding:20px;
-                        "
+                        colspan="6"
+                        style="text-align:center; padding:20px;"
                     >
                         Nenhuma venda encontrada.
                     </td>
@@ -585,18 +532,44 @@
                 .slice(0, 20)
                 .map(function (venda) {
 
-                    const numeroVenda =
+                    const nomeCliente =
                         primeiroValor(
                             venda,
                             [
+                                "nomeCliente",
+                                "nome_cliente",
+                                "clienteNome",
+                                "cliente_nome",
+                                "nome"
+                            ]
+                        ) || "-";
+
+                    const numeroCliente =
+                        primeiroValor(
+                            venda,
+                            [
+                                "numeroCliente",
+                                "numero_cliente",
                                 "numero",
                                 "telefone",
                                 "phone",
-                                "msisdn",
-                                "numeroCliente",
-                                "numero_cliente"
+                                "msisdn"
                             ]
                         ) || "-";
+
+                    const numeroRecebeu =
+                        primeiroValor(
+                            venda,
+                            [
+                                "numeroRecebeu",
+                                "numero_recebeu",
+                                "numeroDestino",
+                                "numero_destino",
+                                "destino"
+                            ]
+                        ) ||
+                        numeroCliente ||
+                        "-";
 
                     const mb =
                         Number(
@@ -621,7 +594,6 @@
                                     "GB",
                                     "gbPacote",
                                     "gb_pacote",
-                                    "gbpacote",
                                     "quantidadeGB",
                                     "quantidade_gb"
                                 ]
@@ -654,28 +626,41 @@
                         );
 
                     const status =
-                        primeiroValor(
-                            venda,
-                            [
-                                "status",
-                                "estado"
-                            ]
-                        ) || "Concluído";
+                        textoStatus(
+                            primeiroValor(
+                                venda,
+                                [
+                                    "status",
+                                    "estado"
+                                ]
+                            )
+                        );
 
                     return `
                         <tr>
                             <td>
-                                ${escapar(numeroVenda)}
+                                ${escapar(nomeCliente)}
                             </td>
+
+                            <td>
+                                ${escapar(numeroCliente)}
+                            </td>
+
+                            <td>
+                                ${escapar(numeroRecebeu)}
+                            </td>
+
                             <td>
                                 ${escapar(quantidade)}
                             </td>
+
                             <td>
                                 ${escapar(dinheiro(valor))}
                             </td>
+
                             <td>
-                                <span class="status ok">
-                                    ${escapar(status)}
+                                <span class="status ${escapar(status.classe)}">
+                                    ${escapar(status.texto)}
                                 </span>
                             </td>
                         </tr>
@@ -692,11 +677,6 @@
         );
 
         if (!verificarCredenciais()) {
-
-            console.warn(
-                "[MOZ TECH] Atualização aguardando autenticação."
-            );
-
             return;
         }
 
@@ -720,9 +700,6 @@
             elemento("btnAtualizar");
 
         if (!botao) {
-            console.warn(
-                "[MOZ TECH] #btnAtualizar não encontrado."
-            );
             return;
         }
 
@@ -739,10 +716,6 @@
                     return;
                 }
 
-                console.log(
-                    "[MOZ TECH] Atualizar clicado."
-                );
-
                 const original =
                     botao.innerHTML;
 
@@ -755,12 +728,6 @@
 
                 try {
                     await carregarTudo();
-                }
-                catch (erro) {
-                    console.error(
-                        "[MOZ TECH] Erro no botão:",
-                        erro
-                    );
                 }
                 finally {
                     botao.disabled = false;
@@ -783,33 +750,16 @@
         carregarTudo;
 
     function iniciarDashboard() {
-
-        console.log(
-            "========================================"
-        );
-
-        console.log(
-            "MOZ TECH - DASHBOARD.JS"
-        );
-
-        console.log(
-            "========================================"
-        );
-
         configurarBotaoAtualizar();
         mostrarCarregando();
     }
 
     if (document.readyState === "loading") {
-
         document.addEventListener(
             "DOMContentLoaded",
             iniciarDashboard,
-            {
-                once: true
-            }
+            { once: true }
         );
-
     }
     else {
         iniciarDashboard();
