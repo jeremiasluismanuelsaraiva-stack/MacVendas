@@ -6,7 +6,7 @@
 (function () {
     "use strict";
 
-    const API_URL = "http://br1.bronxyshost.com:4234";
+    const API_URL = "/api";
 
     let carregando = false;
 
