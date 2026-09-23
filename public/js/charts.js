@@ -313,55 +313,171 @@ function criarGraficoSemanalRadial(compras) {
 // CARREGAR
 // ============================================================
 
+async function extrairCompras() {
+    if (
+        typeof window.garantirCredenciaisAPI === "function"
+    ) {
+        const autenticado = await window.garantirCredenciaisAPI();
+
+        if (!autenticado) {
+            throw new Error("Credenciais da API não encontradas.");
+        }
+    }
+
+    if (
+        !window.MOZ_API ||
+        typeof window.MOZ_API.get !== "function"
+    ) {
+        throw new Error("MOZ_API ainda não está disponível.");
+    }
+
+    // IMPORTANTE:
+    // Os gráficos usam a mesma fonte da tabela de vendas:
+    // /compras
+    const resposta = await window.MOZ_API.get("/compras");
+
+    console.log("[MOZ TECH] Resposta compras para gráficos:", resposta);
+
+    if (!resposta || resposta.success === false) {
+        throw new Error(
+            resposta?.message ||
+            resposta?.error ||
+            "Erro ao carregar compras."
+        );
+    }
+
+    if (Array.isArray(resposta)) {
+        return resposta;
+    }
+
+    if (Array.isArray(resposta.compras)) {
+        return resposta.compras;
+    }
+
+    if (Array.isArray(resposta.vendas)) {
+        return resposta.vendas;
+    }
+
+    if (Array.isArray(resposta.data)) {
+        return resposta.data;
+    }
+
+    if (resposta.data && Array.isArray(resposta.data.compras)) {
+        return resposta.data.compras;
+    }
+
+    if (resposta.data && Array.isArray(resposta.data.vendas)) {
+        return resposta.data.vendas;
+    }
+
+    return [];
+}
+
+// ============================================================
+// CARREGAR
+// ============================================================
+
+let carregandoGraficos = false;
+
 async function carregarGraficos() {
+
+    if (carregandoGraficos) {
+        return;
+    }
+
+    carregandoGraficos = true;
+
     try {
+
         if (typeof Chart === "undefined") {
-            console.error("[MOZ TECH] Chart.js não foi carregado.");
-            return;
-        }
-
-        if (!window.MOZ_API || typeof window.MOZ_API.get !== "function") {
-            console.error("[MOZ TECH] MOZ_API não está disponível.");
-            return;
-        }
-
-        const resposta = await window.MOZ_API.get("/relatorios");
-
-        if (!resposta || resposta.success !== true) {
-            throw new Error(
-                resposta?.message ||
-                resposta?.error ||
-                "Erro ao carregar relatórios."
+            console.error(
+                "[MOZ TECH] Chart.js não foi carregado."
             );
+            return;
         }
 
-        const compras = Array.isArray(resposta.compras)
-            ? resposta.compras.filter(compraConcluida)
-            : [];
+        const compras = await extrairCompras();
 
-        const diario = calcularDadosDiarios(compras);
-        const mensal = calcularFaturamentoMensal(compras);
+        console.log(
+            "[MOZ TECH] Total de compras recebidas:",
+            compras.length
+        );
+
+        /*
+         * NÃO filtramos por status.
+         *
+         * Assim os gráficos mostram os movimentos/vendas
+         * que realmente estão armazenados em compras.json.
+         */
+
+        const diario =
+            calcularDadosDiarios(compras);
+
+        const mensal =
+            calcularFaturamentoMensal(compras);
 
         criarGraficoDiario24h(diario);
-        criarGraficoFaturamentoMensal(mensal);
+
+        // Ordem solicitada:
+        // 1. Diário
+        // 2. Semanal
+        // 3. Mensal
         criarGraficoSemanalRadial(compras);
 
-        console.log("[MOZ TECH] 3 gráficos carregados.");
+        criarGraficoFaturamentoMensal(mensal);
+
+        console.log(
+            "[MOZ TECH] 3 gráficos carregados:",
+            {
+                compras: compras.length,
+                diario: diario.movimentos,
+                mensal: mensal.faturamento
+            }
+        );
+
     } catch (erro) {
-        console.error("[MOZ TECH] Erro nos gráficos:", erro);
+
+        console.error(
+            "[MOZ TECH] Erro ao carregar gráficos:",
+            erro
+        );
+
+    } finally {
+
+        carregandoGraficos = false;
     }
 }
 
-window.carregarGraficos = carregarGraficos;
+window.carregarGraficos =
+    carregarGraficos;
 
 function iniciarGraficos() {
-    carregarGraficos();
+
+    /*
+     * dashboard.js também espera pelas credenciais.
+     * Aqui damos um pequeno atraso para garantir que
+     * api.js/app.js já estejam inicializados.
+     */
+    setTimeout(
+        carregarGraficos,
+        300
+    );
 }
 
 if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", iniciarGraficos, { once: true });
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        iniciarGraficos,
+        { once: true }
+    );
+
 } else {
+
     iniciarGraficos();
 }
 
-setInterval(carregarGraficos, 10000);
+setInterval(
+    carregarGraficos,
+    10000
+);
