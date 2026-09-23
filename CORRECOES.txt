@@ -1,0 +1,15 @@
+MACVENDAS - CORREÇÕES
+
+Corrigido:
+- vercel.json: proxy /api/* agora remove o prefixo /api antes de encaminhar para o Pterodactyl.
+- public/js/api.js: final truncado corrigido e validado.
+- public/js/dashboard.js: removida referência inválida a `resposta` e vendas passam a consultar /compras, rota existente no backend enviado.
+- public/js/pedidos.js: arquivo adicionado para eliminar o 404 estático.
+
+ATENÇÃO:
+O backend enviado anteriormente ainda precisa ter as rotas:
+GET /configuracoes
+GET /dispositivos
+GET /relatorios
+GET /pedidos
+Caso essas rotas não existam no Pterodactyl, elas continuarão retornando 404 depois que o proxy estiver funcionando.
