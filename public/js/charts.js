@@ -1,11 +1,4 @@
-*
- ORDEM DOS GRÁFICOS:
- 1. DIÁRIO
- 2. SEMANAL
- 3. MENSAL
 
- Este arquivo mantém as funções existentes e deve ser carregado nesta ordem.
-*/
 // ============================================================
 // MOZ TECH - 3 GRÁFICOS
 // 1) Movimentos de hoje - 00h às 23h
