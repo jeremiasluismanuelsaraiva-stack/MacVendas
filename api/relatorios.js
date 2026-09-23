@@ -1,21 +1,116 @@
+"use strict";
+
 // =====================================================
 // MACVENDAS
 // API DE RELATÓRIOS
-// FIREBASE REALTIME DATABASE
+// ARMAZENAMENTO JSON
 // =====================================================
 
-"use strict";
-
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 
 const router = express.Router();
 
-const { db } =
-    require("./firebase-admin");
+const autenticarAPI = require("./auth");
 
-const autenticarAPI =
-    require("./auth");
+// =====================================================
+// DIRETÓRIO DE DADOS
+// =====================================================
 
+const DATA_DIR = path.join(
+    __dirname,
+    "data"
+);
+
+// =====================================================
+// FUNÇÃO PARA LER JSON
+// =====================================================
+
+function lerJSON(nome) {
+
+    const arquivo =
+        path.join(
+            DATA_DIR,
+            `${nome}.json`
+        );
+
+    try {
+
+        if (!fs.existsSync(arquivo)) {
+            return [];
+        }
+
+        const conteudo =
+            fs.readFileSync(
+                arquivo,
+                "utf8"
+            ).trim();
+
+        if (!conteudo) {
+            return [];
+        }
+
+        const dados =
+            JSON.parse(conteudo);
+
+        return dados;
+
+    } catch (err) {
+
+        console.error(
+            `[API RELATÓRIOS] Erro ao ler ${nome}.json:`,
+            err
+        );
+
+        return [];
+    }
+}
+
+// =====================================================
+// TRANSFORMAR QUALQUER FORMATO EM ARRAY
+// =====================================================
+
+function paraArray(dados) {
+
+    if (!dados) {
+        return [];
+    }
+
+    if (Array.isArray(dados)) {
+        return dados;
+    }
+
+    if (
+        typeof dados === "object"
+    ) {
+
+        return Object.entries(
+            dados
+        ).map(
+            ([id, item]) => {
+
+                if (
+                    item &&
+                    typeof item === "object"
+                ) {
+
+                    return {
+                        id,
+                        ...item
+                    };
+                }
+
+                return {
+                    id,
+                    valor: item
+                };
+            }
+        );
+    }
+
+    return [];
+}
 
 // =====================================================
 // FUNÇÃO NÚMERO
@@ -23,15 +118,81 @@ const autenticarAPI =
 
 function numero(valor) {
 
+    if (
+        valor === undefined ||
+        valor === null ||
+        valor === ""
+    ) {
+        return 0;
+    }
+
     const n =
         Number(valor);
 
     return Number.isFinite(n)
         ? n
         : 0;
-
 }
 
+// =====================================================
+// VERIFICAR UID
+// =====================================================
+
+function pertenceAoUsuario(
+    item,
+    uid
+) {
+
+    if (!item) {
+        return false;
+    }
+
+    /*
+     * Dados novos possuem uid.
+     */
+
+    if (
+        item.uid !== undefined &&
+        item.uid !== null
+    ) {
+
+        return (
+            String(item.uid) ===
+            String(uid)
+        );
+    }
+
+    /*
+     * Dados antigos sem UID não
+     * são incluídos no relatório.
+     *
+     * Isso evita misturar dados
+     * de utilizadores diferentes.
+     */
+
+    return false;
+}
+
+// =====================================================
+// DATA DO REGISTRO
+// =====================================================
+
+function obterData(item) {
+
+    if (!item) {
+        return null;
+    }
+
+    return (
+        item.createdAt ||
+        item.criadoEm ||
+        item.data ||
+        item.dataVenda ||
+        item.dataCompra ||
+        item.timestamp ||
+        null
+    );
+}
 
 // =====================================================
 // RELATÓRIOS
@@ -48,133 +209,103 @@ router.get(
             const uid =
                 req.usuario.uid;
 
-
             // =================================================
-            // CARREGAR DADOS DO USUÁRIO
-            // =================================================
-
-            const [
-
-                vendasSnapshot,
-
-                clientesSnapshot,
-
-                pedidosSnapshot,
-
-                dispositivosSnapshot,
-
-                pacotesSnapshot,
-
-                gruposSnapshot
-
-            ] = await Promise.all([
-
-                db
-                    .ref(
-                        "vendas/" + uid
-                    )
-                    .once("value"),
-
-                db
-                    .ref(
-                        "clientes/" + uid
-                    )
-                    .once("value"),
-
-                db
-                    .ref(
-                        "pedidos/" + uid
-                    )
-                    .once("value"),
-
-                db
-                    .ref(
-                        "dispositivos/" + uid
-                    )
-                    .once("value"),
-
-                db
-                    .ref(
-                        "pacotes/" + uid
-                    )
-                    .once("value"),
-
-                db
-                    .ref(
-                        "grupos/" + uid
-                    )
-                    .once("value")
-
-            ]);
-
-
-            // =================================================
-            // TRANSFORMAR DADOS EM ARRAYS
+            // CARREGAR DADOS JSON
             // =================================================
 
             const vendasDados =
-                vendasSnapshot.val() || {};
+                lerJSON("compras");
 
             const clientesDados =
-                clientesSnapshot.val() || {};
+                lerJSON("clientes");
 
             const pedidosDados =
-                pedidosSnapshot.val() || {};
+                lerJSON("pedidos");
 
             const dispositivosDados =
-                dispositivosSnapshot.val() || {};
+                lerJSON("dispositivos");
 
             const pacotesDados =
-                pacotesSnapshot.val() || {};
+                lerJSON("pacotes");
 
             const gruposDados =
-                gruposSnapshot.val() || {};
+                lerJSON("grupos");
 
+            // =================================================
+            // TRANSFORMAR EM ARRAYS
+            // =================================================
 
             const vendas =
-                Object.entries(
+                paraArray(
                     vendasDados
                 )
-                .map(
-                    ([id, venda]) => ({
-
-                        id,
-
-                        ...venda
-
-                    })
+                .filter(
+                    venda =>
+                        pertenceAoUsuario(
+                            venda,
+                            uid
+                        )
                 );
-
 
             const clientes =
-                Object.entries(
+                paraArray(
                     clientesDados
+                )
+                .filter(
+                    cliente =>
+                        pertenceAoUsuario(
+                            cliente,
+                            uid
+                        )
                 );
-
 
             const pedidos =
-                Object.entries(
+                paraArray(
                     pedidosDados
+                )
+                .filter(
+                    pedido =>
+                        pertenceAoUsuario(
+                            pedido,
+                            uid
+                        )
                 );
-
 
             const dispositivos =
-                Object.entries(
+                paraArray(
                     dispositivosDados
+                )
+                .filter(
+                    dispositivo =>
+                        pertenceAoUsuario(
+                            dispositivo,
+                            uid
+                        )
                 );
-
 
             const pacotes =
-                Object.entries(
+                paraArray(
                     pacotesDados
+                )
+                .filter(
+                    pacote =>
+                        pertenceAoUsuario(
+                            pacote,
+                            uid
+                        )
                 );
-
 
             const grupos =
-                Object.entries(
+                paraArray(
                     gruposDados
+                )
+                .filter(
+                    grupo =>
+                        pertenceAoUsuario(
+                            grupo,
+                            uid
+                        )
                 );
-
 
             // =================================================
             // TOTAIS
@@ -190,7 +321,6 @@ router.get(
 
             let totalMB = 0;
 
-
             // =================================================
             // RELATÓRIOS
             // =================================================
@@ -201,7 +331,6 @@ router.get(
 
             const gruposResumo = {};
 
-
             // =================================================
             // PROCESSAR VENDAS
             // =================================================
@@ -210,11 +339,8 @@ router.get(
                 venda => {
 
                     if (!venda) {
-
                         return;
-
                     }
-
 
                     // =========================================
                     // VALOR DA VENDA
@@ -226,9 +352,10 @@ router.get(
                             venda.valor_venda ??
                             venda.valorPacote ??
                             venda.valor_pacote ??
-                            venda.valor
+                            venda.valor ??
+                            venda.preco ??
+                            venda.total
                         );
-
 
                     // =========================================
                     // CUSTO
@@ -236,16 +363,16 @@ router.get(
 
                     const valorCusto =
                         numero(
-                            venda.custo
+                            venda.custo ??
+                            venda.valorCusto ??
+                            venda.valor_custo
                         );
-
 
                     // =========================================
                     // LUCRO
                     // =========================================
 
                     let valorLucro;
-
 
                     if (
                         venda.lucro !== undefined &&
@@ -258,25 +385,24 @@ router.get(
                                 venda.lucro
                             );
 
-                    }
-                    else {
+                    } else {
 
                         valorLucro =
                             valor -
                             valorCusto;
-
                     }
-
 
                     // =========================================
                     // MB
                     // =========================================
 
-                    const mb =
+                    let mb =
                         numero(
-                            venda.mb
+                            venda.mb ??
+                            venda.megabytes ??
+                            venda.quantidadeMB ??
+                            venda.quantidadeMb
                         );
-
 
                     // =========================================
                     // GB
@@ -285,10 +411,18 @@ router.get(
                     let gb =
                         numero(
                             venda.gb ??
+                            venda.gigabytes ??
+                            venda.quantidadeGB ??
+                            venda.quantidadeGb ??
                             venda.gbPacote ??
-                            venda.gb_pacote
+                            venda.gb_pacote ??
+                            venda.pacoteGB ??
+                            venda.pacoteGb
                         );
 
+                    // =========================================
+                    // CONVERTER MB PARA GB
+                    // =========================================
 
                     if (
                         gb === 0 &&
@@ -297,9 +431,20 @@ router.get(
 
                         gb =
                             mb / 1024;
-
                     }
 
+                    // =========================================
+                    // CONVERTER GB PARA MB
+                    // =========================================
+
+                    if (
+                        mb === 0 &&
+                        gb > 0
+                    ) {
+
+                        mb =
+                            gb * 1024;
+                    }
 
                     // =========================================
                     // SOMAR TOTAIS
@@ -320,20 +465,16 @@ router.get(
                     totalMB +=
                         mb;
 
-
                     // =========================================
                     // DATA
                     // =========================================
 
                     const dataVenda =
-                        venda.createdAt ||
-                        venda.criadoEm ||
-                        venda.data ||
-                        null;
-
+                        obterData(
+                            venda
+                        );
 
                     let data;
-
 
                     if (dataVenda) {
 
@@ -342,14 +483,11 @@ router.get(
                                 dataVenda
                             );
 
-                    }
-                    else {
+                    } else {
 
                         data =
                             new Date();
-
                     }
-
 
                     // =========================================
                     // VALIDAR DATA
@@ -363,14 +501,10 @@ router.get(
 
                         data =
                             new Date();
-
                     }
 
-
                     const dataISO =
-                        data
-                            .toISOString();
-
+                        data.toISOString();
 
                     const dia =
                         dataISO.substring(
@@ -378,13 +512,11 @@ router.get(
                             10
                         );
 
-
                     const mes =
                         dataISO.substring(
                             0,
                             7
                         );
-
 
                     // =========================================
                     // VENDAS POR DIA
@@ -396,7 +528,6 @@ router.get(
                             0
                         ) + 1;
 
-
                     // =========================================
                     // VENDAS POR MÊS
                     // =========================================
@@ -407,15 +538,14 @@ router.get(
                             0
                         ) + 1;
 
-
                     // =========================================
                     // GRUPO
                     // =========================================
 
                     const grupo =
                         venda.grupo ||
+                        venda.grupoNome ||
                         "GERAL";
-
 
                     if (
                         !gruposResumo[grupo]
@@ -436,30 +566,33 @@ router.get(
                             mb: 0
 
                         };
-
                     }
 
+                    gruposResumo[grupo]
+                        .vendas++;
 
-                    gruposResumo[grupo].vendas++;
-
-                    gruposResumo[grupo].faturamento +=
+                    gruposResumo[grupo]
+                        .faturamento +=
                         valor;
 
-                    gruposResumo[grupo].custo +=
+                    gruposResumo[grupo]
+                        .custo +=
                         valorCusto;
 
-                    gruposResumo[grupo].lucro +=
+                    gruposResumo[grupo]
+                        .lucro +=
                         valorLucro;
 
-                    gruposResumo[grupo].gb +=
+                    gruposResumo[grupo]
+                        .gb +=
                         gb;
 
-                    gruposResumo[grupo].mb +=
+                    gruposResumo[grupo]
+                        .mb +=
                         mb;
 
                 }
             );
-
 
             // =================================================
             // DATA DE HOJE
@@ -473,7 +606,6 @@ router.get(
                         10
                     );
 
-
             // =================================================
             // VENDAS DE HOJE
             // =================================================
@@ -483,30 +615,24 @@ router.get(
                     venda => {
 
                         const dataVenda =
-                            venda.createdAt ||
-                            venda.criadoEm ||
-                            venda.data;
-
+                            obterData(
+                                venda
+                            );
 
                         if (!dataVenda) {
-
                             return false;
-
                         }
-
 
                         return String(
                             dataVenda
                         )
-                        .substring(
-                            0,
-                            10
-                        ) === hoje;
+                            .substring(
+                                0,
+                                10
+                            ) === hoje;
 
                     }
-                )
-                .length;
-
+                ).length;
 
             // =================================================
             // ARREDONDAR GRUPOS
@@ -518,35 +644,40 @@ router.get(
             .forEach(
                 grupo => {
 
-                    gruposResumo[grupo].faturamento =
+                    gruposResumo[grupo]
+                        .faturamento =
                         Number(
                             gruposResumo[grupo]
                                 .faturamento
                                 .toFixed(2)
                         );
 
-                    gruposResumo[grupo].custo =
+                    gruposResumo[grupo]
+                        .custo =
                         Number(
                             gruposResumo[grupo]
                                 .custo
                                 .toFixed(2)
                         );
 
-                    gruposResumo[grupo].lucro =
+                    gruposResumo[grupo]
+                        .lucro =
                         Number(
                             gruposResumo[grupo]
                                 .lucro
                                 .toFixed(2)
                         );
 
-                    gruposResumo[grupo].gb =
+                    gruposResumo[grupo]
+                        .gb =
                         Number(
                             gruposResumo[grupo]
                                 .gb
                                 .toFixed(2)
                         );
 
-                    gruposResumo[grupo].mb =
+                    gruposResumo[grupo]
+                        .mb =
                         Number(
                             gruposResumo[grupo]
                                 .mb
@@ -555,7 +686,6 @@ router.get(
 
                 }
             );
-
 
             // =================================================
             // RESPOSTA
@@ -569,27 +699,32 @@ router.get(
 
                     faturamento:
                         Number(
-                            faturamento.toFixed(2)
+                            faturamento
+                                .toFixed(2)
                         ),
 
                     custo:
                         Number(
-                            custo.toFixed(2)
+                            custo
+                                .toFixed(2)
                         ),
 
                     lucro:
                         Number(
-                            lucro.toFixed(2)
+                            lucro
+                                .toFixed(2)
                         ),
 
                     totalGB:
                         Number(
-                            totalGB.toFixed(2)
+                            totalGB
+                                .toFixed(2)
                         ),
 
                     totalMB:
                         Number(
-                            totalMB.toFixed(2)
+                            totalMB
+                                .toFixed(2)
                         ),
 
                     totalVendas:
@@ -623,14 +758,12 @@ router.get(
 
             });
 
-        }
-        catch (err) {
+        } catch (err) {
 
             console.error(
                 "[API RELATÓRIOS]",
                 err
             );
-
 
             return res.status(500).json({
 
@@ -640,15 +773,14 @@ router.get(
                     "Erro ao carregar relatórios."
 
             });
-
         }
-
     }
 );
-
 
 // =====================================================
 // EXPORTAR
 // =====================================================
 
-module.exports = router;
+module.exports =
+    router;
+
