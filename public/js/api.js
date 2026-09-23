@@ -2,21 +2,24 @@
 
 /*
 =====================================================
- MOZ TECH
+ MACVENDAS
  API.JS
- CREDENCIAIS + API + USUARIO
+ CREDENCIAIS + API + USUÁRIO
+ SEM FIREBASE
 =====================================================
 
- PRIORIDADE DAS CREDENCIAIS:
+ API PRINCIPAL:
 
- 1. Firebase
- 2. localStorage (fallback)
+ http://br1.bronxyshost.com:4234/api
 
- O UID principal vem do Firebase.
- A API Key continua sendo usada para autenticar
- as chamadas à API.
+ CREDENCIAIS:
 
- Este arquivo também cria:
+ - UID
+ - API Key
+
+ As credenciais são obtidas do localStorage.
+
+ O arquivo também cria:
 
  window.MOZ_API
  window.MOZ_CREDENCIAIS_API
@@ -31,7 +34,7 @@
 // =====================================================
 
 const API_URL =
-    window.location.origin + "/api";
+    "http://br1.bronxyshost.com:4234/api";
 
 
 // =====================================================
@@ -41,8 +44,11 @@ const API_URL =
 let usuarioAPI = {
 
     uid: "",
+
     apiKey: "",
+
     fullName: "",
+
     email: ""
 
 };
@@ -67,37 +73,76 @@ function obterCredenciaisLocalStorage() {
         "";
 
     return {
-        uid: String(uid || "").trim(),
-        apiKey: String(apiKey || "").trim()
-    };
 
+        uid:
+            String(
+                uid || ""
+            ).trim(),
+
+        apiKey:
+            String(
+                apiKey || ""
+            ).trim()
+
+    };
 }
 
 
-function salvarCredenciais(uid, apiKey) {
+// =====================================================
+// SALVAR CREDENCIAIS
+// =====================================================
+
+function salvarCredenciais(
+    uid,
+    apiKey
+) {
 
     uid =
-        String(uid || "").trim();
+        String(
+            uid || ""
+        ).trim();
 
     apiKey =
-        String(apiKey || "").trim();
+        String(
+            apiKey || ""
+        ).trim();
 
 
     if (uid) {
 
-        localStorage.setItem("uid", uid);
-        localStorage.setItem("userUID", uid);
-        localStorage.setItem("moz_uid", uid);
+        localStorage.setItem(
+            "uid",
+            uid
+        );
 
+        localStorage.setItem(
+            "userUID",
+            uid
+        );
+
+        localStorage.setItem(
+            "moz_uid",
+            uid
+        );
     }
 
 
     if (apiKey) {
 
-        localStorage.setItem("apiKey", apiKey);
-        localStorage.setItem("api_key", apiKey);
-        localStorage.setItem("moz_api_key", apiKey);
+        localStorage.setItem(
+            "apiKey",
+            apiKey
+        );
 
+        localStorage.setItem(
+            "api_key",
+            apiKey
+        );
+
+        localStorage.setItem(
+            "moz_api_key",
+            apiKey
+        );
     }
 
 }
@@ -107,13 +152,20 @@ function salvarCredenciais(uid, apiKey) {
 // DEFINIR CREDENCIAIS
 // =====================================================
 
-function definirCredenciais(uid, apiKey) {
+function definirCredenciais(
+    uid,
+    apiKey
+) {
 
     usuarioAPI.uid =
-        String(uid || "").trim();
+        String(
+            uid || ""
+        ).trim();
 
     usuarioAPI.apiKey =
-        String(apiKey || "").trim();
+        String(
+            apiKey || ""
+        ).trim();
 
 
     if (
@@ -130,7 +182,6 @@ function definirCredenciais(uid, apiKey) {
                 usuarioAPI.apiKey
 
         };
-
     }
 
 
@@ -141,213 +192,14 @@ function definirCredenciais(uid, apiKey) {
 
 
     return {
-        uid: usuarioAPI.uid,
-        apiKey: usuarioAPI.apiKey
+
+        uid:
+            usuarioAPI.uid,
+
+        apiKey:
+            usuarioAPI.apiKey
+
     };
-
-}
-
-
-// =====================================================
-// FIREBASE
-// =====================================================
-
-async function aguardarFirebase(
-    tempoMaximo = 10000
-) {
-
-    const inicio =
-        Date.now();
-
-
-    while (
-        typeof window.obterDadosUsuario !== "function" &&
-        Date.now() - inicio < tempoMaximo
-    ) {
-
-        await new Promise(
-            resolve =>
-                setTimeout(resolve, 100)
-        );
-
-    }
-
-
-    return (
-        typeof window.obterDadosUsuario === "function"
-    );
-
-}
-
-
-async function obterDadosFirebase() {
-
-    try {
-
-        const firebaseDisponivel =
-            await aguardarFirebase();
-
-
-        if (!firebaseDisponivel) {
-
-            console.warn(
-                "[API] firebase.js não ficou disponível."
-            );
-
-            return null;
-
-        }
-
-
-        let dados =
-            await window.obterDadosUsuario();
-
-
-        if (
-            dados &&
-            dados.uid
-        ) {
-
-            return dados;
-
-        }
-
-
-        if (
-            typeof window.onAuthState === "function"
-        ) {
-
-            console.log(
-                "[API] Aguardando restauração da sessão Firebase..."
-            );
-
-
-            dados =
-                await new Promise(
-                    (resolve) => {
-
-                        let finalizado =
-                            false;
-
-
-                        const terminar =
-                            async (usuario) => {
-
-                                if (finalizado) {
-                                    return;
-                                }
-
-
-                                finalizado =
-                                    true;
-
-
-                                try {
-
-                                    if (!usuario) {
-
-                                        resolve(null);
-                                        return;
-
-                                    }
-
-
-                                    const dadosUsuario =
-                                        await window.obterDadosUsuario();
-
-
-                                    resolve(
-                                        dadosUsuario || null
-                                    );
-
-                                }
-                                catch (erro) {
-
-                                    console.error(
-                                        "[API] Erro ao obter dados Firebase:",
-                                        erro
-                                    );
-
-                                    resolve(null);
-
-                                }
-
-                            };
-
-
-                        try {
-
-                            window.onAuthState(
-                                async (usuario) => {
-
-                                    await terminar(
-                                        usuario
-                                    );
-
-                                }
-                            );
-
-                        }
-                        catch (erro) {
-
-                            console.error(
-                                "[API] Erro no onAuthState:",
-                                erro
-                            );
-
-                            resolve(null);
-
-                        }
-
-
-                        setTimeout(
-                            () => {
-
-                                if (!finalizado) {
-
-                                    finalizado =
-                                        true;
-
-                                    console.warn(
-                                        "[API] Timeout aguardando Firebase Auth."
-                                    );
-
-                                    resolve(null);
-
-                                }
-
-                            },
-                            10000
-                        );
-
-                    }
-                );
-
-
-            if (
-                dados &&
-                dados.uid
-            ) {
-
-                return dados;
-
-            }
-
-        }
-
-    }
-    catch (erro) {
-
-        console.error(
-            "[API] Erro ao obter credenciais Firebase:",
-            erro
-        );
-
-    }
-
-
-    return null;
-
 }
 
 
@@ -359,98 +211,11 @@ async function obterCredenciais() {
 
     /*
     =====================================================
-    PRIMEIRO: FIREBASE
+    A API própria não utiliza Firebase.
+
+    As credenciais vêm do localStorage.
     =====================================================
     */
-
-    const dadosFirebase =
-        await obterDadosFirebase();
-
-
-    if (
-        dadosFirebase &&
-        dadosFirebase.uid
-    ) {
-
-        const uid =
-            String(
-                dadosFirebase.uid || ""
-            ).trim();
-
-
-        const apiKey =
-            String(
-                dadosFirebase.apiKey ||
-                dadosFirebase.api_key ||
-                ""
-            ).trim();
-
-
-        if (uid) {
-
-            usuarioAPI.uid =
-                uid;
-
-        }
-
-
-        if (apiKey) {
-
-            usuarioAPI.apiKey =
-                apiKey;
-
-        }
-
-
-        definirCredenciais(
-            uid,
-            apiKey
-        );
-
-
-        usuarioAPI.fullName =
-            dadosFirebase.fullName ||
-            dadosFirebase.full_name ||
-            dadosFirebase.name ||
-            dadosFirebase.nome ||
-            "";
-
-        usuarioAPI.email =
-            dadosFirebase.email ||
-            "";
-
-
-        console.log(
-            "[API] Credenciais obtidas pelo Firebase:",
-            {
-                uid,
-                possuiApiKey: !!apiKey
-            }
-        );
-
-
-        return {
-
-            uid,
-            apiKey,
-            dadosFirebase
-
-        };
-
-    }
-
-
-    /*
-    =====================================================
-    FALLBACK: LOCALSTORAGE
-    =====================================================
-    */
-
-    console.warn(
-        "[API] Firebase não forneceu credenciais. " +
-        "Usando localStorage como fallback."
-    );
-
 
     const local =
         obterCredenciaisLocalStorage();
@@ -477,7 +242,6 @@ async function obterCredenciais() {
                 local.apiKey
 
         };
-
     }
 
 
@@ -493,7 +257,50 @@ async function obterCredenciais() {
             null
 
     };
+}
 
+
+// =====================================================
+// FUNÇÃO DE COMPATIBILIDADE
+// =====================================================
+
+async function obterDadosFirebase() {
+
+    /*
+     * Firebase foi removido.
+     *
+     * Mantemos esta função apenas para evitar
+     * quebrar código antigo do frontend que
+     * ainda possa chamá-la.
+     */
+
+    const credenciais =
+        obterCredenciaisLocalStorage();
+
+
+    if (!credenciais.uid) {
+        return null;
+    }
+
+
+    return {
+
+        uid:
+            credenciais.uid,
+
+        apiKey:
+            credenciais.apiKey,
+
+        nome:
+            usuarioAPI.fullName,
+
+        fullName:
+            usuarioAPI.fullName,
+
+        email:
+            usuarioAPI.email
+
+    };
 }
 
 
@@ -518,30 +325,39 @@ async function obterHeadersAPI() {
     };
 
 
-    if (credenciais.uid) {
+    /*
+     * UID
+     */
+
+    if (
+        credenciais.uid
+    ) {
 
         headers["x-uid"] =
             credenciais.uid;
 
         headers["uid"] =
             credenciais.uid;
-
     }
 
 
-    if (credenciais.apiKey) {
+    /*
+     * API KEY
+     */
+
+    if (
+        credenciais.apiKey
+    ) {
 
         headers["x-api-key"] =
             credenciais.apiKey;
 
         headers["apiKey"] =
             credenciais.apiKey;
-
     }
 
 
     return headers;
-
 }
 
 
@@ -562,7 +378,6 @@ async function verificarCredenciais() {
         );
 
         return false;
-
     }
 
 
@@ -573,12 +388,10 @@ async function verificarCredenciais() {
         );
 
         return false;
-
     }
 
 
     return true;
-
 }
 
 
@@ -609,6 +422,10 @@ async function fazerRequisicao(
     };
 
 
+    /*
+     * BODY
+     */
+
     if (
         dados !== undefined &&
         metodo !== "GET" &&
@@ -616,17 +433,56 @@ async function fazerRequisicao(
     ) {
 
         opcoes.body =
-            JSON.stringify(dados);
-
+            JSON.stringify(
+                dados
+            );
     }
 
 
-    const resposta =
-        await fetch(
-            API_URL + endpoint,
-            opcoes
+    /*
+     * URL
+     */
+
+    const url =
+        API_URL +
+        endpoint;
+
+
+    console.log(
+        `[API] ${metodo} ${url}`
+    );
+
+
+    /*
+     * REQUEST
+     */
+
+    let resposta;
+
+    try {
+
+        resposta =
+            await fetch(
+                url,
+                opcoes
+            );
+
+    } catch (erro) {
+
+        console.error(
+            "[API] Erro de conexão:",
+            erro
         );
 
+        throw new Error(
+            "Não foi possível conectar à API do MacVendas."
+        );
+    }
+
+
+    /*
+     * RESPOSTA
+     */
 
     const texto =
         await resposta.text();
@@ -640,10 +496,11 @@ async function fazerRequisicao(
         try {
 
             resultado =
-                JSON.parse(texto);
+                JSON.parse(
+                    texto
+                );
 
-        }
-        catch (_) {
+        } catch (_) {
 
             resultado = {
 
@@ -654,28 +511,29 @@ async function fazerRequisicao(
                     texto
 
             };
-
         }
-
     }
 
 
+    /*
+     * ERRO HTTP
+     */
+
     if (!resposta.ok) {
 
-        throw new Error(
-
+        const mensagem =
             resultado?.error ||
             resultado?.erro ||
             resultado?.message ||
-            `HTTP ${resposta.status}`
+            `HTTP ${resposta.status}`;
 
+        throw new Error(
+            mensagem
         );
-
     }
 
 
     return resultado;
-
 }
 
 
@@ -683,7 +541,9 @@ async function fazerRequisicao(
 // GET
 // =====================================================
 
-async function apiGet(endpoint) {
+async function apiGet(
+    endpoint
+) {
 
     try {
 
@@ -692,8 +552,7 @@ async function apiGet(endpoint) {
             endpoint
         );
 
-    }
-    catch (erro) {
+    } catch (erro) {
 
         console.error(
             "[API GET]",
@@ -702,9 +561,7 @@ async function apiGet(endpoint) {
         );
 
         throw erro;
-
     }
-
 }
 
 
@@ -725,8 +582,7 @@ async function apiPost(
             dados
         );
 
-    }
-    catch (erro) {
+    } catch (erro) {
 
         console.error(
             "[API POST]",
@@ -735,9 +591,7 @@ async function apiPost(
         );
 
         throw erro;
-
     }
-
 }
 
 
@@ -758,8 +612,7 @@ async function apiPut(
             dados
         );
 
-    }
-    catch (erro) {
+    } catch (erro) {
 
         console.error(
             "[API PUT]",
@@ -768,9 +621,37 @@ async function apiPut(
         );
 
         throw erro;
-
     }
+}
 
+
+// =====================================================
+// PATCH
+// =====================================================
+
+async function apiPatch(
+    endpoint,
+    dados = {}
+) {
+
+    try {
+
+        return await fazerRequisicao(
+            "PATCH",
+            endpoint,
+            dados
+        );
+
+    } catch (erro) {
+
+        console.error(
+            "[API PATCH]",
+            endpoint,
+            erro
+        );
+
+        throw erro;
+    }
 }
 
 
@@ -778,7 +659,9 @@ async function apiPut(
 // DELETE
 // =====================================================
 
-async function apiDelete(endpoint) {
+async function apiDelete(
+    endpoint
+) {
 
     try {
 
@@ -787,8 +670,7 @@ async function apiDelete(endpoint) {
             endpoint
         );
 
-    }
-    catch (erro) {
+    } catch (erro) {
 
         console.error(
             "[API DELETE]",
@@ -797,9 +679,7 @@ async function apiDelete(endpoint) {
         );
 
         throw erro;
-
     }
-
 }
 
 
@@ -822,9 +702,12 @@ async function carregarUsuario() {
             );
 
             return null;
-
         }
 
+
+        /*
+         * Buscar configurações do usuário
+         */
 
         const dados =
             await apiGet(
@@ -840,27 +723,35 @@ async function carregarUsuario() {
             {};
 
 
+        /*
+         * NOME
+         */
+
         usuarioAPI.fullName =
             configuracao.nomeEmpresa ||
             configuracao.nome ||
             configuracao.fullName ||
-            credenciais.dadosFirebase?.nome ||
-            credenciais.dadosFirebase?.name ||
-            credenciais.dadosFirebase?.displayName ||
+            configuracao.nomeUsuario ||
             usuarioAPI.fullName ||
             "";
 
 
+        /*
+         * EMAIL
+         */
+
         usuarioAPI.email =
             configuracao.email ||
-            credenciais.dadosFirebase?.email ||
             usuarioAPI.email ||
             "";
 
 
+        /*
+         * CREDENCIAIS
+         */
+
         usuarioAPI.uid =
             credenciais.uid;
-
 
         usuarioAPI.apiKey =
             credenciais.apiKey;
@@ -869,6 +760,7 @@ async function carregarUsuario() {
         console.log(
             "[API] Usuário carregado:",
             {
+
                 uid:
                     usuarioAPI.uid,
 
@@ -877,14 +769,14 @@ async function carregarUsuario() {
 
                 email:
                     usuarioAPI.email
+
             }
         );
 
 
         return usuarioAPI;
 
-    }
-    catch (erro) {
+    } catch (erro) {
 
         console.error(
             "[API] Erro ao carregar usuário:",
@@ -892,9 +784,7 @@ async function carregarUsuario() {
         );
 
         return null;
-
     }
-
 }
 
 
@@ -920,7 +810,6 @@ async function copiarUID() {
         );
 
         return;
-
     }
 
 
@@ -934,16 +823,13 @@ async function copiarUID() {
             "[API] UID copiado."
         );
 
-    }
-    catch (erro) {
+    } catch (erro) {
 
         console.error(
             "[API] Erro ao copiar UID:",
             erro
         );
-
     }
-
 }
 
 
@@ -969,7 +855,6 @@ async function copiarAPIKey() {
         );
 
         return;
-
     }
 
 
@@ -983,16 +868,13 @@ async function copiarAPIKey() {
             "[API] API Key copiada."
         );
 
-    }
-    catch (erro) {
+    } catch (erro) {
 
         console.error(
             "[API] Erro ao copiar API Key:",
             erro
         );
-
     }
-
 }
 
 
@@ -1000,7 +882,9 @@ async function copiarAPIKey() {
 // COPIAR CÓDIGO
 // =====================================================
 
-async function copiarCodigo(codigo) {
+async function copiarCodigo(
+    codigo
+) {
 
     if (!codigo) {
 
@@ -1009,7 +893,6 @@ async function copiarCodigo(codigo) {
         );
 
         return;
-
     }
 
 
@@ -1023,16 +906,150 @@ async function copiarCodigo(codigo) {
             "[API] Código copiado."
         );
 
-    }
-    catch (erro) {
+    } catch (erro) {
 
         console.error(
             "[API] Erro ao copiar código:",
             erro
         );
-
     }
+}
 
+
+// =====================================================
+// LIMPAR SESSÃO
+// =====================================================
+
+function limparCredenciais() {
+
+    /*
+     * Remover todas as chaves utilizadas
+     * pelo sistema antigo e novo.
+     */
+
+    localStorage.removeItem(
+        "uid"
+    );
+
+    localStorage.removeItem(
+        "userUID"
+    );
+
+    localStorage.removeItem(
+        "moz_uid"
+    );
+
+    localStorage.removeItem(
+        "apiKey"
+    );
+
+    localStorage.removeItem(
+        "api_key"
+    );
+
+    localStorage.removeItem(
+        "moz_api_key"
+    );
+
+
+    usuarioAPI = {
+
+        uid: "",
+
+        apiKey: "",
+
+        fullName: "",
+
+        email: ""
+
+    };
+
+
+    window.MOZ_CREDENCIAIS_API =
+        null;
+}
+
+
+// =====================================================
+// TESTAR API
+// =====================================================
+
+async function testarAPI() {
+
+    try {
+
+        const resposta =
+            await fetch(
+                API_URL,
+                {
+                    method:
+                        "GET",
+
+                    cache:
+                        "no-store"
+                }
+            );
+
+
+        const texto =
+            await resposta.text();
+
+
+        let dados;
+
+        try {
+
+            dados =
+                JSON.parse(
+                    texto
+                );
+
+        } catch {
+
+            dados = texto;
+        }
+
+
+        console.log(
+            "[API] Teste:",
+            resposta.status,
+            dados
+        );
+
+
+        return {
+
+            success:
+                resposta.ok,
+
+            status:
+                resposta.status,
+
+            data:
+                dados
+
+        };
+
+    } catch (erro) {
+
+        console.error(
+            "[API] Falha no teste:",
+            erro
+        );
+
+        return {
+
+            success:
+                false,
+
+            status:
+                0,
+
+            error:
+                erro.message
+
+        };
+    }
 }
 
 
@@ -1041,6 +1058,9 @@ async function copiarCodigo(codigo) {
 // =====================================================
 
 window.MOZ_API = {
+
+    URL:
+        API_URL,
 
     definirCredenciais,
 
@@ -1052,6 +1072,10 @@ window.MOZ_API = {
 
     carregarUsuario,
 
+    testarAPI,
+
+    limparCredenciais,
+
     get:
         apiGet,
 
@@ -1060,6 +1084,9 @@ window.MOZ_API = {
 
     put:
         apiPut,
+
+    patch:
+        apiPatch,
 
     delete:
         apiDelete
@@ -1101,6 +1128,9 @@ window.apiPost =
 window.apiPut =
     apiPut;
 
+window.apiPatch =
+    apiPatch;
+
 window.apiDelete =
     apiDelete;
 
@@ -1115,6 +1145,12 @@ window.copiarAPIKey =
 
 window.copiarCodigo =
     copiarCodigo;
+
+window.testarAPI =
+    testarAPI;
+
+window.limparCredenciais =
+    limparCredenciais;
 
 
 // =====================================================
@@ -1144,30 +1180,19 @@ window.copiarCodigo =
                 credenciais.uid
             );
 
+            console.log(
+                "[API] API Key encontrada."
+            );
 
-            /*
-            Não é obrigatório carregar /configuracoes
-            aqui. O dashboard/app poderá fazer isso
-            depois que a autenticação estiver pronta.
-            */
-
-        }
-        else {
+        } else {
 
             console.warn(
                 "[API] Nenhum conjunto completo de credenciais encontrado."
             );
-
         }
 
-    }
-    catch (erro) {
+    } catch (erro) {
 
         console.error(
-            "[API] Erro na inicialização:",
-            erro
-        );
+            "[API] Err
 
-    }
-
-})();
