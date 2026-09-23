@@ -528,7 +528,39 @@
             }
 
             #crmDetalhesCliente .crm-status {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 5px 10px;
+                border-radius: 999px;
+                font-size: 12px;
                 font-weight: 700;
+                line-height: 1;
+                border: 1px solid transparent;
+            }
+
+            #crmDetalhesCliente .crm-status.concluido {
+                color: #166534;
+                background: #dcfce7;
+                border-color: #86efac;
+            }
+
+            #crmDetalhesCliente .crm-status.processando {
+                color: #92400e;
+                background: #fef3c7;
+                border-color: #fcd34d;
+            }
+
+            #crmDetalhesCliente .crm-status.pendente {
+                color: #1d4ed8;
+                background: #dbeafe;
+                border-color: #93c5fd;
+            }
+
+            #crmDetalhesCliente .crm-status.erro {
+                color: #991b1b;
+                background: #fee2e2;
+                border-color: #fca5a5;
             }
 
             @media (max-width: 700px) {
@@ -682,7 +714,7 @@
                                         <td>${escapar(obterPagamento(compra))}</td>
                                         <td>${escapar(obterDispositivo(compra))}</td>
                                         <td>${escapar(obterGrupo(compra))}</td>
-                                        <td class="crm-status">${escapar(textoStatus(status))}</td>
+                                        <td><span class="crm-status ${classeStatus(status)}">${escapar(textoStatus(status))}</span></td>
                                     </tr>
                                 `;
                             }).join("")}
