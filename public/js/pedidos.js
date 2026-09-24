@@ -23,6 +23,7 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
 
     let pedidos = [];
     let filtroAtual = "todos";
+    let periodoAtual = "todos";
     let carregando = false;
     let timerAtualizacao = null;
 
@@ -310,6 +311,23 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                     </div>
                 </div>
 
+                <div class="pedidos-periodo-card">
+                    <div class="pedidos-filtros-titulo">
+                        <strong>Período</strong>
+                        <span>Filtrar pedidos por data de criação</span>
+                    </div>
+
+                    <select id="pedidosFiltroPeriodo" class="pedidos-periodo-select"
+                            onchange="window.filtrarPeriodoPedidos(this.value)">
+                        <option value="todos">Todos os períodos</option>
+                        <option value="hoje">Hoje</option>
+                        <option value="ontem">Ontem</option>
+                        <option value="semana">Esta semana</option>
+                        <option value="mes">Este mês</option>
+                        <option value="mes_passado">Mês passado</option>
+                    </select>
+                </div>
+
                 <div class="pedidos-lista-header">
                     <div>
                         <strong id="pedidosTituloLista">Todos os pedidos</strong>
@@ -476,6 +494,28 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                     display: block;
                     margin-top: 3px;
                     opacity: .58;
+                }
+
+                .pedidos-periodo-card {
+                    background: var(--card-bg, #111827);
+                    border: 1px solid rgba(255,255,255,.08);
+                    border-radius: 14px;
+                    padding: 15px 18px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 18px;
+                }
+
+                .pedidos-periodo-select {
+                    min-width: 220px;
+                    border: 1px solid rgba(255,255,255,.1);
+                    background: rgba(255,255,255,.035);
+                    color: inherit;
+                    border-radius: 10px;
+                    padding: 10px 12px;
+                    outline: none;
+                    cursor: pointer;
                 }
 
                 .pedidos-lista-header {
@@ -734,12 +774,131 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
         `;
     }
 
+    function inicioDoDia(data) {
+        const d = new Date(data);
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }
+
+    function obterInicioPeriodo(periodo) {
+        const agora = new Date();
+        const hoje = inicioDoDia(agora);
+
+        if (periodo === "hoje") {
+            return hoje;
+        }
+
+        if (periodo === "ontem") {
+            const d = new Date(hoje);
+            d.setDate(d.getDate() - 1);
+            return d;
+        }
+
+        if (periodo === "semana") {
+            const d = new Date(hoje);
+            const dia = d.getDay();
+            const diferenca = dia === 0 ? 6 : dia - 1;
+            d.setDate(d.getDate() - diferenca);
+            return d;
+        }
+
+        if (periodo === "mes") {
+            return new Date(
+                agora.getFullYear(),
+                agora.getMonth(),
+                1
+            );
+        }
+
+        if (periodo === "mes_passado") {
+            return new Date(
+                agora.getFullYear(),
+                agora.getMonth() - 1,
+                1
+            );
+        }
+
+        return null;
+    }
+
+    function obterFimPeriodo(periodo) {
+        const agora = new Date();
+        const inicio = obterInicioPeriodo(periodo);
+
+        if (!inicio) return null;
+
+        if (periodo === "hoje") {
+            const fim = new Date(inicio);
+            fim.setDate(fim.getDate() + 1);
+            return fim;
+        }
+
+        if (periodo === "ontem") {
+            const fim = new Date(inicio);
+            fim.setDate(fim.getDate() + 1);
+            return fim;
+        }
+
+        if (periodo === "semana") {
+            const fim = new Date(inicio);
+            fim.setDate(fim.getDate() + 7);
+            return fim;
+        }
+
+        if (periodo === "mes") {
+            return new Date(
+                agora.getFullYear(),
+                agora.getMonth() + 1,
+                1
+            );
+        }
+
+        if (periodo === "mes_passado") {
+            return new Date(
+                agora.getFullYear(),
+                agora.getMonth(),
+                1
+            );
+        }
+
+        return null;
+    }
+
+    function pedidoDentroDoPeriodo(pedido, periodo) {
+        if (periodo === "todos") return true;
+
+        const valorData =
+            pedido.criadoEm ||
+            pedido.createdAt ||
+            pedido.data;
+
+        if (!valorData) return false;
+
+        const data = new Date(valorData);
+
+        if (Number.isNaN(data.getTime())) return false;
+
+        const inicio = obterInicioPeriodo(periodo);
+        const fim = obterFimPeriodo(periodo);
+
+        return data >= inicio && data < fim;
+    }
+
+    function obterPedidosFiltradosPorPeriodo() {
+        return pedidos.filter(p =>
+            pedidoDentroDoPeriodo(p, periodoAtual)
+        );
+    }
+
     function atualizarEstatisticas() {
         const box = el("pedidosEstatisticas");
         if (!box) return;
 
+        const pedidosPeriodo =
+            obterPedidosFiltradosPorPeriodo();
+
         const contagem = {
-            total: pedidos.length,
+            total: pedidosPeriodo.length,
             pendente: 0,
             processando: 0,
             concluido: 0,
@@ -747,7 +906,7 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
             cancelado: 0
         };
 
-        pedidos.forEach(p => {
+        pedidosPeriodo.forEach(p => {
             const status = normalizarStatus(p.status);
             contagem[status]++;
         });
@@ -770,21 +929,6 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                 <div class="nome">${nome}</div>
             </div>
         `).join("");
-
-        Object.entries({
-            todos: contagem.total,
-            pendente: contagem.pendente,
-            processando: contagem.processando,
-            concluido: contagem.concluido,
-            falhado: contagem.falhado,
-            cancelado: contagem.cancelado
-        }).forEach(([chave, valor]) => {
-            const item = el("contadorFiltro_" + chave);
-            if (item) {
-                item.textContent =
-                    valor + (valor === 1 ? " pedido" : " pedidos");
-            }
-        });
     }
 
     function renderizarPedidos() {
@@ -792,7 +936,13 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
         if (!lista) return;
 
         const filtrados = pedidos.filter(p => {
+            const dentroPeriodo =
+                pedidoDentroDoPeriodo(p, periodoAtual);
+
+            if (!dentroPeriodo) return false;
+
             if (filtroAtual === "todos") return true;
+
             return normalizarStatus(p.status) === filtroAtual;
         });
 
@@ -808,7 +958,20 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
         const titulo = el("pedidosTituloLista");
         const quantidade = el("pedidosQuantidadeLista");
 
-        if (titulo) titulo.textContent = titulos[filtroAtual] || "Pedidos";
+        const nomesPeriodo = {
+            todos: "",
+            hoje: " — Hoje",
+            ontem: " — Ontem",
+            semana: " — Esta semana",
+            mes: " — Este mês",
+            mes_passado: " — Mês passado"
+        };
+
+        if (titulo) {
+            titulo.textContent =
+                (titulos[filtroAtual] || "Pedidos") +
+                (nomesPeriodo[periodoAtual] || "");
+        }
 
         if (quantidade) {
             quantidade.textContent =
@@ -1023,6 +1186,14 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                 );
             });
 
+        atualizarEstatisticas();
+        renderizarPedidos();
+    };
+
+    window.filtrarPeriodoPedidos = function (periodo) {
+        periodoAtual = periodo || "todos";
+
+        atualizarEstatisticas();
         renderizarPedidos();
     };
 
@@ -1143,6 +1314,13 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
 
         try {
             montarInterface();
+
+            const seletorPeriodo =
+                el("pedidosFiltroPeriodo");
+
+            if (seletorPeriodo) {
+                seletorPeriodo.value = periodoAtual;
+            }
 
             const json = await apiGetPedidos();
             pedidos = obterListaResposta(json)
