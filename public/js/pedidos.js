@@ -19,7 +19,7 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
 
 (function () {
 
-    const VERSAO = "pedidos-resumo-horizontal-vertical-modal-20260924-v3";
+    const VERSAO = "pedidos-resumo-alinhado-20260924-v4";
 
     let pedidos = [];
     let filtroAtual = "todos";
@@ -915,9 +915,10 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                 width: 100% !important;
                 min-width: 0 !important;
                 box-sizing: border-box !important;
-                display: flex !important;
+                display: grid !important;
+                grid-template-columns: minmax(220px, 1.15fr) 150px minmax(300px, 1.8fr) 150px 120px !important;
                 align-items: center !important;
-                gap: 14px !important;
+                column-gap: 16px !important;
                 padding: 14px 18px !important;
             }
             .pedido-resumo-item {
@@ -926,63 +927,83 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                 align-items: center !important;
                 gap: 6px !important;
                 white-space: nowrap !important;
+                overflow: hidden !important;
             }
             .pedido-resumo-label {
                 opacity: .55 !important;
                 font-size: 11px !important;
                 font-weight: 600 !important;
+                flex: 0 0 auto !important;
             }
             .pedido-resumo-item strong {
                 font-size: 13px !important;
+                min-width: 0 !important;
                 overflow: hidden !important;
                 text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+            }
+            .pedido-resumo-linha > .pedido-resumo-item:nth-of-type(1) {
+                grid-column: 1;
+            }
+            .pedido-resumo-linha > .pedido-resumo-item:nth-of-type(2) {
+                grid-column: 2;
             }
             .pedido-id-resumo {
-                flex: 1 1 auto !important;
-                min-width: 120px !important;
+                grid-column: 3 !important;
+                min-width: 0 !important;
             }
             .pedido-id-resumo strong {
                 max-width: 100% !important;
             }
+            .pedido-resumo-linha > .pedido-resumo-item:nth-of-type(3) {
+                grid-column: 4;
+            }
             .pedido-resumo-separador {
-                opacity: .25 !important;
-                flex: 0 0 auto !important;
+                display: none !important;
             }
             .pedido-resumo-linha .pedido-status {
                 flex: 0 0 auto !important;
             }
             .pedido-detalhes-btn {
-                flex: 0 0 auto !important;
-                width: auto !important;
-                min-width: 105px !important;
+                grid-column: 5 !important;
+                grid-row: 1 !important;
+                justify-self: end !important;
+                width: 120px !important;
+                min-width: 120px !important;
                 white-space: nowrap !important;
-                margin-left: auto !important;
+                margin: 0 !important;
             }
-            @media (max-width: 900px) {
+            @media (max-width: 1000px) {
                 .pedido-resumo-linha {
-                    flex-wrap: wrap !important;
-                }
-                .pedido-id-resumo {
-                    flex: 1 1 240px !important;
+                    grid-template-columns: minmax(170px, 1.1fr) 130px minmax(220px, 1.6fr) 135px 110px !important;
+                    column-gap: 10px !important;
                 }
                 .pedido-detalhes-btn {
-                    margin-left: auto !important;
+                    width: 110px !important;
+                    min-width: 110px !important;
                 }
             }
-            @media (max-width: 600px) {
+            @media (max-width: 760px) {
                 .pedido-resumo-linha {
-                    display: grid !important;
                     grid-template-columns: 1fr 1fr !important;
-                    gap: 9px !important;
+                    row-gap: 9px !important;
                 }
-                .pedido-resumo-separador {
-                    display: none !important;
+                .pedido-resumo-linha > .pedido-resumo-item:nth-of-type(1) {
+                    grid-column: 1;
+                }
+                .pedido-resumo-linha > .pedido-resumo-item:nth-of-type(2) {
+                    grid-column: 2;
                 }
                 .pedido-id-resumo {
-                    min-width: 0 !important;
+                    grid-column: 1 / -1 !important;
+                }
+                .pedido-resumo-linha > .pedido-resumo-item:nth-of-type(3) {
+                    grid-column: 1;
                 }
                 .pedido-detalhes-btn {
+                    grid-column: 2 !important;
                     width: 100% !important;
+                    min-width: 0 !important;
                 }
             }
         `;
