@@ -1016,11 +1016,21 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
         if (!pedido) return;
 
         const texto = [
-            "Nome: " + pedido.nomeCliente,
-            "Valor: " + dinheiro(pedido.valor),
-            "ID: " + pedido.id,
-            "Estado: " + STATUS[normalizarStatus(pedido.status)].texto
-        ].join("\n");
+            "Pedido: " + pedido.id,
+            "Status: " + STATUS[normalizarStatus(pedido.status)].texto,
+            "Cliente: " + pedido.nomeCliente,
+            "Nº Cliente: " + pedido.numeroCliente,
+            "Nº que recebeu: " + pedido.numeroRecebeu,
+            "Pacote: " + pedido.pacote,
+            "Grupo: " + pedido.grupo,
+            "Dispositivo: " + pedido.dispositivo,
+            "Tentativas: " + pedido.tentativas,
+            "Criado: " + dataHora(pedido.criadoEm),
+            "Iniciado: " + dataHora(pedido.iniciadoEm),
+            "Concluído: " + dataHora(pedido.concluidoEm),
+            "Atualizado: " + dataHora(pedido.atualizadoEm),
+            pedido.erro ? "Erro: " + pedido.erro : ""
+        ].filter(Boolean).join("\n");
 
         alert(texto);
     };
