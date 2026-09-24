@@ -1340,19 +1340,9 @@
                 return;
             }
 
-            // Se o mesmo painel já está aberto e não existe
-            // necessidade de recarregá-lo, mantém o painel.
-            if (
-                painelAtual === panelId &&
-                !painelEmCarregamento
-            ) {
-                console.log(
-                    "[MOZ TECH] Painel já aberto:",
-                    panelId
-                );
-                return;
-            }
-
+            // O mesmo painel pode ser aberto novamente.
+            // Apenas bloqueamos uma segunda execução enquanto
+            // o carregamento atual ainda estiver em andamento.
             painelAtual = panelId;
             painelEmCarregamento = true;
 
@@ -1936,6 +1926,6 @@
 
     }
 
-    console.log("[MOZ TECH] app.js NAV-OK carregado.");
+    console.log("[MOZ TECH] app.js NAV-OK SEM LOOP 2026-09-24 carregado.");
 
 })();
