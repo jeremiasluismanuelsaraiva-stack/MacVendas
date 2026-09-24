@@ -39,6 +39,19 @@
 
 
     // =====================================================
+    // CONTROLE DE NAVEGAÇÃO
+    // Evita chamadas duplicadas do mesmo painel.
+    // =====================================================
+
+    let painelAtual = null;
+    let painelEmCarregamento = false;
+    let ultimoCliqueMenu = {
+        panel: null,
+        tempo: 0
+    };
+
+
+    // =====================================================
     // AUXILIAR
     // =====================================================
 
@@ -1277,6 +1290,25 @@
     window.showPanel =
         async function (panelId) {
 
+            const agoraClique = Date.now();
+
+            // Ignora cliques repetidos no mesmo painel em sequência.
+            if (
+                ultimoCliqueMenu.panel === panelId &&
+                agoraClique - ultimoCliqueMenu.tempo < 700
+            ) {
+                console.warn(
+                    "[MOZ TECH] Clique duplicado ignorado:",
+                    panelId
+                );
+                return;
+            }
+
+            ultimoCliqueMenu = {
+                panel: panelId,
+                tempo: agoraClique
+            };
+
             console.log(
                 "[MOZ TECH] Abrindo painel:",
                 panelId
@@ -1295,81 +1327,116 @@
                 return;
             }
 
-            // =================================================
-            // ESCONDER TODOS
-            // =================================================
-
-            Object.values(paineis)
-                .forEach(function (id) {
-
-                    const painel =
-                        el(id);
-
-                    if (painel) {
-
-                        painel.style.display =
-                            "none";
-
-                    }
-
-                });
-
-            // =================================================
-            // ABRIR PAINEL
-            // =================================================
-
-            const painel =
-                el(painelId);
-
-            if (!painel) {
-
-                console.error(
-                    "[MOZ TECH] Painel não encontrado:",
-                    painelId
+            // Se o mesmo painel já está sendo carregado,
+            // não inicia outro carregamento.
+            if (
+                painelAtual === panelId &&
+                painelEmCarregamento
+            ) {
+                console.warn(
+                    "[MOZ TECH] Painel já está carregando:",
+                    panelId
                 );
-
                 return;
             }
 
-            painel.style.display =
-                "block";
+            // Se o mesmo painel já está aberto e não existe
+            // necessidade de recarregá-lo, mantém o painel.
+            if (
+                painelAtual === panelId &&
+                !painelEmCarregamento
+            ) {
+                console.log(
+                    "[MOZ TECH] Painel já aberto:",
+                    panelId
+                );
+                return;
+            }
 
-            // =================================================
-            // MENU ATIVO
-            // =================================================
+            painelAtual = panelId;
+            painelEmCarregamento = true;
 
-            document
-                .querySelectorAll(
-                    ".menu-item[data-panel]"
-                )
-                .forEach(function (item) {
+            try {
 
-                    item.classList.remove(
+                // =================================================
+                // ESCONDER TODOS
+                // =================================================
+
+                Object.values(paineis)
+                    .forEach(function (id) {
+
+                        const painel =
+                            el(id);
+
+                        if (painel) {
+
+                            painel.style.display =
+                                "none";
+
+                        }
+
+                    });
+
+                // =================================================
+                // ABRIR PAINEL
+                // =================================================
+
+                const painel =
+                    el(painelId);
+
+                if (!painel) {
+
+                    console.error(
+                        "[MOZ TECH] Painel não encontrado:",
+                        painelId
+                    );
+
+                    painelAtual = null;
+                    return;
+                }
+
+                painel.style.display =
+                    "block";
+
+                // =================================================
+                // MENU ATIVO
+                // =================================================
+
+                document
+                    .querySelectorAll(
+                        ".menu-item[data-panel]"
+                    )
+                    .forEach(function (item) {
+
+                        item.classList.remove(
+                            "active"
+                        );
+
+                    });
+
+                const itemAtivo =
+                    document.querySelector(
+                        '.menu-item[data-panel="' +
+                        panelId +
+                        '"]'
+                    );
+
+                if (itemAtivo) {
+
+                    itemAtivo.classList.add(
                         "active"
                     );
 
-                });
+                }
 
-            const itemAtivo =
-                document.querySelector(
-                    '.menu-item[data-panel="' +
-                    panelId +
-                    '"]'
+                // =================================================
+                // CARREGAR CONTEÚDO
+                // =================================================
+
+                console.log(
+                    "[MOZ TECH] Carregando painel:",
+                    panelId
                 );
-
-            if (itemAtivo) {
-
-                itemAtivo.classList.add(
-                    "active"
-                );
-
-            }
-
-            // =================================================
-            // CARREGAR CONTEÚDO
-            // =================================================
-
-            try {
 
                 await carregarPainel(
                     panelId
@@ -1384,16 +1451,21 @@
                 );
 
             }
+            finally {
 
-            // =================================================
-            // FECHAR MENU MOBILE
-            // =================================================
+                painelEmCarregamento = false;
 
-            if (
-                window.innerWidth <= 768
-            ) {
+                // =================================================
+                // FECHAR MENU MOBILE
+                // =================================================
 
-                fecharMenuMobile();
+                if (
+                    window.innerWidth <= 768
+                ) {
+
+                    fecharMenuMobile();
+
+                }
 
             }
 
@@ -1418,18 +1490,24 @@
 
         botoes.forEach(function (botao) {
 
-            botao.onclick = function (event) {
+            // Marca o botão para não reinstalar o mesmo handler.
+            if (
+                botao.dataset.mozMenuInicializado ===
+                "true"
+            ) {
+                return;
+            }
+
+            botao.dataset.mozMenuInicializado =
+                "true";
+
+            botao.onclick = async function (event) {
 
                 event.preventDefault();
                 event.stopPropagation();
 
                 const panel =
                     botao.getAttribute("data-panel");
-
-                console.log(
-                    "[MOZ TECH] BOTÃO CLICADO:",
-                    panel
-                );
 
                 if (!panel) {
 
@@ -1440,7 +1518,34 @@
                     return;
                 }
 
-                window.showPanel(
+                const agora =
+                    Date.now();
+
+                // Proteção adicional contra clique duplo
+                // ou eventos repetidos no mesmo botão.
+                if (
+                    botao.dataset.mozUltimoClique &&
+                    agora -
+                    Number(botao.dataset.mozUltimoClique) < 700
+                ) {
+
+                    console.warn(
+                        "[MOZ TECH] Clique duplicado ignorado no menu:",
+                        panel
+                    );
+
+                    return;
+                }
+
+                botao.dataset.mozUltimoClique =
+                    String(agora);
+
+                console.log(
+                    "[MOZ TECH] BOTÃO CLICADO:",
+                    panel
+                );
+
+                await window.showPanel(
                     panel
                 );
 
@@ -1753,6 +1858,8 @@
                 "function"
             ) {
 
+                // Apenas abre o dashboard inicial.
+                // Não interfere com os cliques do menu.
                 window.showPanel(
                     "dashboard"
                 );
