@@ -104,7 +104,14 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
             return "processando";
         }
 
-        if (["concluido", "concluida", "sucesso", "success"].includes(s)) {
+        if ([
+            "concluido",
+            "concluida",
+            "finalizado",
+            "finalizada",
+            "sucesso",
+            "success"
+        ].includes(s)) {
             return "concluido";
         }
 
