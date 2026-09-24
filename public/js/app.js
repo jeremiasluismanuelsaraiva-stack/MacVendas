@@ -45,10 +45,6 @@
 
     let painelAtual = null;
     let painelEmCarregamento = false;
-    let ultimoCliqueMenu = {
-        panel: null,
-        tempo: 0
-    };
 
 
     // =====================================================
@@ -1290,25 +1286,6 @@
     window.showPanel =
         async function (panelId) {
 
-            const agoraClique = Date.now();
-
-            // Ignora cliques repetidos no mesmo painel em sequência.
-            if (
-                ultimoCliqueMenu.panel === panelId &&
-                agoraClique - ultimoCliqueMenu.tempo < 700
-            ) {
-                console.warn(
-                    "[MOZ TECH] Clique duplicado ignorado:",
-                    panelId
-                );
-                return;
-            }
-
-            ultimoCliqueMenu = {
-                panel: panelId,
-                tempo: agoraClique
-            };
-
             console.log(
                 "[MOZ TECH] Abrindo painel:",
                 panelId
@@ -1468,7 +1445,7 @@
 
     function inicializarMenu() {
 
-        const botoes =
+        let botoes =
             document.querySelectorAll(
                 ".menu-item[data-panel]"
             );
@@ -1478,68 +1455,75 @@
             botoes.length
         );
 
-        botoes.forEach(function (botao) {
+        botoes.forEach(function (botaoOriginal) {
 
-            // Marca o botão para não reinstalar o mesmo handler.
+            /*
+             * Remove handlers antigos de versões anteriores
+             * do app.js. O clone mantém HTML, classes e data-*
+             * mas não carrega listeners JavaScript antigos.
+             */
             if (
-                botao.dataset.mozMenuInicializado ===
+                botaoOriginal.dataset.mozMenuLimpo !==
+                "true"
+            ) {
+
+                const botaoNovo =
+                    botaoOriginal.cloneNode(true);
+
+                botaoNovo.dataset.mozMenuLimpo =
+                    "true";
+
+                botaoOriginal.replaceWith(
+                    botaoNovo
+                );
+
+                botaoOriginal =
+                    botaoNovo;
+
+            }
+
+            // Impede reinstalação pelo mesmo app.js.
+            if (
+                botaoOriginal.dataset.mozMenuInicializado ===
                 "true"
             ) {
                 return;
             }
 
-            botao.dataset.mozMenuInicializado =
+            botaoOriginal.dataset.mozMenuInicializado =
                 "true";
 
-            botao.onclick = async function (event) {
+            botaoOriginal.onclick =
+                async function (event) {
 
-                event.preventDefault();
-                event.stopPropagation();
+                    event.preventDefault();
+                    event.stopPropagation();
 
-                const panel =
-                    botao.getAttribute("data-panel");
+                    const panel =
+                        botaoOriginal.getAttribute(
+                            "data-panel"
+                        );
 
-                if (!panel) {
+                    if (!panel) {
 
-                    console.error(
-                        "[MOZ TECH] Botão sem data-panel"
-                    );
+                        console.error(
+                            "[MOZ TECH] Botão sem data-panel"
+                        );
 
-                    return;
-                }
+                        return;
 
-                const agora =
-                    Date.now();
+                    }
 
-                // Proteção adicional contra clique duplo
-                // ou eventos repetidos no mesmo botão.
-                if (
-                    botao.dataset.mozUltimoClique &&
-                    agora -
-                    Number(botao.dataset.mozUltimoClique) < 700
-                ) {
-
-                    console.warn(
-                        "[MOZ TECH] Clique duplicado ignorado no menu:",
+                    console.log(
+                        "[MOZ TECH] BOTÃO CLICADO:",
                         panel
                     );
 
-                    return;
-                }
+                    await window.showPanel(
+                        panel
+                    );
 
-                botao.dataset.mozUltimoClique =
-                    String(agora);
-
-                console.log(
-                    "[MOZ TECH] BOTÃO CLICADO:",
-                    panel
-                );
-
-                await window.showPanel(
-                    panel
-                );
-
-            };
+                };
 
         });
 
@@ -1926,6 +1910,6 @@
 
     }
 
-    console.log("[MOZ TECH] app.js NAV-OK SEM LOOP 2026-09-24 carregado.");
+    console.log("[MOZ TECH] app.js FINAL SEM DUPLICAÇÃO DE MENU 2026-09-24 carregado.");
 
 })();
