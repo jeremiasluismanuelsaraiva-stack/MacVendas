@@ -19,7 +19,7 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
 
 (function () {
 
-    const VERSAO = "pedidos-resumo-alinhado-modal-20260924-v5";
+    const VERSAO = "pedidos-resumo-horizontal-vertical-modal-20260924-v3";
 
     let pedidos = [];
     let filtroAtual = "todos";
@@ -508,46 +508,37 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                     width: 100% !important;
                     max-width: none !important;
                     box-sizing: border-box !important;
-                    min-height: 64px;
+                }
+
+                .pedido-card {
                     background: var(--card-bg, #111827);
                     border: 1px solid rgba(255,255,255,.08);
-                    border-radius: 12px;
-                    padding: 12px 16px;
-                    box-shadow: 0 5px 16px rgba(0,0,0,.08);
+                    border-radius: 18px;
+                    padding: 18px;
+                    box-shadow: 0 8px 24px rgba(0,0,0,.1);
                     overflow: hidden;
-                    display: grid !important;
-                    grid-template-columns: minmax(180px, 1.15fr) minmax(130px, .75fr) minmax(300px, 2fr) minmax(140px, .8fr) minmax(110px, auto);
-                    align-items: center;
-                    column-gap: 18px;
                 }
 
                 .pedido-card-topo {
-                    display: contents !important;
-                }
-
-                .pedido-card-topo > div {
-                    display: contents !important;
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                    gap: 12px;
+                    margin-bottom: 16px;
                 }
 
                 .pedido-id {
-                    grid-column: 3;
-                    grid-row: 1;
-                    font-size: 13px;
                     font-weight: 800;
                     word-break: break-all;
-                    overflow-wrap: anywhere;
-                    min-width: 0;
-                    line-height: 1.35;
                 }
 
                 .pedido-subtitulo {
-                    display: none !important;
+                    margin-top: 4px;
+                    font-size: 12px;
+                    opacity: .55;
                 }
 
                 .pedido-status {
-                    grid-column: 4;
-                    grid-row: 1;
-                    justify-self: start;
                     flex: 0 0 auto;
                     display: inline-flex;
                     align-items: center;
@@ -556,30 +547,6 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                     border-radius: 999px;
                     font-size: 11px;
                     font-weight: 800;
-                    white-space: nowrap;
-                }
-
-                .pedido-card::before {
-                    content: "Nome: " attr(data-nome);
-                    grid-column: 1;
-                    grid-row: 1;
-                    font-size: 13px;
-                    font-weight: 700;
-                    min-width: 0;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
-                }
-
-                .pedido-card::after {
-                    content: "Valor: " attr(data-valor);
-                    grid-column: 2;
-                    grid-row: 1;
-                    font-size: 13px;
-                    font-weight: 700;
-                    min-width: 0;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
                     white-space: nowrap;
                 }
 
@@ -698,31 +665,6 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                     font-weight: 700;
                 }
 
-                .pedido-acoes {
-                    grid-column: 5;
-                    grid-row: 1;
-                    display: flex;
-                    align-items: center;
-                    justify-content: flex-end;
-                    gap: 8px;
-                    margin: 0;
-                    min-width: 0;
-                }
-
-                .pedido-acao {
-                    flex: 0 0 auto;
-                    width: auto;
-                    min-width: 105px;
-                    border: 1px solid rgba(255,255,255,.08);
-                    background: rgba(255,255,255,.035);
-                    color: inherit;
-                    border-radius: 9px;
-                    padding: 9px 12px;
-                    cursor: pointer;
-                    font-weight: 700;
-                    white-space: nowrap;
-                }
-
                 .pedido-acao.cancelar {
                     color: #f87171;
                 }
@@ -745,52 +687,6 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
 
                     .pedidos-filtros-grid {
                         grid-template-columns: repeat(3, 1fr);
-                    }
-                }
-
-                @media (max-width: 1000px) {
-                    .pedido-card {
-                        grid-template-columns: minmax(150px, 1.1fr) minmax(120px, .8fr) minmax(220px, 1.8fr) minmax(125px, .8fr) minmax(105px, auto);
-                        column-gap: 10px;
-                    }
-
-                    .pedido-card::before,
-                    .pedido-card::after,
-                    .pedido-id,
-                    .pedido-status {
-                        min-width: 0;
-                    }
-                }
-
-                @media (max-width: 760px) {
-                    .pedido-card {
-                        grid-template-columns: 1fr 1fr;
-                        row-gap: 9px;
-                    }
-
-                    .pedido-card::before {
-                        grid-column: 1;
-                        grid-row: 1;
-                    }
-
-                    .pedido-card::after {
-                        grid-column: 2;
-                        grid-row: 1;
-                    }
-
-                    .pedido-id {
-                        grid-column: 1 / -1;
-                        grid-row: 2;
-                    }
-
-                    .pedido-status {
-                        grid-column: 1;
-                        grid-row: 3;
-                    }
-
-                    .pedido-acoes {
-                        grid-column: 2;
-                        grid-row: 3;
                     }
                 }
 
@@ -961,55 +857,137 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
         const status = normalizarStatus(p.status);
         const info = STATUS[status];
 
-        const podeCancelar =
-            status === "pendente" ||
-            status === "processando";
-
         return `
-            <article
-                class="pedido-card"
-                data-nome="${escapeHtml(p.nomeCliente)}"
-                data-valor="${escapeHtml(dinheiro(p.valor))}">
-
-                <div class="pedido-card-topo">
-                    <div>
-                        <div class="pedido-id">
-                            ${escapeHtml(p.id)}
-                        </div>
-                        <div class="pedido-subtitulo">
-                            Criado em ${escapeHtml(dataHora(p.criadoEm))}
-                        </div>
+            <article class="pedido-card pedido-card-resumo">
+                <div class="pedido-resumo-linha">
+                    <div class="pedido-resumo-item">
+                        <span class="pedido-resumo-label">Nome</span>
+                        <strong>${escapeHtml(p.nomeCliente)}</strong>
                     </div>
-
-                    <span class="pedido-status ${info.classe}">
-                        <i class="fas ${info.icone}"></i>
-                        ${info.texto}
-                    </span>
-                </div>
-
-                <div class="pedido-acoes">
+                    <div class="pedido-resumo-separador">|</div>
+                    <div class="pedido-resumo-item">
+                        <span class="pedido-resumo-label">Valor</span>
+                        <strong>${escapeHtml(dinheiro(p.valor))}</strong>
+                    </div>
+                    <div class="pedido-resumo-separador">|</div>
+                    <div class="pedido-resumo-item pedido-id-resumo">
+                        <span class="pedido-resumo-label">ID</span>
+                        <strong title="${escapeHtml(p.id)}">${escapeHtml(p.id)}</strong>
+                    </div>
+                    <div class="pedido-resumo-separador">|</div>
+                    <div class="pedido-resumo-item">
+                        <span class="pedido-resumo-label">Estado</span>
+                        <span class="pedido-status ${info.classe}">
+                            <i class="fas ${info.icone}"></i>
+                            ${info.texto}
+                        </span>
+                    </div>
                     <button
                         type="button"
-                        class="pedido-acao"
+                        class="pedido-acao pedido-detalhes-btn"
                         onclick="window.verDetalhesPedido('${escapeHtml(String(p.id))}')">
                         <i class="fas fa-eye"></i>
                         Detalhes
                     </button>
-
-                    ${podeCancelar ? `
-                        <button
-                            type="button"
-                            class="pedido-acao cancelar"
-                            onclick="window.cancelarPedido('${escapeHtml(String(p.id))}')">
-                            <i class="fas fa-ban"></i>
-                            Cancelar
-                        </button>
-                    ` : ""}
                 </div>
-
             </article>
         `;
     }
+
+    (function aplicarEstiloResumoPedidos() {
+        if (document.getElementById('estilo-resumo-pedidos-20260924')) return;
+        const style = document.createElement('style');
+        style.id = 'estilo-resumo-pedidos-20260924';
+        style.textContent = `
+            .pedidos-cards-grid {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                gap: 10px !important;
+            }
+            .pedido-card-resumo {
+                width: 100% !important;
+                max-width: none !important;
+                box-sizing: border-box !important;
+                padding: 0 !important;
+            }
+            .pedido-resumo-linha {
+                width: 100% !important;
+                min-width: 0 !important;
+                box-sizing: border-box !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 14px !important;
+                padding: 14px 18px !important;
+            }
+            .pedido-resumo-item {
+                min-width: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+                white-space: nowrap !important;
+            }
+            .pedido-resumo-label {
+                opacity: .55 !important;
+                font-size: 11px !important;
+                font-weight: 600 !important;
+            }
+            .pedido-resumo-item strong {
+                font-size: 13px !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+            .pedido-id-resumo {
+                flex: 1 1 auto !important;
+                min-width: 120px !important;
+            }
+            .pedido-id-resumo strong {
+                max-width: 100% !important;
+            }
+            .pedido-resumo-separador {
+                opacity: .25 !important;
+                flex: 0 0 auto !important;
+            }
+            .pedido-resumo-linha .pedido-status {
+                flex: 0 0 auto !important;
+            }
+            .pedido-detalhes-btn {
+                flex: 0 0 auto !important;
+                width: auto !important;
+                min-width: 105px !important;
+                white-space: nowrap !important;
+                margin-left: auto !important;
+            }
+            @media (max-width: 900px) {
+                .pedido-resumo-linha {
+                    flex-wrap: wrap !important;
+                }
+                .pedido-id-resumo {
+                    flex: 1 1 240px !important;
+                }
+                .pedido-detalhes-btn {
+                    margin-left: auto !important;
+                }
+            }
+            @media (max-width: 600px) {
+                .pedido-resumo-linha {
+                    display: grid !important;
+                    grid-template-columns: 1fr 1fr !important;
+                    gap: 9px !important;
+                }
+                .pedido-resumo-separador {
+                    display: none !important;
+                }
+                .pedido-id-resumo {
+                    min-width: 0 !important;
+                }
+                .pedido-detalhes-btn {
+                    width: 100% !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    })();
 
 
     window.filtrarPedidos = function (status) {
@@ -1028,145 +1006,83 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
     };
 
     window.verDetalhesPedido = function (id) {
-        const pedido = pedidos.find(
-            p => String(p.id) === String(id)
-        );
-
+        const pedido = pedidos.find(p => String(p.id) === String(id));
         if (!pedido) return;
 
-        const formatarNomeCampo = campo => String(campo)
-            .replace(/([a-z])([A-Z])/g, "$1 $2")
-            .replace(/_/g, " ")
-            .replace(/\buid\b/i, "UID")
-            .replace(/\bid\b/i, "ID")
-            .replace(/^./, c => c.toUpperCase());
+        const formatarCampo = chave => String(chave)
+            .replace(/([a-z])([A-Z])/g, '$1 $2')
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, c => c.toUpperCase());
 
-        const formatarValor = (campo, valor) => {
-            if (valor === null || valor === undefined || valor === "") return "-";
-
-            if (campo === "status") {
-                return STATUS[normalizarStatus(valor)]?.texto || String(valor);
-            }
-
-            if (campo === "valor" || campo === "preco" || campo === "total") {
-                return dinheiro(valor);
-            }
-
-            if (/(criado|iniciado|concluido|finalizado|atualizado|cancelado|processado|createdAt|updatedAt|data)/i.test(campo)) {
-                return dataHora(valor);
-            }
-
-            if (typeof valor === "object") {
-                try {
-                    return JSON.stringify(valor, null, 2);
-                } catch (_) {
-                    return String(valor);
-                }
-            }
-
+        const formatarValor = (chave, valor) => {
+            if (valor === null || valor === undefined || valor === '') return '-';
+            const k = String(chave).toLowerCase();
+            if (k === 'status') return STATUS[normalizarStatus(valor)]?.texto || String(valor);
+            if (k.includes('valor') || k === 'preco' || k === 'total') return dinheiro(valor);
+            if (/criado|iniciado|concluido|finalizado|atualizado|cancelado|processado|created|updated/i.test(k)) return dataHora(valor);
+            if (typeof valor === 'object') return JSON.stringify(valor, null, 2);
             return String(valor);
         };
 
-        const campos = Object.entries(pedido)
-            .filter(([_, valor]) => valor !== undefined && valor !== null && valor !== "")
-            .map(([campo, valor]) => `
-                <div class="pedido-detalhe-item">
-                    <span class="pedido-detalhe-label">${escapeHtml(formatarNomeCampo(campo))}</span>
-                    <span class="pedido-detalhe-value">${escapeHtml(formatarValor(campo, valor))}</span>
-                </div>
-            `)
-            .join("");
+        const linhas = Object.entries(pedido).map(([chave, valor]) => `
+            <div class="pedido-detalhe-linha">
+                <span class="pedido-detalhe-chave">${escapeHtml(formatarCampo(chave))}</span>
+                <span class="pedido-detalhe-valor">${escapeHtml(formatarValor(chave, valor))}</span>
+            </div>
+        `).join('');
 
-        const antigo = document.getElementById("modalDetalhesPedido");
-        if (antigo) antigo.remove();
+        document.getElementById('modalDetalhesPedido')?.remove();
 
-        const modal = document.createElement("div");
-        modal.id = "modalDetalhesPedido";
+        const modal = document.createElement('div');
+        modal.id = 'modalDetalhesPedido';
         modal.innerHTML = `
-            <div class="pedido-modal-backdrop" onclick="window.fecharDetalhesPedido(event)">
-                <div class="pedido-modal" onclick="event.stopPropagation()">
-                    <div class="pedido-modal-header">
+            <div class="pedido-modal-overlay" onclick="if(event.target===this) window.fecharDetalhesPedido()">
+                <div class="pedido-modal">
+                    <div class="pedido-modal-cabecalho">
                         <div>
-                            <div class="pedido-modal-titulo">Detalhes do pedido</div>
-                            <div class="pedido-modal-subtitulo">${escapeHtml(pedido.id)}</div>
+                            <small>Detalhes do pedido</small>
+                            <h2>${escapeHtml(pedido.id)}</h2>
                         </div>
-                        <button type="button" class="pedido-modal-fechar" onclick="window.fecharDetalhesPedido()">×</button>
+                        <button type="button" class="pedido-modal-fechar" onclick="window.fecharDetalhesPedido()">&times;</button>
                     </div>
-                    <div class="pedido-modal-conteudo">
-                        ${campos}
-                    </div>
-                    <div class="pedido-modal-footer">
+                    <div class="pedido-modal-conteudo">${linhas}</div>
+                    <div class="pedido-modal-rodape">
                         <button type="button" class="pedido-modal-btn" onclick="window.fecharDetalhesPedido()">Fechar</button>
                     </div>
                 </div>
             </div>
         `;
-
         document.body.appendChild(modal);
 
-        if (!document.getElementById("estilosModalDetalhesPedido")) {
-            const estilo = document.createElement("style");
-            estilo.id = "estilosModalDetalhesPedido";
-            estilo.textContent = `
-                .pedido-modal-backdrop {
-                    position: fixed; inset: 0; z-index: 99999;
-                    background: rgba(0,0,0,.72);
-                    display: flex; align-items: center; justify-content: center;
-                    padding: 20px;
-                }
-                .pedido-modal {
-                    width: min(760px, 100%); max-height: 90vh; overflow: hidden;
-                    background: var(--card-bg, #111827); color: inherit;
-                    border: 1px solid rgba(255,255,255,.1); border-radius: 16px;
-                    box-shadow: 0 25px 70px rgba(0,0,0,.4);
-                    display: flex; flex-direction: column;
-                }
-                .pedido-modal-header {
-                    display: flex; justify-content: space-between; align-items: center;
-                    gap: 15px; padding: 18px 20px;
-                    border-bottom: 1px solid rgba(255,255,255,.08);
-                }
-                .pedido-modal-titulo { font-size: 19px; font-weight: 800; }
-                .pedido-modal-subtitulo { margin-top: 4px; font-size: 12px; opacity: .6; word-break: break-all; }
-                .pedido-modal-fechar {
-                    width: 36px; height: 36px; border: 0; border-radius: 9px;
-                    background: rgba(255,255,255,.07); color: inherit; font-size: 25px; cursor: pointer;
-                }
-                .pedido-modal-conteudo {
-                    overflow-y: auto; padding: 18px 20px;
-                    display: flex; flex-direction: column; gap: 8px;
-                }
-                .pedido-detalhe-item {
-                    display: grid; grid-template-columns: minmax(150px, 220px) 1fr;
-                    gap: 15px; align-items: start; padding: 11px 12px;
-                    border-radius: 9px; background: rgba(255,255,255,.035);
-                    border: 1px solid rgba(255,255,255,.05);
-                }
-                .pedido-detalhe-label { font-weight: 700; opacity: .65; }
-                .pedido-detalhe-value { word-break: break-word; white-space: pre-wrap; }
-                .pedido-modal-footer { padding: 14px 20px; border-top: 1px solid rgba(255,255,255,.08); text-align: right; }
-                .pedido-modal-btn {
-                    border: 0; border-radius: 9px; padding: 10px 18px;
-                    background: #2563eb; color: #fff; cursor: pointer; font-weight: 700;
-                }
-                @media(max-width:600px){
-                    .pedido-detalhe-item { grid-template-columns: 1fr; gap: 4px; }
-                }
+        if (!document.getElementById('estilo-modal-detalhes-pedido')) {
+            const style = document.createElement('style');
+            style.id = 'estilo-modal-detalhes-pedido';
+            style.textContent = `
+                .pedido-modal-overlay { position: fixed; inset: 0; z-index: 99999; background: rgba(0,0,0,.68); display:flex; align-items:center; justify-content:center; padding:20px; }
+                .pedido-modal { width:min(760px,100%); max-height:90vh; overflow:hidden; background:#111827; color:#fff; border:1px solid rgba(255,255,255,.1); border-radius:18px; box-shadow:0 25px 80px rgba(0,0,0,.4); }
+                .pedido-modal-cabecalho { display:flex; justify-content:space-between; gap:15px; padding:20px; border-bottom:1px solid rgba(255,255,255,.08); }
+                .pedido-modal-cabecalho small { opacity:.55; }
+                .pedido-modal-cabecalho h2 { margin:5px 0 0; font-size:18px; word-break:break-all; }
+                .pedido-modal-fechar { border:0; background:rgba(255,255,255,.08); color:#fff; width:38px; height:38px; border-radius:10px; font-size:25px; cursor:pointer; }
+                .pedido-modal-conteudo { padding:18px 20px; max-height:62vh; overflow:auto; }
+                .pedido-detalhe-linha { display:grid; grid-template-columns:minmax(150px,30%) 1fr; gap:15px; padding:11px 0; border-bottom:1px solid rgba(255,255,255,.06); }
+                .pedido-detalhe-chave { opacity:.58; font-size:12px; font-weight:700; }
+                .pedido-detalhe-valor { font-size:13px; word-break:break-word; white-space:pre-wrap; }
+                .pedido-modal-rodape { padding:15px 20px; border-top:1px solid rgba(255,255,255,.08); display:flex; justify-content:flex-end; }
+                .pedido-modal-btn { border:0; background:#2563eb; color:#fff; padding:10px 18px; border-radius:10px; cursor:pointer; font-weight:700; }
+                @media(max-width:600px){ .pedido-detalhe-linha{grid-template-columns:1fr;gap:4px;} }
             `;
-            document.head.appendChild(estilo);
+            document.head.appendChild(style);
         }
     };
 
-    window.fecharDetalhesPedido = function (event) {
-        if (event && event.target && !event.target.classList.contains("pedido-modal-backdrop")) return;
-        const modal = document.getElementById("modalDetalhesPedido");
-        if (modal) modal.remove();
+    window.fecharDetalhesPedido = function () {
+        document.getElementById('modalDetalhesPedido')?.remove();
     };
 
-    document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape") window.fecharDetalhesPedido();
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') window.fecharDetalhesPedido?.();
     });
-    };
 
     window.cancelarPedido = async function (id) {
         const pedido = pedidos.find(
