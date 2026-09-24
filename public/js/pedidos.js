@@ -19,7 +19,7 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
 
 (function () {
 
-    const VERSAO = "pedidos-cards-fila-20260924";
+    const VERSAO = "pedidos-resumo-vertical-modal-20260924-v2";
 
     let pedidos = [];
     let filtroAtual = "todos";
@@ -498,9 +498,10 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                 }
 
                 .pedidos-cards-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-                    gap: 16px;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 10px;
+                    width: 100%;
                 }
 
                 .pedido-card {
@@ -671,169 +672,6 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                     padding: 45px 20px;
                     text-align: center;
                     opacity: .7;
-                }
-
-                .pedido-card-resumo {
-                    padding: 16px 18px;
-                    min-width: 0;
-                }
-
-                .pedido-resumo-linha {
-                    display: flex;
-                    align-items: center;
-                    gap: 14px;
-                    flex-wrap: wrap;
-                    width: 100%;
-                }
-
-                .pedido-resumo-linha > span {
-                    font-size: 13px;
-                    white-space: nowrap;
-                }
-
-                .pedido-resumo-linha > span strong {
-                    font-weight: 800;
-                }
-
-                .pedido-detalhes-btn {
-                    margin-left: auto;
-                    border: 1px solid rgba(255,255,255,.10);
-                    background: rgba(255,255,255,.045);
-                    color: inherit;
-                    border-radius: 9px;
-                    padding: 8px 12px;
-                    cursor: pointer;
-                    font-weight: 700;
-                    white-space: nowrap;
-                }
-
-                .pedido-detalhes-btn:hover {
-                    border-color: rgba(37,99,235,.55);
-                    background: rgba(37,99,235,.12);
-                }
-
-                .pedido-modal-overlay {
-                    position: fixed;
-                    inset: 0;
-                    z-index: 99999;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 20px;
-                    background: rgba(0,0,0,.70);
-                    backdrop-filter: blur(5px);
-                }
-
-                .pedido-modal {
-                    width: min(760px, 100%);
-                    max-height: 88vh;
-                    display: flex;
-                    flex-direction: column;
-                    overflow: hidden;
-                    background: var(--card-bg, #111827);
-                    color: inherit;
-                    border: 1px solid rgba(255,255,255,.10);
-                    border-radius: 18px;
-                    box-shadow: 0 25px 70px rgba(0,0,0,.40);
-                }
-
-                .pedido-modal-header {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    gap: 15px;
-                    padding: 20px 22px;
-                    border-bottom: 1px solid rgba(255,255,255,.08);
-                }
-
-                .pedido-modal-titulo {
-                    font-size: 20px;
-                    font-weight: 800;
-                }
-
-                .pedido-modal-subtitulo {
-                    margin-top: 4px;
-                    font-size: 12px;
-                    opacity: .55;
-                    word-break: break-all;
-                }
-
-                .pedido-modal-fechar {
-                    width: 36px;
-                    height: 36px;
-                    border: 0;
-                    border-radius: 10px;
-                    background: rgba(255,255,255,.06);
-                    color: inherit;
-                    font-size: 25px;
-                    cursor: pointer;
-                }
-
-                .pedido-modal-corpo {
-                    padding: 18px 22px;
-                    overflow-y: auto;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 9px;
-                }
-
-                .pedido-modal-dado {
-                    display: grid;
-                    grid-template-columns: 190px 1fr;
-                    gap: 14px;
-                    align-items: start;
-                    padding: 11px 13px;
-                    border: 1px solid rgba(255,255,255,.06);
-                    border-radius: 10px;
-                    background: rgba(255,255,255,.025);
-                }
-
-                .pedido-modal-rotulo {
-                    font-size: 12px;
-                    font-weight: 800;
-                    opacity: .62;
-                }
-
-                .pedido-modal-valor {
-                    font-size: 13px;
-                    font-weight: 650;
-                    word-break: break-word;
-                    white-space: pre-wrap;
-                }
-
-                .pedido-modal-footer {
-                    padding: 14px 22px;
-                    display: flex;
-                    justify-content: flex-end;
-                    border-top: 1px solid rgba(255,255,255,.08);
-                }
-
-                .pedido-modal-botao {
-                    border: 0;
-                    border-radius: 10px;
-                    padding: 10px 18px;
-                    background: #2563eb;
-                    color: #fff;
-                    cursor: pointer;
-                    font-weight: 700;
-                }
-
-                @media (max-width: 600px) {
-                    .pedido-resumo-linha {
-                        align-items: flex-start;
-                        flex-direction: column;
-                        gap: 8px;
-                    }
-
-                    .pedido-detalhes-btn {
-                        margin-left: 0;
-                        width: 100%;
-                    }
-
-                    .pedido-modal-dado {
-                        grid-template-columns: 1fr;
-                        gap: 5px;
-                    }
                 }
 
                 @media (max-width: 1100px) {
@@ -1019,14 +857,29 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                     <span><strong>Nome:</strong> ${escapeHtml(p.nomeCliente)}</span>
                     <span><strong>Valor:</strong> ${escapeHtml(dinheiro(p.valor))}</span>
                     <span><strong>ID:</strong> ${escapeHtml(p.id)}</span>
-                    <span><strong>Estado:</strong> ${escapeHtml(info.texto)}</span>
+                    <span class="pedido-resumo-estado ${info.classe}"><strong>Estado:</strong> ${escapeHtml(info.texto)}</span>
                     <button
                         type="button"
-                        class="pedido-detalhes-btn"
+                        class="pedido-acao pedido-detalhes-btn"
                         onclick="window.verDetalhesPedido('${escapeHtml(String(p.id))}')">
                         Detalhes...
                     </button>
                 </div>
+
+                ${p.erro ? `
+                    <div class="pedido-erro pedido-erro-resumo">
+                        <strong>Erro:</strong> ${escapeHtml(p.erro)}
+                    </div>
+                ` : ""}
+
+                ${status === "pendente" || status === "processando" ? `
+                    <button
+                        type="button"
+                        class="pedido-acao cancelar pedido-cancelar-resumo"
+                        onclick="window.cancelarPedido('${escapeHtml(String(p.id))}')">
+                        Cancelar
+                    </button>
+                ` : ""}
             </article>
         `;
     }
@@ -1046,46 +899,6 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
         renderizarPedidos();
     };
 
-    function nomeCampoDetalhe(chave) {
-        return String(chave || "")
-            .replace(/([a-z])([A-Z])/g, "$1 $2")
-            .replace(/[_-]+/g, " ")
-            .replace(/\buid\b/i, "UID")
-            .replace(/\bid\b/i, "ID")
-            .replace(/\bmb\b/i, "MB")
-            .replace(/\bgb\b/i, "GB")
-            .replace(/\bapi\b/i, "API")
-            .replace(/\b\w/g, m => m.toUpperCase());
-    }
-
-    function valorDetalhe(chave, valor) {
-        if (valor === null || valor === undefined || valor === "") return "-";
-
-        const k = String(chave || "").toLowerCase();
-
-        if (k === "status") {
-            return STATUS[normalizarStatus(valor)]?.texto || String(valor);
-        }
-
-        if (typeof valor === "number" && /(valor|preco|total|custo|lucro)/i.test(chave)) {
-            return dinheiro(valor);
-        }
-
-        if (/(criado|iniciado|concluido|finalizado|atualizado|cancelado|processado|created|updated)/i.test(chave)) {
-            return dataHora(valor);
-        }
-
-        if (typeof valor === "object") {
-            try {
-                return JSON.stringify(valor, null, 2);
-            } catch (_) {
-                return String(valor);
-            }
-        }
-
-        return String(valor);
-    }
-
     window.verDetalhesPedido = function (id) {
         const pedido = pedidos.find(
             p => String(p.id) === String(id)
@@ -1093,59 +906,255 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
 
         if (!pedido) return;
 
-        const antigo = document.getElementById("modalDetalhesPedidoMozTech");
-        if (antigo) antigo.remove();
+        const formatarNomeCampo = campo => {
+            return String(campo)
+                .replace(/([a-z])([A-Z])/g, "$1 $2")
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, letra => letra.toUpperCase());
+        };
+
+        const formatarValorCampo = (campo, valor) => {
+            if (valor === null || valor === undefined || valor === "") return "-";
+
+            const chave = String(campo).toLowerCase();
+
+            if (chave === "status") {
+                return STATUS[normalizarStatus(valor)]?.texto || String(valor);
+            }
+
+            if (["valor", "preco", "total"].includes(chave)) {
+                return dinheiro(valor);
+            }
+
+            if (/data|criado|iniciado|concluido|finalizado|atualizado|cancelado|processado|created|updated/i.test(campo)) {
+                return dataHora(valor);
+            }
+
+            if (typeof valor === "object") {
+                try {
+                    return JSON.stringify(valor, null, 2);
+                } catch (_) {
+                    return String(valor);
+                }
+            }
+
+            return String(valor);
+        };
 
         const campos = Object.entries(pedido)
             .filter(([_, valor]) => valor !== undefined && valor !== null && valor !== "")
-            .map(([chave, valor]) => `
-                <div class="pedido-modal-dado">
-                    <div class="pedido-modal-rotulo">${escapeHtml(nomeCampoDetalhe(chave))}</div>
-                    <div class="pedido-modal-valor">${escapeHtml(valorDetalhe(chave, valor))}</div>
+            .map(([campo, valor]) => `
+                <div class="pedido-detalhe-item">
+                    <div class="pedido-detalhe-label">${escapeHtml(formatarNomeCampo(campo))}</div>
+                    <div class="pedido-detalhe-valor">${escapeHtml(formatarValorCampo(campo, valor))}</div>
                 </div>
             `)
             .join("");
 
+        const antigo = document.getElementById("modalDetalhesPedido");
+        if (antigo) antigo.remove();
+
         const modal = document.createElement("div");
-        modal.id = "modalDetalhesPedidoMozTech";
+        modal.id = "modalDetalhesPedido";
         modal.className = "pedido-modal-overlay";
         modal.innerHTML = `
-            <div class="pedido-modal">
-                <div class="pedido-modal-header">
+            <div class="pedido-modal" role="dialog" aria-modal="true">
+                <div class="pedido-modal-topo">
                     <div>
-                        <div class="pedido-modal-titulo">Detalhes do Pedido</div>
-                        <div class="pedido-modal-subtitulo">${escapeHtml(pedido.id)}</div>
+                        <span class="pedido-modal-label">PEDIDO</span>
+                        <h2>Detalhes do pedido</h2>
+                        <small>${escapeHtml(String(pedido.id))}</small>
                     </div>
-                    <button type="button" class="pedido-modal-fechar" id="fecharModalPedido">×</button>
+                    <button type="button" class="pedido-modal-fechar" aria-label="Fechar">&times;</button>
                 </div>
 
-                <div class="pedido-modal-corpo">
-                    ${campos || '<div class="pedido-modal-vazio">Nenhum detalhe disponível.</div>'}
+                <div class="pedido-modal-conteudo">
+                    ${campos || '<div class="pedido-detalhe-vazio">Nenhum detalhe disponível.</div>'}
                 </div>
 
-                <div class="pedido-modal-footer">
-                    <button type="button" class="pedido-modal-botao" id="fecharModalPedidoFooter">Fechar</button>
+                <div class="pedido-modal-rodape">
+                    <button type="button" class="pedido-modal-btn-fechar">Fechar</button>
                 </div>
             </div>
         `;
 
+        if (!document.getElementById("estilosModalDetalhesPedido")) {
+            const style = document.createElement("style");
+            style.id = "estilosModalDetalhesPedido";
+            style.textContent = `
+                .pedido-modal-overlay {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 99999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                    background: rgba(0,0,0,.68);
+                    backdrop-filter: blur(5px);
+                }
+                .pedido-modal {
+                    width: min(760px, 100%);
+                    max-height: 90vh;
+                    overflow: hidden;
+                    background: var(--card-bg, #111827);
+                    color: inherit;
+                    border: 1px solid rgba(255,255,255,.10);
+                    border-radius: 18px;
+                    box-shadow: 0 25px 80px rgba(0,0,0,.45);
+                }
+                .pedido-modal-topo {
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                    gap: 15px;
+                    padding: 20px 22px;
+                    border-bottom: 1px solid rgba(255,255,255,.08);
+                }
+                .pedido-modal-label {
+                    font-size: 11px;
+                    font-weight: 800;
+                    opacity: .55;
+                    letter-spacing: .08em;
+                }
+                .pedido-modal-topo h2 {
+                    margin: 3px 0;
+                    font-size: 21px;
+                }
+                .pedido-modal-topo small {
+                    opacity: .55;
+                    word-break: break-all;
+                }
+                .pedido-modal-fechar {
+                    border: 0;
+                    background: transparent;
+                    color: inherit;
+                    font-size: 30px;
+                    line-height: 1;
+                    cursor: pointer;
+                    opacity: .7;
+                }
+                .pedido-modal-conteudo {
+                    padding: 18px 22px;
+                    max-height: 62vh;
+                    overflow-y: auto;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 9px;
+                }
+                .pedido-detalhe-item {
+                    display: grid;
+                    grid-template-columns: 190px minmax(0,1fr);
+                    gap: 15px;
+                    padding: 12px 13px;
+                    border-radius: 10px;
+                    background: rgba(255,255,255,.035);
+                    border: 1px solid rgba(255,255,255,.06);
+                }
+                .pedido-detalhe-label {
+                    font-weight: 700;
+                    opacity: .65;
+                }
+                .pedido-detalhe-valor {
+                    word-break: break-word;
+                    white-space: pre-wrap;
+                }
+                .pedido-modal-rodape {
+                    padding: 15px 22px;
+                    border-top: 1px solid rgba(255,255,255,.08);
+                    display: flex;
+                    justify-content: flex-end;
+                }
+                .pedido-modal-btn-fechar {
+                    border: 0;
+                    border-radius: 10px;
+                    padding: 10px 18px;
+                    background: #2563eb;
+                    color: #fff;
+                    font-weight: 700;
+                    cursor: pointer;
+                }
+                .pedido-detalhe-vazio {
+                    padding: 30px;
+                    text-align: center;
+                    opacity: .65;
+                }
+                .pedido-resumo-linha {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                    width: 100%;
+                    min-width: 0;
+                }
+                .pedido-resumo-linha > span {
+                    min-width: 0;
+                    word-break: break-word;
+                }
+                .pedido-resumo-linha > span:first-child {
+                    flex: 1 1 180px;
+                }
+                .pedido-resumo-linha > span:nth-child(2) {
+                    flex: 0 0 auto;
+                }
+                .pedido-resumo-linha > span:nth-child(3) {
+                    flex: 1 1 230px;
+                }
+                .pedido-resumo-estado {
+                    flex: 0 0 auto !important;
+                }
+                .pedido-detalhes-btn {
+                    flex: 0 0 auto;
+                    border: 1px solid rgba(37,99,235,.35);
+                    background: rgba(37,99,235,.12);
+                    color: inherit;
+                    white-space: nowrap;
+                }
+                .pedido-cancelar-resumo {
+                    margin-top: 8px;
+                    width: auto;
+                    color: #f87171;
+                }
+                .pedido-card-resumo {
+                    padding: 13px 15px;
+                }
+                .pedido-erro-resumo {
+                    margin-top: 10px;
+                }
+                @media (max-width: 800px) {
+                    .pedido-resumo-linha {
+                        flex-wrap: wrap;
+                        gap: 9px 14px;
+                    }
+                    .pedido-resumo-linha > span {
+                        flex: 1 1 45% !important;
+                    }
+                    .pedido-detalhe-item {
+                        grid-template-columns: 1fr;
+                        gap: 5px;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
         document.body.appendChild(modal);
 
-        const fechar = () => modal.remove();
-        document.getElementById("fecharModalPedido")?.addEventListener("click", fechar);
-        document.getElementById("fecharModalPedidoFooter")?.addEventListener("click", fechar);
+        const fechar = () => {
+            modal.remove();
+        };
 
+        modal.querySelector(".pedido-modal-fechar").addEventListener("click", fechar);
+        modal.querySelector(".pedido-modal-btn-fechar").addEventListener("click", fechar);
         modal.addEventListener("click", event => {
             if (event.target === modal) fechar();
         });
 
-        const tecla = event => {
+        document.addEventListener("keydown", function fecharEsc(event) {
             if (event.key === "Escape") {
                 fechar();
-                document.removeEventListener("keydown", tecla);
+                document.removeEventListener("keydown", fecharEsc);
             }
-        };
-        document.addEventListener("keydown", tecla);
+        });
     };
 
     window.cancelarPedido = async function (id) {
