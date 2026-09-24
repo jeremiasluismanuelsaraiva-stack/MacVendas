@@ -19,7 +19,7 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
 
 (function () {
 
-    const VERSAO = "pedidos-resumo-alinhado-modal-20260924-v4";
+    const VERSAO = "pedidos-resumo-alinhado-modal-20260924-v5";
 
     let pedidos = [];
     let filtroAtual = "todos";
@@ -533,9 +533,11 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                     grid-column: 3;
                     grid-row: 1;
                     font-size: 13px;
-                    font-weight: 700;
+                    font-weight: 800;
                     word-break: break-all;
+                    overflow-wrap: anywhere;
                     min-width: 0;
+                    line-height: 1.35;
                 }
 
                 .pedido-subtitulo {
@@ -546,6 +548,15 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                     grid-column: 4;
                     grid-row: 1;
                     justify-self: start;
+                    flex: 0 0 auto;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 7px 9px;
+                    border-radius: 999px;
+                    font-size: 11px;
+                    font-weight: 800;
+                    white-space: nowrap;
                 }
 
                 .pedido-card::before {
@@ -566,37 +577,9 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                     grid-row: 1;
                     font-size: 13px;
                     font-weight: 700;
-                    white-space: nowrap;
-                }
-
-                .pedido-card-topo {
-                    display: flex;
-                    align-items: flex-start;
-                    justify-content: space-between;
-                    gap: 12px;
-                    margin-bottom: 16px;
-                }
-
-                .pedido-id {
-                    font-weight: 800;
-                    word-break: break-all;
-                }
-
-                .pedido-subtitulo {
-                    margin-top: 4px;
-                    font-size: 12px;
-                    opacity: .55;
-                }
-
-                .pedido-status {
-                    flex: 0 0 auto;
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 6px;
-                    padding: 7px 9px;
-                    border-radius: 999px;
-                    font-size: 11px;
-                    font-weight: 800;
+                    min-width: 0;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
                     white-space: nowrap;
                 }
 
@@ -767,8 +750,15 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
 
                 @media (max-width: 1000px) {
                     .pedido-card {
-                        grid-template-columns: minmax(160px, 1.2fr) minmax(120px, .8fr) minmax(220px, 1.5fr) minmax(125px, .8fr) minmax(105px, auto);
+                        grid-template-columns: minmax(150px, 1.1fr) minmax(120px, .8fr) minmax(220px, 1.8fr) minmax(125px, .8fr) minmax(105px, auto);
                         column-gap: 10px;
+                    }
+
+                    .pedido-card::before,
+                    .pedido-card::after,
+                    .pedido-id,
+                    .pedido-status {
+                        min-width: 0;
                     }
                 }
 
