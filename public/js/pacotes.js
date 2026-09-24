@@ -13,13 +13,18 @@
  */
 
 const PACOTES_API = "/api";
-const PACOTES_VERSAO = "pacotes-final-20260923";
+const PACOTES_VERSAO = "pacotes-final-20260924";
 let pacotesData = [];
 let pacoteEditando = null;
 let filtroPacoteAtual = "todos";
+let carregandoPacotes = false;
 
 
-/* CARDS DE PACOTES */
+/* ESTILOS DOS CARDS DE PACOTES */
+(function aplicarEstilosPacotes() {
+    const estilo = document.createElement("style");
+    estilo.setAttribute("data-macvendas-pacotes", "true");
+    estilo.textContent = `/* CARDS DE PACOTES */
 .pacotes-cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -106,6 +111,10 @@ let filtroPacoteAtual = "todos";
         width: 100%;
     }
 }
+
+`;
+    document.head.appendChild(estilo);
+})();
 
 function escapar(valor) {
     return String(valor ?? "")
@@ -292,32 +301,168 @@ function criarInterfacePacotes() {
     }
 
     container.innerHTML = `
-        <div class="pacotes-macvendas">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
-                <div>
-                    <h3 style="margin:0;"> Gestão de Pacotes</h3>
-                    <small style="opacity:.7;">Crie pacotes de Internet, ilimitados, diários, semanais, mensais e personalizados.</small>
+        <style>
+.pacotes-macvendas {
+    width: 100%;
+}
+
+.pacotes-gestao-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 22px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color, rgba(128,128,128,.2));
+    border-radius: 16px;
+    background: var(--bg-secondary, #fff);
+    box-shadow: var(--card-shadow, 0 4px 18px rgba(0,0,0,.06));
+}
+
+.pacotes-gestao-texto {
+    min-width: 0;
+}
+
+.pacotes-gestao-label {
+    display: inline-block;
+    margin-bottom: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--accent-color, #0066cc);
+}
+
+.pacotes-gestao-card h3 {
+    margin: 0 0 6px;
+    font-size: 21px;
+    color: var(--text-primary, #111827);
+}
+
+.pacotes-gestao-card p {
+    margin: 0;
+    color: var(--text-secondary, #6b7280);
+    line-height: 1.5;
+}
+
+.pacotes-gestao-card .btn {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 10px 16px;
+    border-radius: 10px;
+}
+
+.pacotes-filtros-cards {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.pacote-filtro-card {
+    min-height: 78px;
+    padding: 14px 12px;
+    border: 1px solid var(--border-color, rgba(128,128,128,.2));
+    border-radius: 14px;
+    background: var(--bg-secondary, #fff);
+    color: var(--text-primary, #111827);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 700;
+    transition: .2s ease;
+    box-shadow: 0 3px 12px rgba(0,0,0,.05);
+}
+
+.pacote-filtro-card i {
+    font-size: 20px;
+    color: var(--accent-color, #0066cc);
+}
+
+.pacote-filtro-card span {
+    font-size: 13px;
+}
+
+.pacote-filtro-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-color, #0066cc);
+}
+
+.pacote-filtro-card.active {
+    background: var(--accent-color, #0066cc);
+    border-color: var(--accent-color, #0066cc);
+    color: #fff;
+}
+
+.pacote-filtro-card.active i {
+    color: #fff;
+}
+
+.pacotes-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 18px;
+    width: 100%;
+}
+
+.pacote-card {
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .pacotes-filtros-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .pacotes-gestao-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .pacotes-gestao-card .btn {
+        width: 100%;
+    }
+
+    .pacotes-filtros-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+</style>
+<div class="pacotes-macvendas">
+            <div class="pacotes-gestao-card">
+                <div class="pacotes-gestao-texto">
+                    <span class="pacotes-gestao-label">Gestão</span>
+                    <h3>Gestão de Pacotes</h3>
+                    <p>Crie pacotes de Internet, ilimitados, diários, semanais, mensais e personalizados.</p>
                 </div>
+
                 <button type="button" class="btn btn-primary" id="novoPacoteMacBtn">
-                    <i class="fas fa-plus"></i> Novo Pacote
+                    <i class="fas fa-plus"></i>
+                    <span>Novo Pacote</span>
                 </button>
             </div>
 
-            <div id="pacoteFiltrosMac" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
+            <div id="pacoteFiltrosMac" class="pacotes-filtros-cards">
                 ${[
-                    ["todos", "Todos"],
-                    ["internet", " Internet"],
-                    ["ilimitado", " Ilimitado"],
-                    ["diario", " Diário"],
-                    ["semanal", " Semanal"],
-                    ["mensal", " Mensal"],
-                    ["social", " Social"],
-                    ["personalizado", " Personalizado"]
-                ].map(([v, t]) => `
+                    ["todos", "Todos", "fas fa-layer-group"],
+                    ["internet", "Internet", "fas fa-wifi"],
+                    ["ilimitado", "Ilimitado", "fas fa-infinity"],
+                    ["diario", "Diário", "fas fa-calendar-day"],
+                    ["semanal", "Semanal", "fas fa-calendar-week"],
+                    ["mensal", "Mensal", "fas fa-calendar-alt"],
+                    ["social", "Social", "fas fa-share-nodes"],
+                    ["personalizado", "Personalizado", "fas fa-sliders"]
+                ].map(([v, t, icon]) => `
                     <button type="button"
-                        class="rank-filter-btn ${v === "todos" ? "active" : ""}"
+                        class="pacote-filtro-card ${v === "todos" ? "active" : ""}"
                         data-pacote-filtro-mac="${v}">
-                        ${t}
+                        <i class="${icon}"></i>
+                        <span>${t}</span>
                     </button>
                 `).join("")}
             </div>
@@ -727,6 +872,13 @@ async function excluirPacoteMac(id) {
 }
 
 async function carregarPacotes() {
+    if (carregandoPacotes) {
+        console.log("[PACOTES] Carregamento já está em andamento. Ignorando chamada duplicada.");
+        return;
+    }
+
+    carregandoPacotes = true;
+
     try {
         const container = criarInterfacePacotes();
 
@@ -739,6 +891,15 @@ async function carregarPacotes() {
             `<div class="empty-state">Carregando pacotes...</div>`;
 
         const resposta = await chamarPacotesAPI("/pacotes");
+
+        if (resposta && resposta.success === false) {
+            throw new Error(
+                resposta.error ||
+                resposta.erro ||
+                resposta.message ||
+                "A API recusou o carregamento dos pacotes."
+            );
+        }
 
         const lista =
             Array.isArray(resposta)
@@ -774,6 +935,8 @@ async function carregarPacotes() {
                 </div>
             `;
         }
+    } finally {
+        carregandoPacotes = false;
     }
 }
 
