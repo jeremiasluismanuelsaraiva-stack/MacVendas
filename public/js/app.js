@@ -46,6 +46,14 @@
     let painelAtual = null;
     let painelEmCarregamento = false;
 
+    // Locks globais: mesmo que o menu seja inicializado mais de uma vez,
+    // apenas uma ação de navegação pode executar por vez.
+    window.__MOZ_MENU_CLICK_LOCK__ =
+        window.__MOZ_MENU_CLICK_LOCK__ || false;
+
+    window.__MOZ_SHOW_PANEL_LOCK__ =
+        window.__MOZ_SHOW_PANEL_LOCK__ || false;
+
 
     // =====================================================
     // AUXILIAR
@@ -1286,6 +1294,12 @@
     window.showPanel =
         async function (panelId) {
 
+                        if (window.__MOZ_SHOW_PANEL_LOCK__) {
+                return;
+            }
+
+            window.__MOZ_SHOW_PANEL_LOCK__ = true;
+
             console.log(
                 "[MOZ TECH] Abrindo painel:",
                 panelId
@@ -1419,6 +1433,7 @@
 
             }
             finally {
+                  window.__MOZ_SHOW_PANEL_LOCK__ = false;
 
                 painelEmCarregamento = false;
 
@@ -1498,6 +1513,15 @@
 
                     event.preventDefault();
                     event.stopPropagation();
+                    event.stopImmediatePropagation();
+
+                    // Proteção GLOBAL contra vários handlers
+                    // executarem o mesmo clique.
+                    if (window.__MOZ_MENU_CLICK_LOCK__) {
+                        return;
+                    }
+
+                    window.__MOZ_MENU_CLICK_LOCK__ = true;
 
                     const panel =
                         botaoOriginal.getAttribute(
@@ -1505,13 +1529,13 @@
                         );
 
                     if (!panel) {
+                        window.__MOZ_MENU_CLICK_LOCK__ = false;
 
                         console.error(
                             "[MOZ TECH] Botão sem data-panel"
                         );
 
                         return;
-
                     }
 
                     console.log(
@@ -1519,9 +1543,27 @@
                         panel
                     );
 
-                    await window.showPanel(
-                        panel
-                    );
+                    try {
+
+                        await window.showPanel(
+                            panel
+                        );
+
+                    } catch (erro) {
+
+                        console.error(
+                            "[MOZ TECH] Erro ao abrir painel:",
+                            erro
+                        );
+
+                    } finally {
+
+                        setTimeout(function () {
+                            window.__MOZ_MENU_CLICK_LOCK__ =
+                                false;
+                        }, 150);
+
+                    }
 
                 };
 
@@ -1910,6 +1952,6 @@
 
     }
 
-    console.log("[MOZ TECH] app.js FINAL SEM DUPLICAÇÃO DE MENU 2026-09-24 carregado.");
+    console.log("[MOZ TECH] app.js FINAL BLOQUEIO GLOBAL MENU 2026-09-24 carregado.");
 
 })();
