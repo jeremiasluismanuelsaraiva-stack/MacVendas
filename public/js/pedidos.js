@@ -673,6 +673,169 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                     opacity: .7;
                 }
 
+                .pedido-card-resumo {
+                    padding: 16px 18px;
+                    min-width: 0;
+                }
+
+                .pedido-resumo-linha {
+                    display: flex;
+                    align-items: center;
+                    gap: 14px;
+                    flex-wrap: wrap;
+                    width: 100%;
+                }
+
+                .pedido-resumo-linha > span {
+                    font-size: 13px;
+                    white-space: nowrap;
+                }
+
+                .pedido-resumo-linha > span strong {
+                    font-weight: 800;
+                }
+
+                .pedido-detalhes-btn {
+                    margin-left: auto;
+                    border: 1px solid rgba(255,255,255,.10);
+                    background: rgba(255,255,255,.045);
+                    color: inherit;
+                    border-radius: 9px;
+                    padding: 8px 12px;
+                    cursor: pointer;
+                    font-weight: 700;
+                    white-space: nowrap;
+                }
+
+                .pedido-detalhes-btn:hover {
+                    border-color: rgba(37,99,235,.55);
+                    background: rgba(37,99,235,.12);
+                }
+
+                .pedido-modal-overlay {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 99999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                    background: rgba(0,0,0,.70);
+                    backdrop-filter: blur(5px);
+                }
+
+                .pedido-modal {
+                    width: min(760px, 100%);
+                    max-height: 88vh;
+                    display: flex;
+                    flex-direction: column;
+                    overflow: hidden;
+                    background: var(--card-bg, #111827);
+                    color: inherit;
+                    border: 1px solid rgba(255,255,255,.10);
+                    border-radius: 18px;
+                    box-shadow: 0 25px 70px rgba(0,0,0,.40);
+                }
+
+                .pedido-modal-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 15px;
+                    padding: 20px 22px;
+                    border-bottom: 1px solid rgba(255,255,255,.08);
+                }
+
+                .pedido-modal-titulo {
+                    font-size: 20px;
+                    font-weight: 800;
+                }
+
+                .pedido-modal-subtitulo {
+                    margin-top: 4px;
+                    font-size: 12px;
+                    opacity: .55;
+                    word-break: break-all;
+                }
+
+                .pedido-modal-fechar {
+                    width: 36px;
+                    height: 36px;
+                    border: 0;
+                    border-radius: 10px;
+                    background: rgba(255,255,255,.06);
+                    color: inherit;
+                    font-size: 25px;
+                    cursor: pointer;
+                }
+
+                .pedido-modal-corpo {
+                    padding: 18px 22px;
+                    overflow-y: auto;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 9px;
+                }
+
+                .pedido-modal-dado {
+                    display: grid;
+                    grid-template-columns: 190px 1fr;
+                    gap: 14px;
+                    align-items: start;
+                    padding: 11px 13px;
+                    border: 1px solid rgba(255,255,255,.06);
+                    border-radius: 10px;
+                    background: rgba(255,255,255,.025);
+                }
+
+                .pedido-modal-rotulo {
+                    font-size: 12px;
+                    font-weight: 800;
+                    opacity: .62;
+                }
+
+                .pedido-modal-valor {
+                    font-size: 13px;
+                    font-weight: 650;
+                    word-break: break-word;
+                    white-space: pre-wrap;
+                }
+
+                .pedido-modal-footer {
+                    padding: 14px 22px;
+                    display: flex;
+                    justify-content: flex-end;
+                    border-top: 1px solid rgba(255,255,255,.08);
+                }
+
+                .pedido-modal-botao {
+                    border: 0;
+                    border-radius: 10px;
+                    padding: 10px 18px;
+                    background: #2563eb;
+                    color: #fff;
+                    cursor: pointer;
+                    font-weight: 700;
+                }
+
+                @media (max-width: 600px) {
+                    .pedido-resumo-linha {
+                        align-items: flex-start;
+                        flex-direction: column;
+                        gap: 8px;
+                    }
+
+                    .pedido-detalhes-btn {
+                        margin-left: 0;
+                        width: 100%;
+                    }
+
+                    .pedido-modal-dado {
+                        grid-template-columns: 1fr;
+                        gap: 5px;
+                    }
+                }
+
                 @media (max-width: 1100px) {
                     .pedidos-stats-grid {
                         grid-template-columns: repeat(3, 1fr);
@@ -850,145 +1013,20 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
         const status = normalizarStatus(p.status);
         const info = STATUS[status];
 
-        const quantidade =
-            p.mb > 0
-                ? (p.gb > 0 ? p.gb + " GB / " + p.mb + " MB" : p.mb + " MB")
-                : (p.gb > 0 ? p.gb + " GB" : "-");
-
-        const percentual =
-            status === "pendente" ? 0 :
-            status === "processando" ? 55 :
-            status === "concluido" ? 100 :
-            status === "falhado" ? 100 :
-            status === "cancelado" ? 100 : 0;
-
-        const podeCancelar =
-            status === "pendente" ||
-            status === "processando";
-
         return `
-            <article class="pedido-card">
-
-                <div class="pedido-card-topo">
-                    <div>
-                        <div class="pedido-id">
-                            ${escapeHtml(p.id)}
-                        </div>
-                        <div class="pedido-subtitulo">
-                            Criado em ${escapeHtml(dataHora(p.criadoEm))}
-                        </div>
-                    </div>
-
-                    <span class="pedido-status ${info.classe}">
-                        <i class="fas ${info.icone}"></i>
-                        ${info.texto}
-                    </span>
-                </div>
-
-                <div class="pedido-dados">
-
-                    <div class="pedido-dado full">
-                        <span class="rotulo">Cliente</span>
-                        <span class="texto">
-                            ${escapeHtml(p.nomeCliente)}
-                        </span>
-                    </div>
-
-                    <div class="pedido-dado">
-                        <span class="rotulo">Nº Cliente</span>
-                        <span class="texto">
-                            ${escapeHtml(p.numeroCliente)}
-                        </span>
-                    </div>
-
-                    <div class="pedido-dado">
-                        <span class="rotulo">Nº que recebeu</span>
-                        <span class="texto">
-                            ${escapeHtml(p.numeroRecebeu)}
-                        </span>
-                    </div>
-
-                    <div class="pedido-dado">
-                        <span class="rotulo">Pacote</span>
-                        <span class="texto">
-                            ${escapeHtml(p.pacote)}
-                        </span>
-                    </div>
-
-                    <div class="pedido-dado">
-                        <span class="rotulo">Quantidade</span>
-                        <span class="texto">
-                            ${escapeHtml(quantidade)}
-                        </span>
-                    </div>
-
-                    <div class="pedido-dado">
-                        <span class="rotulo">Valor</span>
-                        <span class="texto">
-                            ${escapeHtml(dinheiro(p.valor))}
-                        </span>
-                    </div>
-
-                    <div class="pedido-dado">
-                        <span class="rotulo">Grupo</span>
-                        <span class="texto">
-                            ${escapeHtml(p.grupo)}
-                        </span>
-                    </div>
-
-                    <div class="pedido-dado">
-                        <span class="rotulo">Dispositivo</span>
-                        <span class="texto">
-                            ${escapeHtml(p.dispositivo)}
-                        </span>
-                    </div>
-
-                    <div class="pedido-dado">
-                        <span class="rotulo">Tentativas</span>
-                        <span class="texto">
-                            ${escapeHtml(p.tentativas)}
-                        </span>
-                    </div>
-
-                </div>
-
-                <div class="pedido-progresso">
-                    <div class="pedido-progresso-linha">
-                        <span>Progresso da fila</span>
-                        <span>${percentual}%</span>
-                    </div>
-                    <div class="pedido-progresso-barra">
-                        <span style="width:${percentual}%"></span>
-                    </div>
-                </div>
-
-                ${p.erro ? `
-                    <div class="pedido-erro">
-                        <strong>Erro:</strong>
-                        ${escapeHtml(p.erro)}
-                    </div>
-                ` : ""}
-
-                <div class="pedido-acoes">
+            <article class="pedido-card pedido-card-resumo">
+                <div class="pedido-resumo-linha">
+                    <span><strong>Nome:</strong> ${escapeHtml(p.nomeCliente)}</span>
+                    <span><strong>Valor:</strong> ${escapeHtml(dinheiro(p.valor))}</span>
+                    <span><strong>ID:</strong> ${escapeHtml(p.id)}</span>
+                    <span><strong>Estado:</strong> ${escapeHtml(info.texto)}</span>
                     <button
                         type="button"
-                        class="pedido-acao"
+                        class="pedido-detalhes-btn"
                         onclick="window.verDetalhesPedido('${escapeHtml(String(p.id))}')">
-                        <i class="fas fa-eye"></i>
-                        Ver detalhes
+                        Detalhes...
                     </button>
-
-                    ${podeCancelar ? `
-                        <button
-                            type="button"
-                            class="pedido-acao cancelar"
-                            onclick="window.cancelarPedido('${escapeHtml(String(p.id))}')">
-                            <i class="fas fa-ban"></i>
-                            Cancelar
-                        </button>
-                    ` : ""}
                 </div>
-
             </article>
         `;
     }
@@ -1008,6 +1046,46 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
         renderizarPedidos();
     };
 
+    function nomeCampoDetalhe(chave) {
+        return String(chave || "")
+            .replace(/([a-z])([A-Z])/g, "$1 $2")
+            .replace(/[_-]+/g, " ")
+            .replace(/\buid\b/i, "UID")
+            .replace(/\bid\b/i, "ID")
+            .replace(/\bmb\b/i, "MB")
+            .replace(/\bgb\b/i, "GB")
+            .replace(/\bapi\b/i, "API")
+            .replace(/\b\w/g, m => m.toUpperCase());
+    }
+
+    function valorDetalhe(chave, valor) {
+        if (valor === null || valor === undefined || valor === "") return "-";
+
+        const k = String(chave || "").toLowerCase();
+
+        if (k === "status") {
+            return STATUS[normalizarStatus(valor)]?.texto || String(valor);
+        }
+
+        if (typeof valor === "number" && /(valor|preco|total|custo|lucro)/i.test(chave)) {
+            return dinheiro(valor);
+        }
+
+        if (/(criado|iniciado|concluido|finalizado|atualizado|cancelado|processado|created|updated)/i.test(chave)) {
+            return dataHora(valor);
+        }
+
+        if (typeof valor === "object") {
+            try {
+                return JSON.stringify(valor, null, 2);
+            } catch (_) {
+                return String(valor);
+            }
+        }
+
+        return String(valor);
+    }
+
     window.verDetalhesPedido = function (id) {
         const pedido = pedidos.find(
             p => String(p.id) === String(id)
@@ -1015,150 +1093,59 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
 
         if (!pedido) return;
 
-        const formatarCampo = chave => {
-            return String(chave)
-                .replace(/([a-z])([A-Z])/g, "$1 $2")
-                .replace(/_/g, " ")
-                .replace(/-/g, " ")
-                .replace(/\b\w/g, letra => letra.toUpperCase());
-        };
-
-        const formatarValor = (chave, valor) => {
-            if (valor === null || valor === undefined || valor === "") {
-                return "-";
-            }
-
-            const k = String(chave).toLowerCase();
-
-            if (k === "status") {
-                return STATUS[normalizarStatus(valor)]?.texto || String(valor);
-            }
-
-            if (k.includes("valor") || k === "preco" || k === "total") {
-                return typeof valor === "number" ? dinheiro(valor) : String(valor);
-            }
-
-            if (/(criado|iniciado|concluido|finalizado|atualizado|cancelado|processado|created|updated|date)/i.test(k)) {
-                return dataHora(valor);
-            }
-
-            if (typeof valor === "object") {
-                try {
-                    return JSON.stringify(valor, null, 2);
-                } catch (_) {
-                    return String(valor);
-                }
-            }
-
-            return String(valor);
-        };
+        const antigo = document.getElementById("modalDetalhesPedidoMozTech");
+        if (antigo) antigo.remove();
 
         const campos = Object.entries(pedido)
             .filter(([_, valor]) => valor !== undefined && valor !== null && valor !== "")
             .map(([chave, valor]) => `
-                <div class="pedido-detalhe-item">
-                    <div class="pedido-detalhe-rotulo">${escapeHtml(formatarCampo(chave))}</div>
-                    <div class="pedido-detalhe-valor">${escapeHtml(formatarValor(chave, valor))}</div>
+                <div class="pedido-modal-dado">
+                    <div class="pedido-modal-rotulo">${escapeHtml(nomeCampoDetalhe(chave))}</div>
+                    <div class="pedido-modal-valor">${escapeHtml(valorDetalhe(chave, valor))}</div>
                 </div>
             `)
             .join("");
 
-        const antigo = document.getElementById("modalDetalhesPedido");
-        if (antigo) antigo.remove();
-
         const modal = document.createElement("div");
-        modal.id = "modalDetalhesPedido";
+        modal.id = "modalDetalhesPedidoMozTech";
+        modal.className = "pedido-modal-overlay";
         modal.innerHTML = `
-            <div class="pedido-detalhes-overlay">
-                <div class="pedido-detalhes-modal" role="dialog" aria-modal="true">
-                    <div class="pedido-detalhes-header">
-                        <div>
-                            <div class="pedido-detalhes-titulo">Detalhes do Pedido</div>
-                            <div class="pedido-detalhes-id">${escapeHtml(String(pedido.id || "-"))}</div>
-                        </div>
-                        <button type="button" class="pedido-detalhes-fechar" id="fecharDetalhesPedido" aria-label="Fechar">&times;</button>
+            <div class="pedido-modal">
+                <div class="pedido-modal-header">
+                    <div>
+                        <div class="pedido-modal-titulo">Detalhes do Pedido</div>
+                        <div class="pedido-modal-subtitulo">${escapeHtml(pedido.id)}</div>
                     </div>
-                    <div class="pedido-detalhes-corpo">
-                        ${campos || '<div class="pedido-detalhe-vazio">Nenhum detalhe disponível.</div>'}
-                    </div>
-                    <div class="pedido-detalhes-footer">
-                        <button type="button" class="pedido-detalhes-btn-fechar" id="fecharDetalhesPedidoFooter">Fechar</button>
-                    </div>
+                    <button type="button" class="pedido-modal-fechar" id="fecharModalPedido">×</button>
+                </div>
+
+                <div class="pedido-modal-corpo">
+                    ${campos || '<div class="pedido-modal-vazio">Nenhum detalhe disponível.</div>'}
+                </div>
+
+                <div class="pedido-modal-footer">
+                    <button type="button" class="pedido-modal-botao" id="fecharModalPedidoFooter">Fechar</button>
                 </div>
             </div>
         `;
 
-        if (!document.getElementById("estilosDetalhesPedido")) {
-            const style = document.createElement("style");
-            style.id = "estilosDetalhesPedido";
-            style.textContent = `
-                .pedido-detalhes-overlay {
-                    position: fixed; inset: 0; z-index: 999999;
-                    display: flex; align-items: center; justify-content: center;
-                    padding: 20px; background: rgba(0,0,0,.72);
-                    backdrop-filter: blur(5px);
-                }
-                .pedido-detalhes-modal {
-                    width: min(760px, 100%); max-height: 88vh; overflow: hidden;
-                    background: var(--card-bg, #111827); color: inherit;
-                    border: 1px solid rgba(255,255,255,.1); border-radius: 18px;
-                    box-shadow: 0 25px 80px rgba(0,0,0,.45);
-                    display: flex; flex-direction: column;
-                }
-                .pedido-detalhes-header {
-                    display: flex; justify-content: space-between; align-items: center;
-                    gap: 15px; padding: 20px 22px;
-                    border-bottom: 1px solid rgba(255,255,255,.08);
-                }
-                .pedido-detalhes-titulo { font-size: 20px; font-weight: 800; }
-                .pedido-detalhes-id { margin-top: 5px; font-size: 12px; opacity: .6; word-break: break-all; }
-                .pedido-detalhes-fechar {
-                    width: 38px; height: 38px; border: 0; border-radius: 10px;
-                    background: rgba(255,255,255,.07); color: inherit; cursor: pointer; font-size: 26px;
-                }
-                .pedido-detalhes-corpo {
-                    overflow-y: auto; padding: 18px 22px; display: flex; flex-direction: column; gap: 10px;
-                }
-                .pedido-detalhe-item {
-                    padding: 12px 14px; border: 1px solid rgba(255,255,255,.07);
-                    border-radius: 11px; background: rgba(255,255,255,.025);
-                }
-                .pedido-detalhe-rotulo {
-                    font-size: 10px; text-transform: uppercase; letter-spacing: .05em; opacity: .55; margin-bottom: 5px;
-                }
-                .pedido-detalhe-valor { font-size: 14px; font-weight: 650; word-break: break-word; white-space: pre-wrap; }
-                .pedido-detalhes-footer {
-                    padding: 15px 22px; border-top: 1px solid rgba(255,255,255,.08);
-                    display: flex; justify-content: flex-end;
-                }
-                .pedido-detalhes-btn-fechar {
-                    border: 0; border-radius: 10px; padding: 10px 18px;
-                    background: #2563eb; color: #fff; cursor: pointer; font-weight: 700;
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
         document.body.appendChild(modal);
 
-        const fechar = () => {
-            const atual = document.getElementById("modalDetalhesPedido");
-            if (atual) atual.remove();
-        };
+        const fechar = () => modal.remove();
+        document.getElementById("fecharModalPedido")?.addEventListener("click", fechar);
+        document.getElementById("fecharModalPedidoFooter")?.addEventListener("click", fechar);
 
-        document.getElementById("fecharDetalhesPedido")?.addEventListener("click", fechar);
-        document.getElementById("fecharDetalhesPedidoFooter")?.addEventListener("click", fechar);
-        modal.querySelector(".pedido-detalhes-overlay")?.addEventListener("click", event => {
-            if (event.target.classList.contains("pedido-detalhes-overlay")) fechar();
+        modal.addEventListener("click", event => {
+            if (event.target === modal) fechar();
         });
 
-        const teclaEsc = event => {
+        const tecla = event => {
             if (event.key === "Escape") {
                 fechar();
-                document.removeEventListener("keydown", teclaEsc);
+                document.removeEventListener("keydown", tecla);
             }
         };
-        document.addEventListener("keydown", teclaEsc);
+        document.addEventListener("keydown", tecla);
     };
 
     window.cancelarPedido = async function (id) {
