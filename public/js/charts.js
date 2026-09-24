@@ -80,14 +80,7 @@ function mbCompra(compra) {
 }
 
 function valorCompra(compra) {
-    return numero(
-        compra?.valor ??
-        compra?.preco ??
-        compra?.preço ??
-        compra?.total ??
-        compra?.valorTotal ??
-        compra?.valor_total
-    );
+    return numero(compra?.valor);
 }
 
 function dataCompra(compra) {
@@ -96,14 +89,8 @@ function dataCompra(compra) {
         compra?.criadoEm ||
         compra?.criado_em ||
         compra?.data ||
-        compra?.dataCompra ||
-        compra?.data_compra ||
-        compra?.dataVenda ||
-        compra?.data_venda ||
-        compra?.timestamp ||
         compra?.createdAt ||
         compra?.created_at ||
-        compra?.date ||
         null
     );
 }
@@ -212,22 +199,6 @@ function extrairCompras(resposta) {
         return resposta.vendas;
     }
 
-    if (Array.isArray(resposta?.resultado)) {
-        return resposta.resultado;
-    }
-
-    if (Array.isArray(resposta?.items)) {
-        return resposta.items;
-    }
-
-    if (Array.isArray(resposta?.data?.compras)) {
-        return resposta.data.compras;
-    }
-
-    if (Array.isArray(resposta?.data?.vendas)) {
-        return resposta.data.vendas;
-    }
-
     return [];
 }
 
@@ -277,35 +248,26 @@ async function carregarGraficos() {
             return;
         }
 
+        if (
+            !window.MOZ_API ||
+            typeof window.MOZ_API.get !== "function"
+        ) {
+
+            console.warn(
+                "[MOZ TECH] MOZ_API ainda não está disponível para os gráficos."
+            );
+
+            return;
+        }
+
         console.log(
             "[MOZ TECH] Carregando dados dos gráficos..."
         );
 
-        let resposta;
-
-        if (
-            window.MOZ_API &&
-            typeof window.MOZ_API.get === "function"
-        ) {
-            resposta = await window.MOZ_API.get("/compras");
-        } else {
-            const respostaHTTP = await fetch(
-                "/api/compras",
-                {
-                    headers: {
-                        "Accept": "application/json"
-                    }
-                }
+        const resposta =
+            await window.MOZ_API.get(
+                "/compras"
             );
-
-            if (!respostaHTTP.ok) {
-                throw new Error(
-                    "HTTP " + respostaHTTP.status + " ao carregar /api/compras"
-                );
-            }
-
-            resposta = await respostaHTTP.json();
-        }
 
         console.log(
             "[MOZ TECH] Resposta /compras:",
@@ -314,11 +276,6 @@ async function carregarGraficos() {
 
         const compras =
             extrairCompras(resposta);
-
-        console.log(
-            "[MOZ TECH] Compras encontradas para os gráficos:",
-            compras.length
-        );
 
         const hoje =
             new Date();
@@ -391,9 +348,26 @@ async function carregarGraficos() {
                                 {
                                     label: "Vendas",
                                     data: vendasHora,
+                                    fill: true,
                                     tension: 0.35,
-                                    borderWidth: 3,
-                                    pointRadius: 3
+                                    borderWidth: 2,
+                                    pointRadius: 2
+                                },
+                                {
+                                    label: "GB",
+                                    data: gbHora,
+                                    fill: true,
+                                    tension: 0.35,
+                                    borderWidth: 2,
+                                    pointRadius: 2
+                                },
+                                {
+                                    label: "MB",
+                                    data: mbHora,
+                                    fill: true,
+                                    tension: 0.35,
+                                    borderWidth: 2,
+                                    pointRadius: 2
                                 }
                             ]
                         },
@@ -402,8 +376,12 @@ async function carregarGraficos() {
                             ...opcoesBase(),
 
                             scales: {
+                                x: {
+                                    stacked: true
+                                },
                                 y: {
                                     beginAtZero: true,
+                                    stacked: true,
                                     ticks: {
                                         precision: 0
                                     }
@@ -517,7 +495,7 @@ async function carregarGraficos() {
                 new Chart(
                     canvasDias,
                     {
-                        type: "bar",
+                        type: "line",
 
                         data: {
                             labels:
@@ -529,7 +507,26 @@ async function carregarGraficos() {
                                 {
                                     label: "GB",
                                     data: gbDias,
-                                    borderRadius: 7
+                                    fill: false,
+                                    tension: 0.35,
+                                    borderWidth: 3,
+                                    pointRadius: 3
+                                },
+                                {
+                                    label: "MB",
+                                    data: mbDias,
+                                    fill: false,
+                                    tension: 0.35,
+                                    borderWidth: 3,
+                                    pointRadius: 3
+                                },
+                                {
+                                    label: "Vendas",
+                                    data: vendasDias,
+                                    fill: false,
+                                    tension: 0.35,
+                                    borderWidth: 3,
+                                    pointRadius: 3
                                 }
                             ]
                         },
@@ -628,7 +625,7 @@ async function carregarGraficos() {
                 new Chart(
                     canvasMeses,
                     {
-                        type: "bar",
+                        type: "line",
 
                         data: {
                             labels:
@@ -638,13 +635,34 @@ async function carregarGraficos() {
 
                             datasets: [
                                 {
-                                    label: "Faturamento (MT)",
-                                    data:
-                                        mesesOrdenados.map(
-                                            mes =>
-                                                mesesMap[mes].faturamento
-                                        ),
-                                    borderRadius: 7
+                                    label: "Faturamento",
+                                    data: mesesOrdenados.map(
+                                        mes => mesesMap[mes].faturamento
+                                    ),
+                                    fill: true,
+                                    tension: 0.35,
+                                    borderWidth: 3,
+                                    pointRadius: 3
+                                },
+                                {
+                                    label: "GB",
+                                    data: mesesOrdenados.map(
+                                        mes => mesesMap[mes].gb
+                                    ),
+                                    fill: true,
+                                    tension: 0.35,
+                                    borderWidth: 3,
+                                    pointRadius: 3
+                                },
+                                {
+                                    label: "Vendas",
+                                    data: mesesOrdenados.map(
+                                        mes => mesesMap[mes].vendas
+                                    ),
+                                    fill: true,
+                                    tension: 0.35,
+                                    borderWidth: 3,
+                                    pointRadius: 3
                                 }
                             ]
                         },
@@ -769,5 +787,5 @@ else {
 
 setInterval(
     carregarGraficos,
-    5000
+    10000
 );
