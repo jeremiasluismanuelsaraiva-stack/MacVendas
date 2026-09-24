@@ -1015,24 +1015,150 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
 
         if (!pedido) return;
 
-        const texto = [
-            "Pedido: " + pedido.id,
-            "Status: " + STATUS[normalizarStatus(pedido.status)].texto,
-            "Cliente: " + pedido.nomeCliente,
-            "Nº Cliente: " + pedido.numeroCliente,
-            "Nº que recebeu: " + pedido.numeroRecebeu,
-            "Pacote: " + pedido.pacote,
-            "Grupo: " + pedido.grupo,
-            "Dispositivo: " + pedido.dispositivo,
-            "Tentativas: " + pedido.tentativas,
-            "Criado: " + dataHora(pedido.criadoEm),
-            "Iniciado: " + dataHora(pedido.iniciadoEm),
-            "Concluído: " + dataHora(pedido.concluidoEm),
-            "Atualizado: " + dataHora(pedido.atualizadoEm),
-            pedido.erro ? "Erro: " + pedido.erro : ""
-        ].filter(Boolean).join("\n");
+        const formatarCampo = chave => {
+            return String(chave)
+                .replace(/([a-z])([A-Z])/g, "$1 $2")
+                .replace(/_/g, " ")
+                .replace(/-/g, " ")
+                .replace(/\b\w/g, letra => letra.toUpperCase());
+        };
 
-        alert(texto);
+        const formatarValor = (chave, valor) => {
+            if (valor === null || valor === undefined || valor === "") {
+                return "-";
+            }
+
+            const k = String(chave).toLowerCase();
+
+            if (k === "status") {
+                return STATUS[normalizarStatus(valor)]?.texto || String(valor);
+            }
+
+            if (k.includes("valor") || k === "preco" || k === "total") {
+                return typeof valor === "number" ? dinheiro(valor) : String(valor);
+            }
+
+            if (/(criado|iniciado|concluido|finalizado|atualizado|cancelado|processado|created|updated|date)/i.test(k)) {
+                return dataHora(valor);
+            }
+
+            if (typeof valor === "object") {
+                try {
+                    return JSON.stringify(valor, null, 2);
+                } catch (_) {
+                    return String(valor);
+                }
+            }
+
+            return String(valor);
+        };
+
+        const campos = Object.entries(pedido)
+            .filter(([_, valor]) => valor !== undefined && valor !== null && valor !== "")
+            .map(([chave, valor]) => `
+                <div class="pedido-detalhe-item">
+                    <div class="pedido-detalhe-rotulo">${escapeHtml(formatarCampo(chave))}</div>
+                    <div class="pedido-detalhe-valor">${escapeHtml(formatarValor(chave, valor))}</div>
+                </div>
+            `)
+            .join("");
+
+        const antigo = document.getElementById("modalDetalhesPedido");
+        if (antigo) antigo.remove();
+
+        const modal = document.createElement("div");
+        modal.id = "modalDetalhesPedido";
+        modal.innerHTML = `
+            <div class="pedido-detalhes-overlay">
+                <div class="pedido-detalhes-modal" role="dialog" aria-modal="true">
+                    <div class="pedido-detalhes-header">
+                        <div>
+                            <div class="pedido-detalhes-titulo">Detalhes do Pedido</div>
+                            <div class="pedido-detalhes-id">${escapeHtml(String(pedido.id || "-"))}</div>
+                        </div>
+                        <button type="button" class="pedido-detalhes-fechar" id="fecharDetalhesPedido" aria-label="Fechar">&times;</button>
+                    </div>
+                    <div class="pedido-detalhes-corpo">
+                        ${campos || '<div class="pedido-detalhe-vazio">Nenhum detalhe disponível.</div>'}
+                    </div>
+                    <div class="pedido-detalhes-footer">
+                        <button type="button" class="pedido-detalhes-btn-fechar" id="fecharDetalhesPedidoFooter">Fechar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        if (!document.getElementById("estilosDetalhesPedido")) {
+            const style = document.createElement("style");
+            style.id = "estilosDetalhesPedido";
+            style.textContent = `
+                .pedido-detalhes-overlay {
+                    position: fixed; inset: 0; z-index: 999999;
+                    display: flex; align-items: center; justify-content: center;
+                    padding: 20px; background: rgba(0,0,0,.72);
+                    backdrop-filter: blur(5px);
+                }
+                .pedido-detalhes-modal {
+                    width: min(760px, 100%); max-height: 88vh; overflow: hidden;
+                    background: var(--card-bg, #111827); color: inherit;
+                    border: 1px solid rgba(255,255,255,.1); border-radius: 18px;
+                    box-shadow: 0 25px 80px rgba(0,0,0,.45);
+                    display: flex; flex-direction: column;
+                }
+                .pedido-detalhes-header {
+                    display: flex; justify-content: space-between; align-items: center;
+                    gap: 15px; padding: 20px 22px;
+                    border-bottom: 1px solid rgba(255,255,255,.08);
+                }
+                .pedido-detalhes-titulo { font-size: 20px; font-weight: 800; }
+                .pedido-detalhes-id { margin-top: 5px; font-size: 12px; opacity: .6; word-break: break-all; }
+                .pedido-detalhes-fechar {
+                    width: 38px; height: 38px; border: 0; border-radius: 10px;
+                    background: rgba(255,255,255,.07); color: inherit; cursor: pointer; font-size: 26px;
+                }
+                .pedido-detalhes-corpo {
+                    overflow-y: auto; padding: 18px 22px; display: flex; flex-direction: column; gap: 10px;
+                }
+                .pedido-detalhe-item {
+                    padding: 12px 14px; border: 1px solid rgba(255,255,255,.07);
+                    border-radius: 11px; background: rgba(255,255,255,.025);
+                }
+                .pedido-detalhe-rotulo {
+                    font-size: 10px; text-transform: uppercase; letter-spacing: .05em; opacity: .55; margin-bottom: 5px;
+                }
+                .pedido-detalhe-valor { font-size: 14px; font-weight: 650; word-break: break-word; white-space: pre-wrap; }
+                .pedido-detalhes-footer {
+                    padding: 15px 22px; border-top: 1px solid rgba(255,255,255,.08);
+                    display: flex; justify-content: flex-end;
+                }
+                .pedido-detalhes-btn-fechar {
+                    border: 0; border-radius: 10px; padding: 10px 18px;
+                    background: #2563eb; color: #fff; cursor: pointer; font-weight: 700;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(modal);
+
+        const fechar = () => {
+            const atual = document.getElementById("modalDetalhesPedido");
+            if (atual) atual.remove();
+        };
+
+        document.getElementById("fecharDetalhesPedido")?.addEventListener("click", fechar);
+        document.getElementById("fecharDetalhesPedidoFooter")?.addEventListener("click", fechar);
+        modal.querySelector(".pedido-detalhes-overlay")?.addEventListener("click", event => {
+            if (event.target.classList.contains("pedido-detalhes-overlay")) fechar();
+        });
+
+        const teclaEsc = event => {
+            if (event.key === "Escape") {
+                fechar();
+                document.removeEventListener("keydown", teclaEsc);
+            }
+        };
+        document.addEventListener("keydown", teclaEsc);
     };
 
     window.cancelarPedido = async function (id) {
