@@ -1,945 +1,1150 @@
+/* =========================================================
+   MOZ TECH / MACVENDAS
+   PEDIDOS — FILA EM CARDS
+   Estados:
+   PENDENTE
+   PROCESSANDO
+   CONCLUIDO
+   FALHADO
+   CANCELADO
+   ========================================================= */
+
 "use strict";
 
-/*
- * MACVENDAS - PACOTES
- * Suporta:
- * - Internet por GB/MB
- * - Ilimitado
- * - Diário
- * - Semanal
- * - Mensal
- * - Social
- * - Personalizado
- */
-
-const PACOTES_API = "/api";
-const PACOTES_VERSAO = "pacotes-final-20260924";
-let pacotesData = [];
-let pacoteEditando = null;
-let filtroPacoteAtual = "todos";
-let carregandoPacotes = false;
+if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
+    console.warn("[PEDIDOS] Módulo já iniciado. Ignorando segunda inicialização.");
+} else {
+    window.__MOZ_PEDIDOS_MODULO_INICIADO__ = true;
 
 
-/* ESTILOS DOS CARDS DE PACOTES */
-(function aplicarEstilosPacotes() {
-    const estilo = document.createElement("style");
-    estilo.setAttribute("data-macvendas-pacotes", "true");
-    estilo.textContent = `/* CARDS DE PACOTES */
-.pacotes-cards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 18px;
-    width: 100%;
-}
+(function () {
 
-.pacote-card {
-    padding: 20px;
-    border: 1px solid rgba(128,128,128,.20);
-    border-radius: 16px;
-    background: var(--card-bg, rgba(255,255,255,.03));
-    box-shadow: 0 6px 20px rgba(0,0,0,.08);
-    transition: transform .2s ease, box-shadow .2s ease;
-}
+    const VERSAO = "pedidos-cards-fila-20260924";
 
-.pacote-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 28px rgba(0,0,0,.14);
-}
+    let pedidos = [];
+    let filtroAtual = "todos";
+    let carregando = false;
+    let timerAtualizacao = null;
 
-.pacote-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 20px;
-}
+    const STATUS = {
+        pendente: {
+            texto: "Pendente",
+            classe: "pendente",
+            icone: "fa-clock"
+        },
+        processando: {
+            texto: "Em processamento",
+            classe: "processando",
+            icone: "fa-spinner"
+        },
+        concluido: {
+            texto: "Concluído",
+            classe: "concluido",
+            icone: "fa-check-circle"
+        },
+        falhado: {
+            texto: "Falhado",
+            classe: "falhado",
+            icone: "fa-circle-xmark"
+        },
+        cancelado: {
+            texto: "Cancelado",
+            classe: "cancelado",
+            icone: "fa-ban"
+        }
+    };
 
-.pacote-card-title {
-    font-size: 19px;
-    font-weight: 700;
-}
-
-.pacote-card-type {
-    margin-top: 5px;
-    font-size: 13px;
-    opacity: .65;
-}
-
-.pacote-card-info {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin-bottom: 20px;
-}
-
-.pacote-info-item {
-    padding: 12px;
-    border-radius: 10px;
-    background: rgba(128,128,128,.08);
-}
-
-.pacote-info-item small {
-    display: block;
-    opacity: .6;
-    margin-bottom: 5px;
-}
-
-.pacote-info-item strong {
-    font-size: 15px;
-}
-
-.pacote-card-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-}
-
-@media (max-width: 600px) {
-    .pacotes-cards-grid {
-        grid-template-columns: 1fr;
+    function el(id) {
+        return document.getElementById(id);
     }
 
-    .pacote-card-info {
-        grid-template-columns: 1fr 1fr;
+    function escapeHtml(valor) {
+        return String(valor ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
-    .pacote-card-actions {
-        flex-direction: column;
+    function numero(valor) {
+        const n = Number(valor);
+        return Number.isFinite(n) ? n : 0;
     }
 
-    .pacote-card-actions button {
-        width: 100%;
-    }
-}
-
-`;
-    document.head.appendChild(estilo);
-})();
-
-function escapar(valor) {
-    return String(valor ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-async function garantirPacotesAPI() {
-    if (typeof window.garantirCredenciaisAPI === "function") {
-        try {
-            await window.garantirCredenciaisAPI();
-        } catch (_) {}
+    function dinheiro(valor) {
+        return numero(valor).toLocaleString("pt-MZ", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }) + " MT";
     }
 
-    if (window.MOZ_API && typeof window.MOZ_API.get === "function") {
-        return true;
+    function dataHora(valor) {
+        if (!valor) return "-";
+        const d = new Date(valor);
+        if (Number.isNaN(d.getTime())) return String(valor);
+
+        return d.toLocaleString("pt-MZ", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        });
     }
 
-    const apiKey = localStorage.getItem("apiKey") || "";
-    if (apiKey) return true;
+    function normalizarStatus(status) {
+        const s = String(status || "pendente")
+            .trim()
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
 
-    throw new Error("API do sistema ainda não está disponível.");
-}
-
-async function chamarPacotesAPI(endpoint, options = {}) {
-    const metodo = String(options.method || "GET").toUpperCase();
-
-    try {
-        if (typeof window.garantirCredenciaisAPI === "function") {
-            try {
-                await window.garantirCredenciaisAPI();
-            } catch (e) {
-                console.warn("[PACOTES] Credenciais:", e.message);
-            }
+        if (["processando", "processamento", "em_processamento"].includes(s)) {
+            return "processando";
         }
 
-        if (window.MOZ_API) {
-            if (metodo === "GET" && typeof window.MOZ_API.get === "function") {
-                return await window.MOZ_API.get(endpoint);
-            }
-
-            if (metodo === "POST" && typeof window.MOZ_API.post === "function") {
-                return await window.MOZ_API.post(endpoint, options.body || {});
-            }
-
-            if (metodo === "PUT" && typeof window.MOZ_API.put === "function") {
-                return await window.MOZ_API.put(endpoint, options.body || {});
-            }
-
-            if (metodo === "DELETE" && typeof window.MOZ_API.delete === "function") {
-                return await window.MOZ_API.delete(endpoint);
-            }
+        if (["concluido", "concluida", "sucesso", "success"].includes(s)) {
+            return "concluido";
         }
 
-        const apiKey = localStorage.getItem("apiKey") || "";
-        const uid = localStorage.getItem("uid") || "";
+        if (["falhado", "falhou", "erro", "failed"].includes(s)) {
+            return "falhado";
+        }
 
-        const url = PACOTES_API + endpoint +
-            (metodo === "GET"
-                ? (endpoint.includes("?") ? "&" : "?") + "_v=" + Date.now()
-                : "");
+        if (["cancelado", "cancelada", "cancelled"].includes(s)) {
+            return "cancelado";
+        }
 
-        console.log("[PACOTES] Requisição:", metodo, url);
+        return "pendente";
+    }
 
-        const resposta = await fetch(url, {
-            method: metodo,
-            cache: "no-store",
-            headers: {
-                "Content-Type": "application/json",
-                ...(apiKey ? { "x-api-key": apiKey } : {}),
-                ...(uid ? { "x-uid": uid } : {})
-            },
-            body: metodo === "GET"
-                ? undefined
-                : JSON.stringify(options.body || {})
+    function normalizarPedido(p) {
+        p = p && typeof p === "object" ? p : {};
+
+        return {
+            ...p,
+            id: p.id || p.pedidoId || p.idPedido || "-",
+            status: normalizarStatus(p.status),
+            nomeCliente:
+                p.nomeCliente ||
+                p.cliente ||
+                p.nome ||
+                "-",
+            numeroCliente:
+                p.numeroCliente ||
+                p.numero ||
+                p.telefone ||
+                "-",
+            numeroRecebeu:
+                p.numeroRecebeu ||
+                p.numeroDestino ||
+                p.destino ||
+                "-",
+            pacote:
+                p.pacote ||
+                p.nomePacote ||
+                "-",
+            gb:
+                numero(p.gb || p.quantidadeGB || p.quantidadeGb),
+            mb:
+                numero(p.mb || p.quantidadeMB || p.quantidadeMb),
+            valor:
+                numero(p.valor || p.preco || p.total),
+            grupo:
+                p.grupo ||
+                p.nomeGrupo ||
+                "-",
+            dispositivo:
+                p.dispositivo ||
+                p.aparelho ||
+                p.device ||
+                "-",
+            tentativas:
+                numero(p.tentativas || p.tentativa),
+            criadoEm:
+                p.criadoEm ||
+                p.createdAt ||
+                p.data ||
+                null,
+            iniciadoEm:
+                p.iniciadoEm ||
+                p.processadoEm ||
+                null,
+            concluidoEm:
+                p.concluidoEm ||
+                p.finalizadoEm ||
+                null,
+            atualizadoEm:
+                p.atualizadoEm ||
+                p.updatedAt ||
+                null,
+            erro:
+                p.erro ||
+                p.mensagemErro ||
+                p.error ||
+                ""
+        };
+    }
+
+    async function apiGetPedidos() {
+        if (window.MOZ_API && typeof window.MOZ_API.get === "function") {
+            return await window.MOZ_API.get("/pedidos");
+        }
+
+        const resposta = await fetch("/api/pedidos", {
+            headers: headersAPI()
         });
 
-        const texto = await resposta.text();
-
-        let json = {};
-        try {
-            json = texto ? JSON.parse(texto) : {};
-        } catch (_) {
-            json = { message: texto };
+        if (!resposta.ok) {
+            throw new Error("HTTP " + resposta.status);
         }
 
-        console.log("[PACOTES] HTTP:", resposta.status, json);
+        return await resposta.json();
+    }
 
-        if (!resposta.ok) {
-            throw new Error(
-                json.error ||
-                json.message ||
-                `HTTP ${resposta.status}`
+    async function apiPutPedido(id, dados) {
+        if (window.MOZ_API && typeof window.MOZ_API.put === "function") {
+            return await window.MOZ_API.put(
+                "/pedidos/" + encodeURIComponent(id),
+                dados
             );
         }
 
-        return json;
-    } catch (erro) {
-        console.error("[PACOTES] API ERROR:", erro);
-        throw erro;
-    }
-}
+        const resposta = await fetch(
+            "/api/pedidos/" + encodeURIComponent(id),
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...headersAPI()
+                },
+                body: JSON.stringify(dados)
+            }
+        );
 
-function normalizarPacote(p) {
-    const ilimitado =
-        String(p.tipo || "").toLowerCase() === "ilimitado" ||
-        String(p.unidade || "").toLowerCase() === "ilimitado";
+        if (!resposta.ok) {
+            throw new Error("HTTP " + resposta.status);
+        }
 
-    const quantidade =
-        p.quantidade !== undefined
-            ? Number(p.quantidade || 0)
-            : Number(p.gb || 0);
-
-    const gb = ilimitado ? 0 : Number(p.gb || quantidade || 0);
-    const mb = ilimitado ? 0 : Number(p.mb || (gb * 1000));
-
-    return {
-        ...p,
-        nome: p.nome || p.pacote || "Pacote",
-        tipo: p.tipo || "internet",
-        validade: p.validade || "",
-        unidade: p.unidade || (ilimitado ? "ilimitado" : "GB"),
-        quantidade,
-        gb,
-        mb,
-        preco: Number(p.preco ?? p.valor ?? 0),
-        custo: Number(p.custo || 0),
-        vantagem: p.vantagem || "",
-        grupoId: p.grupoId || p.grupo_id || "",
-        ativo: p.ativo !== false
-    };
-}
-
-function iconeTipo(tipo) {
-    return {
-        internet: "",
-        ilimitado: "",
-        diario: "",
-        semanal: "",
-        mensal: "",
-        social: "",
-        personalizado: ""
-    }[tipo] || "";
-}
-
-function nomeTipo(tipo) {
-    return {
-        internet: "Internet",
-        ilimitado: "Ilimitado",
-        diario: "Diário",
-        semanal: "Semanal",
-        mensal: "Mensal",
-        social: "Social",
-        personalizado: "Personalizado"
-    }[tipo] || tipo;
-}
-
-function mostrarToastPacote(mensagem, erro = false) {
-    if (typeof window.mostrarToast === "function") {
-        window.mostrarToast(mensagem, erro);
-        return;
+        return await resposta.json();
     }
 
-    const toast = document.getElementById("toastMessage");
-    const box = document.getElementById("toast");
+    function headersAPI() {
+        const headers = {};
 
-    if (toast && box) {
-        toast.textContent = mensagem;
-        box.style.display = "flex";
-        setTimeout(() => box.style.display = "none", 2500);
-    } else {
-        alert(mensagem);
-    }
-}
+        const apiKey =
+            localStorage.getItem("apiKey") ||
+            localStorage.getItem("moz_api_key") ||
+            localStorage.getItem("API_KEY");
 
-function criarInterfacePacotes() {
-    const container = document.getElementById("pacotesConteudo");
+        const uid =
+            localStorage.getItem("uid") ||
+            localStorage.getItem("moz_uid") ||
+            localStorage.getItem("UID");
 
-    if (!container) {
-        return null;
-    }
+        if (apiKey) headers["x-api-key"] = apiKey;
+        if (uid) headers["x-uid"] = uid;
 
-    container.innerHTML = `
-        <style>
-.pacotes-macvendas {
-    width: 100%;
-}
-
-.pacotes-gestao-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    padding: 22px;
-    margin-bottom: 20px;
-    border: 1px solid var(--border-color, rgba(128,128,128,.2));
-    border-radius: 16px;
-    background: var(--bg-secondary, #fff);
-    box-shadow: var(--card-shadow, 0 4px 18px rgba(0,0,0,.06));
-}
-
-.pacotes-gestao-texto {
-    min-width: 0;
-}
-
-.pacotes-gestao-label {
-    display: inline-block;
-    margin-bottom: 5px;
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    color: var(--accent-color, #0066cc);
-}
-
-.pacotes-gestao-card h3 {
-    margin: 0 0 6px;
-    font-size: 21px;
-    color: var(--text-primary, #111827);
-}
-
-.pacotes-gestao-card p {
-    margin: 0;
-    color: var(--text-secondary, #6b7280);
-    line-height: 1.5;
-}
-
-.pacotes-gestao-card .btn {
-    flex: 0 0 auto;
-    min-height: 44px;
-    padding: 10px 16px;
-    border-radius: 10px;
-}
-
-.pacotes-filtros-cards {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-    margin-bottom: 20px;
-}
-
-.pacote-filtro-card {
-    min-height: 78px;
-    padding: 14px 12px;
-    border: 1px solid var(--border-color, rgba(128,128,128,.2));
-    border-radius: 14px;
-    background: var(--bg-secondary, #fff);
-    color: var(--text-primary, #111827);
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-weight: 700;
-    transition: .2s ease;
-    box-shadow: 0 3px 12px rgba(0,0,0,.05);
-}
-
-.pacote-filtro-card i {
-    font-size: 20px;
-    color: var(--accent-color, #0066cc);
-}
-
-.pacote-filtro-card span {
-    font-size: 13px;
-}
-
-.pacote-filtro-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--accent-color, #0066cc);
-}
-
-.pacote-filtro-card.active {
-    background: var(--accent-color, #0066cc);
-    border-color: var(--accent-color, #0066cc);
-    color: #fff;
-}
-
-.pacote-filtro-card.active i {
-    color: #fff;
-}
-
-.pacotes-cards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 18px;
-    width: 100%;
-}
-
-.pacote-card {
-    min-width: 0;
-}
-
-@media (max-width: 900px) {
-    .pacotes-filtros-cards {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 600px) {
-    .pacotes-gestao-card {
-        flex-direction: column;
-        align-items: stretch;
+        return headers;
     }
 
-    .pacotes-gestao-card .btn {
-        width: 100%;
+    function obterListaResposta(json) {
+        if (Array.isArray(json)) return json;
+        if (json && Array.isArray(json.pedidos)) return json.pedidos;
+        if (json && Array.isArray(json.data)) return json.data;
+        if (json && json.data && Array.isArray(json.data.pedidos)) {
+            return json.data.pedidos;
+        }
+        return [];
     }
 
-    .pacotes-filtros-cards {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-</style>
-<div class="pacotes-macvendas">
-            <div class="pacotes-gestao-card">
-                <div class="pacotes-gestao-texto">
-                    <span class="pacotes-gestao-label">Gestão</span>
-                    <h3>Gestão de Pacotes</h3>
-                    <p>Crie pacotes de Internet, ilimitados, diários, semanais, mensais e personalizados.</p>
-                </div>
+    function montarInterface() {
+        const container =
+            el("pedidosConteudo") ||
+            el("listaPedidos") ||
+            el("pedidosLista");
 
-                <button type="button" class="btn btn-primary" id="novoPacoteMacBtn">
-                    <i class="fas fa-plus"></i>
-                    <span>Novo Pacote</span>
-                </button>
-            </div>
+        if (!container) {
+            console.warn("[PEDIDOS] Container não encontrado.");
+            return null;
+        }
 
-            <div id="pacoteFiltrosMac" class="pacotes-filtros-cards">
-                ${[
-                    ["todos", "Todos", "fas fa-layer-group"],
-                    ["internet", "Internet", "fas fa-wifi"],
-                    ["ilimitado", "Ilimitado", "fas fa-infinity"],
-                    ["diario", "Diário", "fas fa-calendar-day"],
-                    ["semanal", "Semanal", "fas fa-calendar-week"],
-                    ["mensal", "Mensal", "fas fa-calendar-alt"],
-                    ["social", "Social", "fas fa-share-nodes"],
-                    ["personalizado", "Personalizado", "fas fa-sliders"]
-                ].map(([v, t, icon]) => `
-                    <button type="button"
-                        class="pacote-filtro-card ${v === "todos" ? "active" : ""}"
-                        data-pacote-filtro-mac="${v}">
-                        <i class="${icon}"></i>
-                        <span>${t}</span>
+        container.innerHTML = `
+            <div class="pedidos-fila-app">
+
+                <div class="pedidos-gestao-card">
+                    <div>
+                        <span class="pedidos-label">Gestão</span>
+                        <h2>Fila de Pedidos</h2>
+                        <p>
+                            Cada pedido passa pela fila antes de ser enviado
+                            para processamento.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="pedidos-btn atualizar"
+                        onclick="window.atualizarPedidos()">
+                        <i class="fas fa-rotate"></i>
+                        <span>Atualizar fila</span>
                     </button>
-                `).join("")}
+                </div>
+
+                <div id="pedidosEstatisticas" class="pedidos-stats-grid"></div>
+
+                <div class="pedidos-filtros-card">
+                    <div class="pedidos-filtros-titulo">
+                        <strong>Fila</strong>
+                        <span>Filtrar pedidos por estado</span>
+                    </div>
+
+                    <div id="pedidosFiltros" class="pedidos-filtros-grid">
+                        ${filtroCard("todos", "Todos", "fa-layer-group")}
+                        ${filtroCard("pendente", "Pendentes", "fa-clock")}
+                        ${filtroCard("processando", "Em processamento", "fa-spinner")}
+                        ${filtroCard("concluido", "Concluídos", "fa-check-circle")}
+                        ${filtroCard("falhado", "Falhados", "fa-circle-xmark")}
+                        ${filtroCard("cancelado", "Cancelados", "fa-ban")}
+                    </div>
+                </div>
+
+                <div class="pedidos-lista-header">
+                    <div>
+                        <strong id="pedidosTituloLista">Todos os pedidos</strong>
+                        <span id="pedidosQuantidadeLista">0 pedidos</span>
+                    </div>
+                </div>
+
+                <div id="pedidosCards" class="pedidos-cards-grid">
+                    <div class="pedidos-loading-card">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Carregando pedidos...</span>
+                    </div>
+                </div>
+
             </div>
 
-            <div id="listaPacotesMac">
-                <div class="empty-state">Carregando pacotes...</div>
-            </div>
-        </div>
+            <style>
+                .pedidos-fila-app {
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 18px;
+                }
 
-        <div id="modalPacoteMac" class="modal" style="display:none;">
-            <div class="modal-content" style="max-width:620px;">
-                <h3 id="modalPacoteMacTitulo"> Novo Pacote</h3>
+                .pedidos-gestao-card,
+                .pedidos-filtros-card {
+                    background: var(--card-bg, #111827);
+                    border: 1px solid rgba(255,255,255,.08);
+                    border-radius: 18px;
+                    padding: 22px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,.12);
+                }
 
-                <div class="form-group">
-                    <label>Nome do pacote</label>
-                    <input id="macPacoteNome" type="text" placeholder="Ex: 10 GB Mensal">
-                </div>
+                .pedidos-gestao-card {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 20px;
+                }
 
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                    <div class="form-group">
-                        <label>Tipo</label>
-                        <select id="macPacoteTipo">
-                            <option value="internet"> Internet</option>
-                            <option value="ilimitado"> Ilimitado</option>
-                            <option value="diario"> Diário</option>
-                            <option value="semanal"> Semanal</option>
-                            <option value="mensal"> Mensal</option>
-                            <option value="social"> Social</option>
-                            <option value="personalizado"> Personalizado</option>
-                        </select>
-                    </div>
+                .pedidos-label {
+                    display: inline-block;
+                    font-size: 12px;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: .08em;
+                    opacity: .65;
+                    margin-bottom: 5px;
+                }
 
-                    <div class="form-group">
-                        <label>Validade</label>
-                        <input id="macPacoteValidade" type="text" placeholder="Ex: 7 dias / 30 dias">
-                    </div>
-                </div>
+                .pedidos-gestao-card h2 {
+                    margin: 0 0 5px;
+                    font-size: 25px;
+                }
 
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                    <div class="form-group">
-                        <label>Quantidade</label>
-                        <input id="macPacoteQuantidade" type="number" min="0" step="0.01" placeholder="Ex: 10">
-                    </div>
+                .pedidos-gestao-card p {
+                    margin: 0;
+                    opacity: .68;
+                }
 
-                    <div class="form-group">
-                        <label>Unidade</label>
-                        <select id="macPacoteUnidade">
-                            <option value="GB">GB</option>
-                            <option value="MB">MB</option>
-                            <option value="ilimitado">Ilimitado</option>
-                            <option value="unidade">Unidade</option>
-                        </select>
-                    </div>
-                </div>
+                .pedidos-btn {
+                    border: 0;
+                    border-radius: 12px;
+                    padding: 12px 17px;
+                    cursor: pointer;
+                    font-weight: 700;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                }
 
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                    <div class="form-group">
-                        <label>Preço (MT)</label>
-                        <input id="macPacotePreco" type="number" min="0" step="0.01" placeholder="Ex: 250">
-                    </div>
+                .pedidos-btn.atualizar {
+                    background: #2563eb;
+                    color: #fff;
+                }
 
-                    <div class="form-group">
-                        <label>Custo (MT)</label>
-                        <input id="macPacoteCusto" type="number" min="0" step="0.01" placeholder="Ex: 200">
-                    </div>
-                </div>
+                .pedidos-stats-grid {
+                    display: grid;
+                    grid-template-columns: repeat(6, minmax(0,1fr));
+                    gap: 14px;
+                }
 
-                <div class="form-group" style="display:flex;align-items:center;gap:8px;">
-                    <input id="macPacoteAtivo" type="checkbox" checked>
-                    <label for="macPacoteAtivo" style="margin:0;">Pacote ativo</label>
-                </div>
+                .pedido-stat-card {
+                    background: var(--card-bg, #111827);
+                    border: 1px solid rgba(255,255,255,.08);
+                    border-radius: 16px;
+                    padding: 18px;
+                    min-height: 105px;
+                }
 
-                <div class="modal-buttons">
-                    <button type="button" class="btn btn-outline" id="cancelarPacoteMacBtn">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="salvarPacoteMacBtn">Salvar Pacote</button>
-                </div>
-            </div>
-        </div>
-    `;
+                .pedido-stat-card .icone {
+                    width: 34px;
+                    height: 34px;
+                    border-radius: 10px;
+                    display: grid;
+                    place-items: center;
+                    background: rgba(255,255,255,.07);
+                    margin-bottom: 12px;
+                }
 
-    document.getElementById("novoPacoteMacBtn")
-        ?.addEventListener("click", () => abrirModalPacoteMac());
+                .pedido-stat-card .valor {
+                    font-size: 27px;
+                    font-weight: 800;
+                }
 
-    document.getElementById("cancelarPacoteMacBtn")
-        ?.addEventListener("click", fecharModalPacoteMac);
+                .pedido-stat-card .nome {
+                    margin-top: 3px;
+                    font-size: 12px;
+                    opacity: .62;
+                }
 
-    document.getElementById("salvarPacoteMacBtn")
-        ?.addEventListener("click", salvarPacoteMac);
+                .pedidos-filtros-titulo {
+                    margin-bottom: 14px;
+                }
 
-    document.querySelectorAll("[data-pacote-filtro-mac]")
-        .forEach(btn => {
-            btn.addEventListener("click", () => {
-                filtroPacoteAtual = btn.dataset.pacoteFiltroMac;
+                .pedidos-filtros-titulo strong {
+                    display: block;
+                    font-size: 17px;
+                }
 
-                document.querySelectorAll("[data-pacote-filtro-mac]")
-                    .forEach(b => b.classList.remove("active"));
+                .pedidos-filtros-titulo span {
+                    font-size: 13px;
+                    opacity: .62;
+                }
 
-                btn.classList.add("active");
-                renderizarPacotesMac();
-            });
-        });
+                .pedidos-filtros-grid {
+                    display: grid;
+                    grid-template-columns: repeat(6, minmax(0,1fr));
+                    gap: 12px;
+                }
 
-    document.getElementById("macPacoteTipo")
-        ?.addEventListener("change", atualizarCampoIlimitado);
+                .pedido-filtro {
+                    border: 1px solid rgba(255,255,255,.08);
+                    background: rgba(255,255,255,.035);
+                    border-radius: 14px;
+                    padding: 15px 12px;
+                    cursor: pointer;
+                    transition: .18s ease;
+                    color: inherit;
+                    text-align: left;
+                }
 
-    atualizarCampoIlimitado();
+                .pedido-filtro:hover {
+                    transform: translateY(-2px);
+                    border-color: rgba(37,99,235,.45);
+                }
 
-    return container;
-}
+                .pedido-filtro.ativo {
+                    border-color: #2563eb;
+                    background: rgba(37,99,235,.14);
+                }
 
-function atualizarCampoIlimitado() {
-    const tipo = document.getElementById("macPacoteTipo");
-    const unidade = document.getElementById("macPacoteUnidade");
-    const quantidade = document.getElementById("macPacoteQuantidade");
-    const validade = document.getElementById("macPacoteValidade");
+                .pedido-filtro i {
+                    display: block;
+                    margin-bottom: 9px;
+                }
 
-    if (!tipo || !unidade || !quantidade) return;
+                .pedido-filtro strong {
+                    display: block;
+                    font-size: 13px;
+                }
 
-    const ilimitado = tipo.value === "ilimitado";
+                .pedido-filtro small {
+                    display: block;
+                    margin-top: 3px;
+                    opacity: .58;
+                }
 
-    if (ilimitado) {
-        unidade.value = "ilimitado";
-        quantidade.value = "";
-        quantidade.disabled = true;
+                .pedidos-lista-header {
+                    background: var(--card-bg, #111827);
+                    border: 1px solid rgba(255,255,255,.08);
+                    border-radius: 14px;
+                    padding: 15px 18px;
+                }
 
-        if (validade && !validade.value) {
-            validade.value = "30 dias";
-        }
-    } else {
-        quantidade.disabled = false;
+                .pedidos-lista-header > div {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 10px;
+                }
 
-        if (unidade.value === "ilimitado") {
-            unidade.value = "GB";
-        }
+                #pedidosQuantidadeLista {
+                    font-size: 13px;
+                    opacity: .6;
+                }
+
+                .pedidos-cards-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                    gap: 16px;
+                }
+
+                .pedido-card {
+                    background: var(--card-bg, #111827);
+                    border: 1px solid rgba(255,255,255,.08);
+                    border-radius: 18px;
+                    padding: 18px;
+                    box-shadow: 0 8px 24px rgba(0,0,0,.1);
+                    overflow: hidden;
+                }
+
+                .pedido-card-topo {
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                    gap: 12px;
+                    margin-bottom: 16px;
+                }
+
+                .pedido-id {
+                    font-weight: 800;
+                    word-break: break-all;
+                }
+
+                .pedido-subtitulo {
+                    margin-top: 4px;
+                    font-size: 12px;
+                    opacity: .55;
+                }
+
+                .pedido-status {
+                    flex: 0 0 auto;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 7px 9px;
+                    border-radius: 999px;
+                    font-size: 11px;
+                    font-weight: 800;
+                    white-space: nowrap;
+                }
+
+                .pedido-status.pendente {
+                    background: rgba(245,158,11,.13);
+                    color: #f59e0b;
+                }
+
+                .pedido-status.processando {
+                    background: rgba(37,99,235,.14);
+                    color: #60a5fa;
+                }
+
+                .pedido-status.concluido {
+                    background: rgba(16,185,129,.13);
+                    color: #34d399;
+                }
+
+                .pedido-status.falhado {
+                    background: rgba(239,68,68,.13);
+                    color: #f87171;
+                }
+
+                .pedido-status.cancelado {
+                    background: rgba(148,163,184,.13);
+                    color: #94a3b8;
+                }
+
+                .pedido-dados {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 10px;
+                }
+
+                .pedido-dado {
+                    border: 1px solid rgba(255,255,255,.06);
+                    background: rgba(255,255,255,.025);
+                    border-radius: 11px;
+                    padding: 10px;
+                    min-width: 0;
+                }
+
+                .pedido-dado.full {
+                    grid-column: 1 / -1;
+                }
+
+                .pedido-dado .rotulo {
+                    display: block;
+                    font-size: 10px;
+                    opacity: .5;
+                    margin-bottom: 4px;
+                    text-transform: uppercase;
+                    letter-spacing: .04em;
+                }
+
+                .pedido-dado .texto {
+                    display: block;
+                    font-size: 13px;
+                    font-weight: 650;
+                    word-break: break-word;
+                }
+
+                .pedido-progresso {
+                    margin-top: 15px;
+                    padding-top: 14px;
+                    border-top: 1px solid rgba(255,255,255,.06);
+                }
+
+                .pedido-progresso-linha {
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 11px;
+                    opacity: .65;
+                    margin-bottom: 7px;
+                }
+
+                .pedido-progresso-barra {
+                    height: 5px;
+                    border-radius: 999px;
+                    background: rgba(255,255,255,.07);
+                    overflow: hidden;
+                }
+
+                .pedido-progresso-barra span {
+                    display: block;
+                    height: 100%;
+                    width: 0;
+                    border-radius: inherit;
+                    background: #2563eb;
+                    transition: width .3s;
+                }
+
+                .pedido-erro {
+                    margin-top: 12px;
+                    border-radius: 10px;
+                    padding: 10px;
+                    background: rgba(239,68,68,.09);
+                    color: #fca5a5;
+                    font-size: 12px;
+                }
+
+                .pedido-acoes {
+                    display: flex;
+                    gap: 8px;
+                    margin-top: 15px;
+                }
+
+                .pedido-acao {
+                    flex: 1;
+                    border: 1px solid rgba(255,255,255,.08);
+                    background: rgba(255,255,255,.035);
+                    color: inherit;
+                    border-radius: 10px;
+                    padding: 10px;
+                    cursor: pointer;
+                    font-weight: 700;
+                }
+
+                .pedido-acao.cancelar {
+                    color: #f87171;
+                }
+
+                .pedidos-empty,
+                .pedidos-loading-card {
+                    grid-column: 1 / -1;
+                    background: var(--card-bg, #111827);
+                    border: 1px solid rgba(255,255,255,.08);
+                    border-radius: 18px;
+                    padding: 45px 20px;
+                    text-align: center;
+                    opacity: .7;
+                }
+
+                @media (max-width: 1100px) {
+                    .pedidos-stats-grid {
+                        grid-template-columns: repeat(3, 1fr);
+                    }
+
+                    .pedidos-filtros-grid {
+                        grid-template-columns: repeat(3, 1fr);
+                    }
+                }
+
+                @media (max-width: 700px) {
+                    .pedidos-gestao-card {
+                        flex-direction: column;
+                        align-items: stretch;
+                    }
+
+                    .pedidos-stats-grid,
+                    .pedidos-filtros-grid {
+                        grid-template-columns: repeat(2, 1fr);
+                    }
+
+                    .pedido-dados {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .pedido-dado.full {
+                        grid-column: auto;
+                    }
+
+                    .pedidos-lista-header > div {
+                        flex-direction: column;
+                        align-items: flex-start;
+                    }
+                }
+            </style>
+        `;
+
+        return container;
     }
-}
 
-function abrirModalPacoteMac(id = null) {
-    pacoteEditando = id;
-
-    const modal = document.getElementById("modalPacoteMac");
-    if (!modal) return;
-
-    const titulo = document.getElementById("modalPacoteMacTitulo");
-
-    if (id) {
-        const p = pacotesData.find(item => item.id === id);
-
-        if (!p) return;
-
-        titulo.textContent = " Editar Pacote";
-        document.getElementById("macPacoteNome").value = p.nome;
-        document.getElementById("macPacoteTipo").value = p.tipo;
-        document.getElementById("macPacoteValidade").value = p.validade;
-        document.getElementById("macPacoteQuantidade").value = p.quantidade || "";
-        document.getElementById("macPacoteUnidade").value = p.unidade;
-        document.getElementById("macPacotePreco").value = p.preco;
-        document.getElementById("macPacoteCusto").value = p.custo;
-        document.getElementById("macPacoteAtivo").checked = p.ativo;
-    } else {
-        titulo.textContent = " Novo Pacote";
-
-        document.getElementById("macPacoteNome").value = "";
-        document.getElementById("macPacoteTipo").value = "internet";
-        document.getElementById("macPacoteValidade").value = "";
-        document.getElementById("macPacoteQuantidade").value = "";
-        document.getElementById("macPacoteUnidade").value = "GB";
-        document.getElementById("macPacotePreco").value = "";
-        document.getElementById("macPacoteCusto").value = "";
-        document.getElementById("macPacoteAtivo").checked = true;
+    function filtroCard(status, titulo, icone) {
+        return `
+            <button
+                type="button"
+                class="pedido-filtro ${status === "todos" ? "ativo" : ""}"
+                data-filtro-pedido="${status}"
+                onclick="window.filtrarPedidos('${status}')">
+                <i class="fas ${icone}"></i>
+                <strong>${titulo}</strong>
+                <small id="contadorFiltro_${status}">0 pedidos</small>
+            </button>
+        `;
     }
 
-    atualizarCampoIlimitado();
-    modal.style.display = "flex";
-}
+    function atualizarEstatisticas() {
+        const box = el("pedidosEstatisticas");
+        if (!box) return;
 
-function fecharModalPacoteMac() {
-    const modal = document.getElementById("modalPacoteMac");
-    if (modal) modal.style.display = "none";
-    pacoteEditando = null;
-}
-
-async function salvarPacoteMac() {
-    try {
-        const nome = document.getElementById("macPacoteNome").value.trim();
-        const tipo = document.getElementById("macPacoteTipo").value;
-        const validade = document.getElementById("macPacoteValidade").value.trim();
-        const quantidade = Number(document.getElementById("macPacoteQuantidade").value || 0);
-        const unidade = document.getElementById("macPacoteUnidade").value;
-        const preco = Number(document.getElementById("macPacotePreco").value || 0);
-        const custo = Number(document.getElementById("macPacoteCusto").value || 0);
-        const vantagem = "";
-        const grupoId = "";
-        const ativo = document.getElementById("macPacoteAtivo").checked;
-
-        if (!nome) {
-            mostrarToastPacote("Digite o nome do pacote.", true);
-            return;
-        }
-
-        if (tipo !== "ilimitado" && quantidade <= 0) {
-            mostrarToastPacote("Digite uma quantidade válida.", true);
-            return;
-        }
-
-        if (preco <= 0) {
-            mostrarToastPacote("Digite um preço válido.", true);
-            return;
-        }
-
-        let gb = 0;
-        let mb = 0;
-
-        if (unidade === "GB") {
-            gb = quantidade;
-            mb = quantidade * 1000;
-        } else if (unidade === "MB") {
-            mb = quantidade;
-            gb = quantidade / 1000;
-        }
-
-        const body = {
-            nome,
-            tipo,
-            validade,
-            unidade,
-            quantidade,
-            gb,
-            mb,
-            preco,
-            valor: preco,
-            custo,
-            vantagem,
-            descricao: vantagem,
-            grupoId,
-            ativo
+        const contagem = {
+            total: pedidos.length,
+            pendente: 0,
+            processando: 0,
+            concluido: 0,
+            falhado: 0,
+            cancelado: 0
         };
 
-        if (pacoteEditando) {
-            await chamarPacotesAPI(`/pacotes/${encodeURIComponent(pacoteEditando)}`, {
-                method: "PUT",
-                body
-            });
+        pedidos.forEach(p => {
+            const status = normalizarStatus(p.status);
+            contagem[status]++;
+        });
 
-            mostrarToastPacote("Pacote atualizado!");
-        } else {
-            await chamarPacotesAPI("/pacotes", {
-                method: "POST",
-                body
-            });
+        const cards = [
+            ["total", "Total", "fa-layer-group"],
+            ["pendente", "Pendentes", "fa-clock"],
+            ["processando", "Em processamento", "fa-spinner"],
+            ["concluido", "Concluídos", "fa-check-circle"],
+            ["falhado", "Falhados", "fa-circle-xmark"],
+            ["cancelado", "Cancelados", "fa-ban"]
+        ];
 
-            mostrarToastPacote("Pacote adicionado!");
+        box.innerHTML = cards.map(([chave, nome, icone]) => `
+            <div class="pedido-stat-card">
+                <div class="icone">
+                    <i class="fas ${icone}"></i>
+                </div>
+                <div class="valor">${contagem[chave]}</div>
+                <div class="nome">${nome}</div>
+            </div>
+        `).join("");
+
+        Object.entries({
+            todos: contagem.total,
+            pendente: contagem.pendente,
+            processando: contagem.processando,
+            concluido: contagem.concluido,
+            falhado: contagem.falhado,
+            cancelado: contagem.cancelado
+        }).forEach(([chave, valor]) => {
+            const item = el("contadorFiltro_" + chave);
+            if (item) {
+                item.textContent =
+                    valor + (valor === 1 ? " pedido" : " pedidos");
+            }
+        });
+    }
+
+    function renderizarPedidos() {
+        const lista = el("pedidosCards");
+        if (!lista) return;
+
+        const filtrados = pedidos.filter(p => {
+            if (filtroAtual === "todos") return true;
+            return normalizarStatus(p.status) === filtroAtual;
+        });
+
+        const titulos = {
+            todos: "Todos os pedidos",
+            pendente: "Pedidos pendentes",
+            processando: "Pedidos em processamento",
+            concluido: "Pedidos concluídos",
+            falhado: "Pedidos falhados",
+            cancelado: "Pedidos cancelados"
+        };
+
+        const titulo = el("pedidosTituloLista");
+        const quantidade = el("pedidosQuantidadeLista");
+
+        if (titulo) titulo.textContent = titulos[filtroAtual] || "Pedidos";
+
+        if (quantidade) {
+            quantidade.textContent =
+                filtrados.length +
+                (filtrados.length === 1 ? " pedido" : " pedidos");
         }
 
-        fecharModalPacoteMac();
-        await carregarPacotes();
+        if (!filtrados.length) {
+            lista.innerHTML = `
+                <div class="pedidos-empty">
+                    <i class="fas fa-inbox"></i>
+                    <div style="margin-top:10px;font-weight:700">
+                        Nenhum pedido nesta fila
+                    </div>
+                    <div style="margin-top:5px;font-size:13px">
+                        Os pedidos aparecerão aqui assim que forem criados.
+                    </div>
+                </div>
+            `;
+            return;
+        }
 
-    } catch (erro) {
-        console.error("[PACOTES] Erro ao salvar:", erro);
-        mostrarToastPacote(
-            "Não foi possível salvar o pacote: " + erro.message,
-            true
-        );
-    }
-}
+        const ordenados = [...filtrados].sort((a, b) => {
+            const ordem = {
+                pendente: 1,
+                processando: 2,
+                falhado: 3,
+                concluido: 4,
+                cancelado: 5
+            };
 
-function formatarQuantidade(p) {
-    if (p.tipo === "ilimitado" || p.unidade === "ilimitado") {
-        return " Ilimitado";
-    }
+            const sa = normalizarStatus(a.status);
+            const sb = normalizarStatus(b.status);
 
-    const q = Number(p.quantidade || p.gb || 0);
+            if (ordem[sa] !== ordem[sb]) {
+                return ordem[sa] - ordem[sb];
+            }
 
-    if (p.unidade === "MB") {
-        return `${q.toLocaleString("pt-MZ")} MB`;
-    }
+            return new Date(a.criadoEm || 0) - new Date(b.criadoEm || 0);
+        });
 
-    if (p.unidade === "unidade") {
-        return `${q.toLocaleString("pt-MZ")} unidades`;
-    }
-
-    return `${q.toLocaleString("pt-MZ")} GB`;
-}
-
-function formatarLucro(p) {
-    const lucro = Number(p.preco || 0) - Number(p.custo || 0);
-    return `${lucro.toLocaleString("pt-MZ")} MT`;
-}
-
-function renderizarPacotesMac() {
-    const container = document.getElementById("listaPacotesMac");
-    if (!container) return;
-
-    let lista = [...pacotesData];
-
-    if (filtroPacoteAtual !== "todos") {
-        lista = lista.filter(
-            p => String(p.tipo).toLowerCase() === filtroPacoteAtual
-        );
+        lista.innerHTML = ordenados.map(renderizarCardPedido).join("");
     }
 
-    if (!lista.length) {
-        container.innerHTML = `
-            <div class="empty-state">
-                Nenhum pacote cadastrado neste filtro.
-            </div>
-        `;
-        return;
-    }
+    function renderizarCardPedido(p) {
+        const status = normalizarStatus(p.status);
+        const info = STATUS[status];
 
-    container.innerHTML = `
-        <div class="pacotes-cards-grid">
-            ${lista.map(p => `
-                <div class="pacote-item pacote-card">
-                    <div class="pacote-card-header">
-                        <div>
-                            <div class="pacote-card-title">
-                                ${escapar(p.nome)}
-                            </div>
-                            <div class="pacote-card-type">
-                                ${escapar(nomeTipo(p.tipo))}
-                            </div>
+        const quantidade =
+            p.mb > 0
+                ? (p.gb > 0 ? p.gb + " GB / " + p.mb + " MB" : p.mb + " MB")
+                : (p.gb > 0 ? p.gb + " GB" : "-");
+
+        const percentual =
+            status === "pendente" ? 0 :
+            status === "processando" ? 55 :
+            status === "concluido" ? 100 :
+            status === "falhado" ? 100 :
+            status === "cancelado" ? 100 : 0;
+
+        const podeCancelar =
+            status === "pendente" ||
+            status === "processando";
+
+        return `
+            <article class="pedido-card">
+
+                <div class="pedido-card-topo">
+                    <div>
+                        <div class="pedido-id">
+                            ${escapeHtml(p.id)}
                         </div>
+                        <div class="pedido-subtitulo">
+                            Criado em ${escapeHtml(dataHora(p.criadoEm))}
+                        </div>
+                    </div>
 
-                        <span class="pacote-badge ${escapar(p.tipo)}">
-                            ${p.ativo ? "Ativo" : "Inativo"}
+                    <span class="pedido-status ${info.classe}">
+                        <i class="fas ${info.icone}"></i>
+                        ${info.texto}
+                    </span>
+                </div>
+
+                <div class="pedido-dados">
+
+                    <div class="pedido-dado full">
+                        <span class="rotulo">Cliente</span>
+                        <span class="texto">
+                            ${escapeHtml(p.nomeCliente)}
                         </span>
                     </div>
 
-                    <div class="pacote-card-info">
-                        <div class="pacote-info-item">
-                            <small>Quantidade</small>
-                            <strong>${formatarQuantidade(p)}</strong>
-                        </div>
-
-                        <div class="pacote-info-item">
-                            <small>Validade</small>
-                            <strong>${escapar(p.validade || "Não definida")}</strong>
-                        </div>
-
-                        <div class="pacote-info-item">
-                            <small>Preço</small>
-                            <strong>${Number(p.preco).toLocaleString("pt-MZ")} MT</strong>
-                        </div>
-
-                        <div class="pacote-info-item">
-                            <small>Lucro</small>
-                            <strong>${formatarLucro(p)}</strong>
-                        </div>
+                    <div class="pedido-dado">
+                        <span class="rotulo">Nº Cliente</span>
+                        <span class="texto">
+                            ${escapeHtml(p.numeroCliente)}
+                        </span>
                     </div>
 
-                    <div class="pacote-card-actions">
-                        <button type="button"
-                            class="btn btn-outline"
-                            data-editar-pacote="${escapar(p.id)}">
-                            <i class="fas fa-edit"></i> Editar
-                        </button>
+                    <div class="pedido-dado">
+                        <span class="rotulo">Nº que recebeu</span>
+                        <span class="texto">
+                            ${escapeHtml(p.numeroRecebeu)}
+                        </span>
+                    </div>
 
-                        <button type="button"
-                            class="btn btn-danger"
-                            data-excluir-pacote="${escapar(p.id)}">
-                            <i class="fas fa-trash"></i> Excluir
-                        </button>
+                    <div class="pedido-dado">
+                        <span class="rotulo">Pacote</span>
+                        <span class="texto">
+                            ${escapeHtml(p.pacote)}
+                        </span>
+                    </div>
+
+                    <div class="pedido-dado">
+                        <span class="rotulo">Quantidade</span>
+                        <span class="texto">
+                            ${escapeHtml(quantidade)}
+                        </span>
+                    </div>
+
+                    <div class="pedido-dado">
+                        <span class="rotulo">Valor</span>
+                        <span class="texto">
+                            ${escapeHtml(dinheiro(p.valor))}
+                        </span>
+                    </div>
+
+                    <div class="pedido-dado">
+                        <span class="rotulo">Grupo</span>
+                        <span class="texto">
+                            ${escapeHtml(p.grupo)}
+                        </span>
+                    </div>
+
+                    <div class="pedido-dado">
+                        <span class="rotulo">Dispositivo</span>
+                        <span class="texto">
+                            ${escapeHtml(p.dispositivo)}
+                        </span>
+                    </div>
+
+                    <div class="pedido-dado">
+                        <span class="rotulo">Tentativas</span>
+                        <span class="texto">
+                            ${escapeHtml(p.tentativas)}
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="pedido-progresso">
+                    <div class="pedido-progresso-linha">
+                        <span>Progresso da fila</span>
+                        <span>${percentual}%</span>
+                    </div>
+                    <div class="pedido-progresso-barra">
+                        <span style="width:${percentual}%"></span>
                     </div>
                 </div>
-            `).join("")}
-        </div>
-    `;
 
-    container.querySelectorAll("[data-editar-pacote]").forEach(btn => {
-        btn.addEventListener("click", () => {
-            abrirModalPacoteMac(btn.dataset.editarPacote);
-        });
-    });
+                ${p.erro ? `
+                    <div class="pedido-erro">
+                        <strong>Erro:</strong>
+                        ${escapeHtml(p.erro)}
+                    </div>
+                ` : ""}
 
-    container.querySelectorAll("[data-excluir-pacote]").forEach(btn => {
-        btn.addEventListener("click", () => {
-            excluirPacoteMac(btn.dataset.excluirPacote);
-        });
-    });
-}
+                <div class="pedido-acoes">
+                    <button
+                        type="button"
+                        class="pedido-acao"
+                        onclick="window.verDetalhesPedido('${escapeHtml(String(p.id))}')">
+                        <i class="fas fa-eye"></i>
+                        Ver detalhes
+                    </button>
 
-async function excluirPacoteMac(id) {
-    const pacote = pacotesData.find(p => p.id === id);
+                    ${podeCancelar ? `
+                        <button
+                            type="button"
+                            class="pedido-acao cancelar"
+                            onclick="window.cancelarPedido('${escapeHtml(String(p.id))}')">
+                            <i class="fas fa-ban"></i>
+                            Cancelar
+                        </button>
+                    ` : ""}
+                </div>
 
-    if (!pacote) return;
-
-    if (!confirm(`Excluir o pacote "${pacote.nome}"?`)) {
-        return;
+            </article>
+        `;
     }
 
-    try {
-        await chamarPacotesAPI(`/pacotes/${encodeURIComponent(id)}`, {
-            method: "DELETE"
-        });
+    window.filtrarPedidos = function (status) {
+        filtroAtual = status || "todos";
 
-        mostrarToastPacote("Pacote excluído!");
-        await carregarPacotes();
+        document
+            .querySelectorAll("[data-filtro-pedido]")
+            .forEach(btn => {
+                btn.classList.toggle(
+                    "ativo",
+                    btn.getAttribute("data-filtro-pedido") === filtroAtual
+                );
+            });
 
-    } catch (erro) {
-        console.error("[PACOTES] Erro ao excluir:", erro);
-        mostrarToastPacote(
-            "Não foi possível excluir: " + erro.message,
-            true
+        renderizarPedidos();
+    };
+
+    window.verDetalhesPedido = function (id) {
+        const pedido = pedidos.find(
+            p => String(p.id) === String(id)
         );
-    }
-}
 
-async function carregarPacotes() {
-    if (carregandoPacotes) {
-        console.log("[PACOTES] Carregamento já está em andamento. Ignorando chamada duplicada.");
-        return;
-    }
+        if (!pedido) return;
 
-    carregandoPacotes = true;
+        const texto = [
+            "Pedido: " + pedido.id,
+            "Status: " + STATUS[normalizarStatus(pedido.status)].texto,
+            "Cliente: " + pedido.nomeCliente,
+            "Nº Cliente: " + pedido.numeroCliente,
+            "Nº que recebeu: " + pedido.numeroRecebeu,
+            "Pacote: " + pedido.pacote,
+            "Grupo: " + pedido.grupo,
+            "Dispositivo: " + pedido.dispositivo,
+            "Tentativas: " + pedido.tentativas,
+            "Criado: " + dataHora(pedido.criadoEm),
+            "Iniciado: " + dataHora(pedido.iniciadoEm),
+            "Concluído: " + dataHora(pedido.concluidoEm),
+            "Atualizado: " + dataHora(pedido.atualizadoEm),
+            pedido.erro ? "Erro: " + pedido.erro : ""
+        ].filter(Boolean).join("\n");
 
-    try {
-        const container = criarInterfacePacotes();
+        alert(texto);
+    };
 
-        if (!container) {
-            console.warn("[PACOTES] #pacotesConteudo não encontrado.");
+    window.cancelarPedido = async function (id) {
+        const pedido = pedidos.find(
+            p => String(p.id) === String(id)
+        );
+
+        if (!pedido) return;
+
+        const status = normalizarStatus(pedido.status);
+
+        if (!["pendente", "processando"].includes(status)) {
             return;
         }
 
-        container.querySelector("#listaPacotesMac").innerHTML =
-            `<div class="empty-state">Carregando pacotes...</div>`;
+        if (!confirm("Cancelar este pedido?")) {
+            return;
+        }
 
-        const resposta = await chamarPacotesAPI("/pacotes");
+        try {
+            await apiPutPedido(id, {
+                status: "cancelado",
+                canceladoEm: new Date().toISOString()
+            });
 
-        if (resposta && resposta.success === false) {
-            throw new Error(
-                resposta.error ||
-                resposta.erro ||
-                resposta.message ||
-                "A API recusou o carregamento dos pacotes."
+            await window.carregarPedidos();
+
+        } catch (erro) {
+            console.error("[PEDIDOS] Erro ao cancelar:", erro);
+            alert("Não foi possível cancelar o pedido.");
+        }
+    };
+
+    window.carregarPedidos = async function () {
+        if (carregando) return pedidos;
+
+        carregando = true;
+
+        try {
+            montarInterface();
+
+            const json = await apiGetPedidos();
+            pedidos = obterListaResposta(json)
+                .map(normalizarPedido);
+
+            console.log(
+                "[PEDIDOS] Pedidos recebidos:",
+                pedidos.length
             );
+
+            atualizarEstatisticas();
+            renderizarPedidos();
+
+            return pedidos;
+
+        } catch (erro) {
+            console.error(
+                "[PEDIDOS] Erro ao carregar pedidos:",
+                erro
+            );
+
+            const lista = el("pedidosCards");
+
+            if (lista) {
+                lista.innerHTML = `
+                    <div class="pedidos-empty">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <div style="margin-top:10px;font-weight:700">
+                            Não foi possível carregar os pedidos.
+                        </div>
+                        <div style="margin-top:5px;font-size:13px">
+                            Verifique a API e tente novamente.
+                        </div>
+                    </div>
+                `;
+            }
+
+            return [];
+
+        } finally {
+            carregando = false;
+        }
+    };
+
+    window.atualizarPedidos = async function () {
+        await window.carregarPedidos();
+    };
+
+    window.iniciarPedidos = function () {
+        window.carregarPedidos();
+
+        if (timerAtualizacao) {
+            clearInterval(timerAtualizacao);
         }
 
-        const lista =
-            Array.isArray(resposta)
-                ? resposta
-                : Array.isArray(resposta.pacotes)
-                    ? resposta.pacotes
-                    : Array.isArray(resposta.data)
-                        ? resposta.data
-                        : [];
+        timerAtualizacao = setInterval(() => {
+            if (
+                document.getElementById("panelPedidos") &&
+                document.getElementById("panelPedidos").style.display !== "none"
+            ) {
+                window.carregarPedidos();
+            }
+        }, 5000);
+    };
 
-        pacotesData = lista.map(normalizarPacote);
+    window.PEDIDOS_VERSAO = VERSAO;
 
-        renderizarPacotesMac();
+    console.log(
+        "[PEDIDOS] Fila em cards carregada:",
+        VERSAO
+    );
 
-        console.log("[PACOTES] Pacotes carregados:", pacotesData.length);
+})();
 
-    } catch (erro) {
-        console.error("[PACOTES] Erro ao carregar pacotes:", erro);
-
-        const container = document.getElementById("listaPacotesMac");
-
-        if (container) {
-            container.innerHTML = `
-                <div class="empty-state" style="color:#ef4444;">
-                    <strong>Não foi possível carregar os pacotes.</strong>
-                    <br>
-                    <small>${escapar(erro.message || "Erro desconhecido")}</small>
-                    <br><br>
-                    <button type="button" class="btn btn-outline"
-                        onclick="carregarPacotes()">
-                        Tentar novamente
-                    </button>
-                </div>
-            `;
-        }
-    } finally {
-        carregandoPacotes = false;
-    }
 }
-
-window.carregarPacotes = carregarPacotes;
-window.abrirModalPacote = abrirModalPacoteMac;
-window.salvarPacote = salvarPacoteMac;
