@@ -1460,117 +1460,125 @@
 
     function inicializarMenu() {
 
-        let botoes =
-            document.querySelectorAll(
-                ".menu-item[data-panel]"
-            );
+        /*
+         * MENU CENTRALIZADO
+         *
+         * Não usamos onclick em cada botão.
+         * Existe apenas UM listener no document.
+         *
+         * Isso evita:
+         * - listeners duplicados;
+         * - inicialização repetida;
+         * - showPanel() disparado várias vezes;
+         * - eventos programáticos .click() abrindo o painel.
+         */
+
+        if (
+            window.__MOZ_MENU_DELEGADO_INICIADO__
+        ) {
+
+            return;
+
+        }
+
+        window.__MOZ_MENU_DELEGADO_INICIADO__ =
+            true;
 
         console.log(
-            "[MOZ TECH] Botões encontrados:",
-            botoes.length
+            "[MOZ TECH] Menu delegado iniciado."
         );
 
-        botoes.forEach(function (botaoOriginal) {
+        document.addEventListener(
+            "click",
+            function (event) {
 
-            /*
-             * Remove handlers antigos de versões anteriores
-             * do app.js. O clone mantém HTML, classes e data-*
-             * mas não carrega listeners JavaScript antigos.
-             */
-            if (
-                botaoOriginal.dataset.mozMenuLimpo !==
-                "true"
-            ) {
+                /*
+                 * Somente clique físico do utilizador.
+                 * Eventos criados por JavaScript são ignorados.
+                 */
+                if (
+                    event.isTrusted === false
+                ) {
 
-                const botaoNovo =
-                    botaoOriginal.cloneNode(true);
+                    return;
 
-                botaoNovo.dataset.mozMenuLimpo =
-                    "true";
+                }
 
-                botaoOriginal.replaceWith(
-                    botaoNovo
-                );
+                const alvo =
+                    event.target instanceof Element
+                        ? event.target.closest(
+                            ".menu-item[data-panel]"
+                        )
+                        : null;
 
-                botaoOriginal =
-                    botaoNovo;
+                if (!alvo) {
 
-            }
+                    return;
 
-            // Impede reinstalação pelo mesmo app.js.
-            if (
-                botaoOriginal.dataset.mozMenuInicializado ===
-                "true"
-            ) {
-                return;
-            }
+                }
 
-            botaoOriginal.dataset.mozMenuInicializado =
-                "true";
+                /*
+                 * O botão já pertence ao menu.
+                 * Interceptamos aqui e não deixamos outros
+                 * handlers/ancestors processarem o mesmo evento.
+                 */
+                event.preventDefault();
+                event.stopPropagation();
 
-            botaoOriginal.onclick =
-                async function (event) {
-
-                    event.preventDefault();
-                    event.stopPropagation();
-                    event.stopImmediatePropagation();
-
-                    // Proteção GLOBAL contra vários handlers
-                    // executarem o mesmo clique.
-                    if (window.__MOZ_MENU_CLICK_LOCK__) {
-                        return;
-                    }
-
-                    window.__MOZ_MENU_CLICK_LOCK__ = true;
-
-                    const panel =
-                        botaoOriginal.getAttribute(
-                            "data-panel"
-                        );
-
-                    if (!panel) {
-                        window.__MOZ_MENU_CLICK_LOCK__ = false;
-
-                        console.error(
-                            "[MOZ TECH] Botão sem data-panel"
-                        );
-
-                        return;
-                    }
-
-                    console.log(
-                        "[MOZ TECH] BOTÃO CLICADO:",
-                        panel
+                const panel =
+                    alvo.getAttribute(
+                        "data-panel"
                     );
 
-                    try {
+                if (!panel) {
 
-                        await window.showPanel(
-                            panel
-                        );
+                    return;
 
-                    } catch (erro) {
+                }
 
-                        console.error(
-                            "[MOZ TECH] Erro ao abrir painel:",
-                            erro
-                        );
+                /*
+                 * Não aceita outra navegação enquanto uma
+                 * navegação estiver em andamento.
+                 */
+                if (
+                    window.__MOZ_MENU_NAVEGANDO__
+                ) {
 
-                    } finally {
+                    return;
 
-                        setTimeout(function () {
-                            window.__MOZ_MENU_CLICK_LOCK__ =
-                                false;
-                        }, 150);
+                }
 
-                    }
+                window.__MOZ_MENU_NAVEGANDO__ =
+                    true;
 
-                };
+                console.log(
+                    "[MOZ TECH] BOTÃO CLICADO:",
+                    panel
+                );
 
-        });
+                Promise.resolve(
+                    window.showPanel(panel)
+                )
+                .catch(function (erro) {
+
+                    console.error(
+                        "[MOZ TECH] Erro ao abrir painel:",
+                        erro
+                    );
+
+                })
+                .finally(function () {
+
+                    window.__MOZ_MENU_NAVEGANDO__ =
+                        false;
+
+                });
+
+            },
+            true
+        );
 
     }
-
 
     // =====================================================
     // BOTÃO MENU MOBILE
