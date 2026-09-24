@@ -19,7 +19,7 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
 
 (function () {
 
-    const VERSAO = "pedidos-resumo-alinhado-20260924-v4";
+    const VERSAO = "pedidos-tempo-real-finalizado-20260924-v5";
 
     let pedidos = [];
     let filtroAtual = "todos";
@@ -104,14 +104,7 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
             return "processando";
         }
 
-        if ([
-            "concluido",
-            "concluida",
-            "finalizado",
-            "finalizada",
-            "sucesso",
-            "success"
-        ].includes(s)) {
+        if (["concluido", "concluida", "finalizado", "finalizada", "sucesso", "success"].includes(s)) {
             return "concluido";
         }
 
@@ -1212,7 +1205,7 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
             ) {
                 window.carregarPedidos();
             }
-        }, 5000);
+        }, 2000);
     };
 
     window.PEDIDOS_VERSAO = VERSAO;
