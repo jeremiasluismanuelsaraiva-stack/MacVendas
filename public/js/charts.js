@@ -320,7 +320,7 @@ async function carregarGraficos() {
 
         const canvasHoje =
             document.getElementById(
-                "graficoDiario24h"
+                "graficoHoje"
             );
 
         if (canvasHoje) {
@@ -348,9 +348,26 @@ async function carregarGraficos() {
                                 {
                                     label: "Vendas",
                                     data: vendasHora,
+                                    fill: true,
                                     tension: 0.35,
-                                    borderWidth: 3,
-                                    pointRadius: 3
+                                    borderWidth: 2,
+                                    pointRadius: 2
+                                },
+                                {
+                                    label: "GB",
+                                    data: gbHora,
+                                    fill: true,
+                                    tension: 0.35,
+                                    borderWidth: 2,
+                                    pointRadius: 2
+                                },
+                                {
+                                    label: "MB",
+                                    data: mbHora,
+                                    fill: true,
+                                    tension: 0.35,
+                                    borderWidth: 2,
+                                    pointRadius: 2
                                 }
                             ]
                         },
@@ -359,8 +376,12 @@ async function carregarGraficos() {
                             ...opcoesBase(),
 
                             scales: {
+                                x: {
+                                    stacked: true
+                                },
                                 y: {
                                     beginAtZero: true,
+                                    stacked: true,
                                     ticks: {
                                         precision: 0
                                     }
@@ -460,7 +481,7 @@ async function carregarGraficos() {
 
         const canvasDias =
             document.getElementById(
-                "graficoSemanalRadial"
+                "graficoDias"
             );
 
         if (canvasDias) {
@@ -571,7 +592,7 @@ async function carregarGraficos() {
 
         const canvasMeses =
             document.getElementById(
-                "graficoFaturamentoMensal"
+                "graficoMeses"
             );
 
         if (canvasMeses) {
