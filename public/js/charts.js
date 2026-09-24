@@ -320,7 +320,7 @@ async function carregarGraficos() {
 
         const canvasHoje =
             document.getElementById(
-                "graficoHoje"
+                "graficoDiario24h"
             );
 
         if (canvasHoje) {
@@ -460,7 +460,7 @@ async function carregarGraficos() {
 
         const canvasDias =
             document.getElementById(
-                "graficoDias"
+                "graficoSemanalRadial"
             );
 
         if (canvasDias) {
@@ -571,7 +571,7 @@ async function carregarGraficos() {
 
         const canvasMeses =
             document.getElementById(
-                "graficoMeses"
+                "graficoFaturamentoMensal"
             );
 
         if (canvasMeses) {
