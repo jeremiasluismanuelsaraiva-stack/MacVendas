@@ -19,7 +19,7 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
 
 (function () {
 
-    const VERSAO = "pedidos-resumo-vertical-modal-20260924-v2";
+    const VERSAO = "pedidos-resumo-horizontal-vertical-modal-20260924-v3";
 
     let pedidos = [];
     let filtroAtual = "todos";
@@ -500,8 +500,14 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                 .pedidos-cards-grid {
                     display: flex !important;
                     flex-direction: column !important;
-                    gap: 10px;
-                    width: 100%;
+                    gap: 10px !important;
+                    width: 100% !important;
+                }
+
+                .pedido-card {
+                    width: 100% !important;
+                    max-width: none !important;
+                    box-sizing: border-box !important;
                 }
 
                 .pedido-card {
@@ -854,35 +860,135 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
         return `
             <article class="pedido-card pedido-card-resumo">
                 <div class="pedido-resumo-linha">
-                    <span><strong>Nome:</strong> ${escapeHtml(p.nomeCliente)}</span>
-                    <span><strong>Valor:</strong> ${escapeHtml(dinheiro(p.valor))}</span>
-                    <span><strong>ID:</strong> ${escapeHtml(p.id)}</span>
-                    <span class="pedido-resumo-estado ${info.classe}"><strong>Estado:</strong> ${escapeHtml(info.texto)}</span>
+                    <div class="pedido-resumo-item">
+                        <span class="pedido-resumo-label">Nome</span>
+                        <strong>${escapeHtml(p.nomeCliente)}</strong>
+                    </div>
+                    <div class="pedido-resumo-separador">|</div>
+                    <div class="pedido-resumo-item">
+                        <span class="pedido-resumo-label">Valor</span>
+                        <strong>${escapeHtml(dinheiro(p.valor))}</strong>
+                    </div>
+                    <div class="pedido-resumo-separador">|</div>
+                    <div class="pedido-resumo-item pedido-id-resumo">
+                        <span class="pedido-resumo-label">ID</span>
+                        <strong title="${escapeHtml(p.id)}">${escapeHtml(p.id)}</strong>
+                    </div>
+                    <div class="pedido-resumo-separador">|</div>
+                    <div class="pedido-resumo-item">
+                        <span class="pedido-resumo-label">Estado</span>
+                        <span class="pedido-status ${info.classe}">
+                            <i class="fas ${info.icone}"></i>
+                            ${info.texto}
+                        </span>
+                    </div>
                     <button
                         type="button"
                         class="pedido-acao pedido-detalhes-btn"
                         onclick="window.verDetalhesPedido('${escapeHtml(String(p.id))}')">
-                        Detalhes...
+                        <i class="fas fa-eye"></i>
+                        Detalhes
                     </button>
                 </div>
-
-                ${p.erro ? `
-                    <div class="pedido-erro pedido-erro-resumo">
-                        <strong>Erro:</strong> ${escapeHtml(p.erro)}
-                    </div>
-                ` : ""}
-
-                ${status === "pendente" || status === "processando" ? `
-                    <button
-                        type="button"
-                        class="pedido-acao cancelar pedido-cancelar-resumo"
-                        onclick="window.cancelarPedido('${escapeHtml(String(p.id))}')">
-                        Cancelar
-                    </button>
-                ` : ""}
             </article>
         `;
     }
+
+    (function aplicarEstiloResumoPedidos() {
+        if (document.getElementById('estilo-resumo-pedidos-20260924')) return;
+        const style = document.createElement('style');
+        style.id = 'estilo-resumo-pedidos-20260924';
+        style.textContent = `
+            .pedidos-cards-grid {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                gap: 10px !important;
+            }
+            .pedido-card-resumo {
+                width: 100% !important;
+                max-width: none !important;
+                box-sizing: border-box !important;
+                padding: 0 !important;
+            }
+            .pedido-resumo-linha {
+                width: 100% !important;
+                min-width: 0 !important;
+                box-sizing: border-box !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 14px !important;
+                padding: 14px 18px !important;
+            }
+            .pedido-resumo-item {
+                min-width: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+                white-space: nowrap !important;
+            }
+            .pedido-resumo-label {
+                opacity: .55 !important;
+                font-size: 11px !important;
+                font-weight: 600 !important;
+            }
+            .pedido-resumo-item strong {
+                font-size: 13px !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+            .pedido-id-resumo {
+                flex: 1 1 auto !important;
+                min-width: 120px !important;
+            }
+            .pedido-id-resumo strong {
+                max-width: 100% !important;
+            }
+            .pedido-resumo-separador {
+                opacity: .25 !important;
+                flex: 0 0 auto !important;
+            }
+            .pedido-resumo-linha .pedido-status {
+                flex: 0 0 auto !important;
+            }
+            .pedido-detalhes-btn {
+                flex: 0 0 auto !important;
+                width: auto !important;
+                min-width: 105px !important;
+                white-space: nowrap !important;
+                margin-left: auto !important;
+            }
+            @media (max-width: 900px) {
+                .pedido-resumo-linha {
+                    flex-wrap: wrap !important;
+                }
+                .pedido-id-resumo {
+                    flex: 1 1 240px !important;
+                }
+                .pedido-detalhes-btn {
+                    margin-left: auto !important;
+                }
+            }
+            @media (max-width: 600px) {
+                .pedido-resumo-linha {
+                    display: grid !important;
+                    grid-template-columns: 1fr 1fr !important;
+                    gap: 9px !important;
+                }
+                .pedido-resumo-separador {
+                    display: none !important;
+                }
+                .pedido-id-resumo {
+                    min-width: 0 !important;
+                }
+                .pedido-detalhes-btn {
+                    width: 100% !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    })();
+
 
     window.filtrarPedidos = function (status) {
         filtroAtual = status || "todos";
@@ -900,262 +1006,83 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
     };
 
     window.verDetalhesPedido = function (id) {
-        const pedido = pedidos.find(
-            p => String(p.id) === String(id)
-        );
-
+        const pedido = pedidos.find(p => String(p.id) === String(id));
         if (!pedido) return;
 
-        const formatarNomeCampo = campo => {
-            return String(campo)
-                .replace(/([a-z])([A-Z])/g, "$1 $2")
-                .replace(/_/g, " ")
-                .replace(/\b\w/g, letra => letra.toUpperCase());
-        };
+        const formatarCampo = chave => String(chave)
+            .replace(/([a-z])([A-Z])/g, '$1 $2')
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, c => c.toUpperCase());
 
-        const formatarValorCampo = (campo, valor) => {
-            if (valor === null || valor === undefined || valor === "") return "-";
-
-            const chave = String(campo).toLowerCase();
-
-            if (chave === "status") {
-                return STATUS[normalizarStatus(valor)]?.texto || String(valor);
-            }
-
-            if (["valor", "preco", "total"].includes(chave)) {
-                return dinheiro(valor);
-            }
-
-            if (/data|criado|iniciado|concluido|finalizado|atualizado|cancelado|processado|created|updated/i.test(campo)) {
-                return dataHora(valor);
-            }
-
-            if (typeof valor === "object") {
-                try {
-                    return JSON.stringify(valor, null, 2);
-                } catch (_) {
-                    return String(valor);
-                }
-            }
-
+        const formatarValor = (chave, valor) => {
+            if (valor === null || valor === undefined || valor === '') return '-';
+            const k = String(chave).toLowerCase();
+            if (k === 'status') return STATUS[normalizarStatus(valor)]?.texto || String(valor);
+            if (k.includes('valor') || k === 'preco' || k === 'total') return dinheiro(valor);
+            if (/criado|iniciado|concluido|finalizado|atualizado|cancelado|processado|created|updated/i.test(k)) return dataHora(valor);
+            if (typeof valor === 'object') return JSON.stringify(valor, null, 2);
             return String(valor);
         };
 
-        const campos = Object.entries(pedido)
-            .filter(([_, valor]) => valor !== undefined && valor !== null && valor !== "")
-            .map(([campo, valor]) => `
-                <div class="pedido-detalhe-item">
-                    <div class="pedido-detalhe-label">${escapeHtml(formatarNomeCampo(campo))}</div>
-                    <div class="pedido-detalhe-valor">${escapeHtml(formatarValorCampo(campo, valor))}</div>
-                </div>
-            `)
-            .join("");
+        const linhas = Object.entries(pedido).map(([chave, valor]) => `
+            <div class="pedido-detalhe-linha">
+                <span class="pedido-detalhe-chave">${escapeHtml(formatarCampo(chave))}</span>
+                <span class="pedido-detalhe-valor">${escapeHtml(formatarValor(chave, valor))}</span>
+            </div>
+        `).join('');
 
-        const antigo = document.getElementById("modalDetalhesPedido");
-        if (antigo) antigo.remove();
+        document.getElementById('modalDetalhesPedido')?.remove();
 
-        const modal = document.createElement("div");
-        modal.id = "modalDetalhesPedido";
-        modal.className = "pedido-modal-overlay";
+        const modal = document.createElement('div');
+        modal.id = 'modalDetalhesPedido';
         modal.innerHTML = `
-            <div class="pedido-modal" role="dialog" aria-modal="true">
-                <div class="pedido-modal-topo">
-                    <div>
-                        <span class="pedido-modal-label">PEDIDO</span>
-                        <h2>Detalhes do pedido</h2>
-                        <small>${escapeHtml(String(pedido.id))}</small>
+            <div class="pedido-modal-overlay" onclick="if(event.target===this) window.fecharDetalhesPedido()">
+                <div class="pedido-modal">
+                    <div class="pedido-modal-cabecalho">
+                        <div>
+                            <small>Detalhes do pedido</small>
+                            <h2>${escapeHtml(pedido.id)}</h2>
+                        </div>
+                        <button type="button" class="pedido-modal-fechar" onclick="window.fecharDetalhesPedido()">&times;</button>
                     </div>
-                    <button type="button" class="pedido-modal-fechar" aria-label="Fechar">&times;</button>
-                </div>
-
-                <div class="pedido-modal-conteudo">
-                    ${campos || '<div class="pedido-detalhe-vazio">Nenhum detalhe disponível.</div>'}
-                </div>
-
-                <div class="pedido-modal-rodape">
-                    <button type="button" class="pedido-modal-btn-fechar">Fechar</button>
+                    <div class="pedido-modal-conteudo">${linhas}</div>
+                    <div class="pedido-modal-rodape">
+                        <button type="button" class="pedido-modal-btn" onclick="window.fecharDetalhesPedido()">Fechar</button>
+                    </div>
                 </div>
             </div>
         `;
+        document.body.appendChild(modal);
 
-        if (!document.getElementById("estilosModalDetalhesPedido")) {
-            const style = document.createElement("style");
-            style.id = "estilosModalDetalhesPedido";
+        if (!document.getElementById('estilo-modal-detalhes-pedido')) {
+            const style = document.createElement('style');
+            style.id = 'estilo-modal-detalhes-pedido';
             style.textContent = `
-                .pedido-modal-overlay {
-                    position: fixed;
-                    inset: 0;
-                    z-index: 99999;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 20px;
-                    background: rgba(0,0,0,.68);
-                    backdrop-filter: blur(5px);
-                }
-                .pedido-modal {
-                    width: min(760px, 100%);
-                    max-height: 90vh;
-                    overflow: hidden;
-                    background: var(--card-bg, #111827);
-                    color: inherit;
-                    border: 1px solid rgba(255,255,255,.10);
-                    border-radius: 18px;
-                    box-shadow: 0 25px 80px rgba(0,0,0,.45);
-                }
-                .pedido-modal-topo {
-                    display: flex;
-                    align-items: flex-start;
-                    justify-content: space-between;
-                    gap: 15px;
-                    padding: 20px 22px;
-                    border-bottom: 1px solid rgba(255,255,255,.08);
-                }
-                .pedido-modal-label {
-                    font-size: 11px;
-                    font-weight: 800;
-                    opacity: .55;
-                    letter-spacing: .08em;
-                }
-                .pedido-modal-topo h2 {
-                    margin: 3px 0;
-                    font-size: 21px;
-                }
-                .pedido-modal-topo small {
-                    opacity: .55;
-                    word-break: break-all;
-                }
-                .pedido-modal-fechar {
-                    border: 0;
-                    background: transparent;
-                    color: inherit;
-                    font-size: 30px;
-                    line-height: 1;
-                    cursor: pointer;
-                    opacity: .7;
-                }
-                .pedido-modal-conteudo {
-                    padding: 18px 22px;
-                    max-height: 62vh;
-                    overflow-y: auto;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 9px;
-                }
-                .pedido-detalhe-item {
-                    display: grid;
-                    grid-template-columns: 190px minmax(0,1fr);
-                    gap: 15px;
-                    padding: 12px 13px;
-                    border-radius: 10px;
-                    background: rgba(255,255,255,.035);
-                    border: 1px solid rgba(255,255,255,.06);
-                }
-                .pedido-detalhe-label {
-                    font-weight: 700;
-                    opacity: .65;
-                }
-                .pedido-detalhe-valor {
-                    word-break: break-word;
-                    white-space: pre-wrap;
-                }
-                .pedido-modal-rodape {
-                    padding: 15px 22px;
-                    border-top: 1px solid rgba(255,255,255,.08);
-                    display: flex;
-                    justify-content: flex-end;
-                }
-                .pedido-modal-btn-fechar {
-                    border: 0;
-                    border-radius: 10px;
-                    padding: 10px 18px;
-                    background: #2563eb;
-                    color: #fff;
-                    font-weight: 700;
-                    cursor: pointer;
-                }
-                .pedido-detalhe-vazio {
-                    padding: 30px;
-                    text-align: center;
-                    opacity: .65;
-                }
-                .pedido-resumo-linha {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                    width: 100%;
-                    min-width: 0;
-                }
-                .pedido-resumo-linha > span {
-                    min-width: 0;
-                    word-break: break-word;
-                }
-                .pedido-resumo-linha > span:first-child {
-                    flex: 1 1 180px;
-                }
-                .pedido-resumo-linha > span:nth-child(2) {
-                    flex: 0 0 auto;
-                }
-                .pedido-resumo-linha > span:nth-child(3) {
-                    flex: 1 1 230px;
-                }
-                .pedido-resumo-estado {
-                    flex: 0 0 auto !important;
-                }
-                .pedido-detalhes-btn {
-                    flex: 0 0 auto;
-                    border: 1px solid rgba(37,99,235,.35);
-                    background: rgba(37,99,235,.12);
-                    color: inherit;
-                    white-space: nowrap;
-                }
-                .pedido-cancelar-resumo {
-                    margin-top: 8px;
-                    width: auto;
-                    color: #f87171;
-                }
-                .pedido-card-resumo {
-                    padding: 13px 15px;
-                }
-                .pedido-erro-resumo {
-                    margin-top: 10px;
-                }
-                @media (max-width: 800px) {
-                    .pedido-resumo-linha {
-                        flex-wrap: wrap;
-                        gap: 9px 14px;
-                    }
-                    .pedido-resumo-linha > span {
-                        flex: 1 1 45% !important;
-                    }
-                    .pedido-detalhe-item {
-                        grid-template-columns: 1fr;
-                        gap: 5px;
-                    }
-                }
+                .pedido-modal-overlay { position: fixed; inset: 0; z-index: 99999; background: rgba(0,0,0,.68); display:flex; align-items:center; justify-content:center; padding:20px; }
+                .pedido-modal { width:min(760px,100%); max-height:90vh; overflow:hidden; background:#111827; color:#fff; border:1px solid rgba(255,255,255,.1); border-radius:18px; box-shadow:0 25px 80px rgba(0,0,0,.4); }
+                .pedido-modal-cabecalho { display:flex; justify-content:space-between; gap:15px; padding:20px; border-bottom:1px solid rgba(255,255,255,.08); }
+                .pedido-modal-cabecalho small { opacity:.55; }
+                .pedido-modal-cabecalho h2 { margin:5px 0 0; font-size:18px; word-break:break-all; }
+                .pedido-modal-fechar { border:0; background:rgba(255,255,255,.08); color:#fff; width:38px; height:38px; border-radius:10px; font-size:25px; cursor:pointer; }
+                .pedido-modal-conteudo { padding:18px 20px; max-height:62vh; overflow:auto; }
+                .pedido-detalhe-linha { display:grid; grid-template-columns:minmax(150px,30%) 1fr; gap:15px; padding:11px 0; border-bottom:1px solid rgba(255,255,255,.06); }
+                .pedido-detalhe-chave { opacity:.58; font-size:12px; font-weight:700; }
+                .pedido-detalhe-valor { font-size:13px; word-break:break-word; white-space:pre-wrap; }
+                .pedido-modal-rodape { padding:15px 20px; border-top:1px solid rgba(255,255,255,.08); display:flex; justify-content:flex-end; }
+                .pedido-modal-btn { border:0; background:#2563eb; color:#fff; padding:10px 18px; border-radius:10px; cursor:pointer; font-weight:700; }
+                @media(max-width:600px){ .pedido-detalhe-linha{grid-template-columns:1fr;gap:4px;} }
             `;
             document.head.appendChild(style);
         }
-
-        document.body.appendChild(modal);
-
-        const fechar = () => {
-            modal.remove();
-        };
-
-        modal.querySelector(".pedido-modal-fechar").addEventListener("click", fechar);
-        modal.querySelector(".pedido-modal-btn-fechar").addEventListener("click", fechar);
-        modal.addEventListener("click", event => {
-            if (event.target === modal) fechar();
-        });
-
-        document.addEventListener("keydown", function fecharEsc(event) {
-            if (event.key === "Escape") {
-                fechar();
-                document.removeEventListener("keydown", fecharEsc);
-            }
-        });
     };
+
+    window.fecharDetalhesPedido = function () {
+        document.getElementById('modalDetalhesPedido')?.remove();
+    };
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') window.fecharDetalhesPedido?.();
+    });
 
     window.cancelarPedido = async function (id) {
         const pedido = pedidos.find(
