@@ -26,6 +26,8 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
     let periodoAtual = "todos";
     let carregando = false;
     let timerAtualizacao = null;
+    let primeiraCargaConcluida = false;
+    const CACHE_PEDIDOS_KEY = "moz_tech_pedidos_cache_v1";
 
     const STATUS = {
         pendente: {
@@ -336,10 +338,6 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                 </div>
 
                 <div id="pedidosCards" class="pedidos-cards-grid">
-                    <div class="pedidos-loading-card">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <span>Carregando pedidos...</span>
-                    </div>
                 </div>
 
             </div>
@@ -1307,17 +1305,53 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
         }
     };
 
+    function salvarCachePedidos() {
+        try {
+            localStorage.setItem(
+                CACHE_PEDIDOS_KEY,
+                JSON.stringify(pedidos)
+            );
+        } catch (erro) {
+            console.warn("[PEDIDOS] Não foi possível guardar cache:", erro);
+        }
+    }
+
+    function carregarCachePedidos() {
+        try {
+            const bruto = localStorage.getItem(CACHE_PEDIDOS_KEY);
+
+            if (!bruto) return false;
+
+            const cache = JSON.parse(bruto);
+
+            if (!Array.isArray(cache) || !cache.length) {
+                return false;
+            }
+
+            pedidos = cache.map(normalizarPedido);
+
+            console.log(
+                "[PEDIDOS] Cache carregado imediatamente:",
+                pedidos.length
+            );
+
+            atualizarEstatisticas();
+            renderizarPedidos();
+
+            return true;
+
+        } catch (erro) {
+            console.warn("[PEDIDOS] Cache inválido:", erro);
+            return false;
+        }
+    }
+
     window.carregarPedidos = async function () {
         if (carregando) return pedidos;
 
         carregando = true;
 
         try {
-            const containerExistente =
-                el("pedidosConteudo") ||
-                el("listaPedidos") ||
-                el("pedidosLista");
-
             const interfaceJaMontada =
                 !!el("pedidosCards") &&
                 !!el("pedidosEstatisticas") &&
@@ -1334,12 +1368,27 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                 seletorPeriodo.value = periodoAtual;
             }
 
+            /*
+             * A primeira abertura não fica esperando a API para mostrar
+             * os dados. Se existir cache local, ele é renderizado antes
+             * da chamada à API.
+             */
+            if (!primeiraCargaConcluida) {
+                carregarCachePedidos();
+                primeiraCargaConcluida = true;
+            }
+
             const json = await apiGetPedidos();
-            pedidos = obterListaResposta(json)
+
+            const novosPedidos = obterListaResposta(json)
                 .map(normalizarPedido);
 
+            pedidos = novosPedidos;
+
+            salvarCachePedidos();
+
             console.log(
-                "[PEDIDOS] Pedidos recebidos:",
+                "[PEDIDOS] Pedidos recebidos da API:",
                 pedidos.length
             );
 
