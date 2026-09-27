@@ -1313,7 +1313,19 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
         carregando = true;
 
         try {
-            montarInterface();
+            const containerExistente =
+                el("pedidosConteudo") ||
+                el("listaPedidos") ||
+                el("pedidosLista");
+
+            const interfaceJaMontada =
+                !!el("pedidosCards") &&
+                !!el("pedidosEstatisticas") &&
+                !!el("pedidosFiltroPeriodo");
+
+            if (!interfaceJaMontada) {
+                montarInterface();
+            }
 
             const seletorPeriodo =
                 el("pedidosFiltroPeriodo");
