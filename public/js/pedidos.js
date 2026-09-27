@@ -19,15 +19,29 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
 
 (function () {
 
-    const VERSAO = "pedidos-tempo-real-finalizado-20260924-v5";
+    const VERSAO = "pedidos-tempo-real-finalizado-imediato-20260927-v6";
+
+    let sincronizacaoImediataEmAndamento = false;
+
+    async function sincronizarDashboardImediatamente() {
+        if (sincronizacaoImediataEmAndamento) return;
+        sincronizacaoImediataEmAndamento = true;
+        try {
+            if (typeof window.sincronizarDashboardAgora === "function") {
+                await window.sincronizarDashboardAgora();
+            }
+        } catch (erro) {
+            console.warn("[PEDIDOS] Sincronização imediata indisponível:", erro.message);
+        } finally {
+            sincronizacaoImediataEmAndamento = false;
+        }
+    }
 
     let pedidos = [];
     let filtroAtual = "todos";
     let periodoAtual = "todos";
     let carregando = false;
     let timerAtualizacao = null;
-    let primeiraCargaConcluida = false;
-    const CACHE_PEDIDOS_KEY = "moz_tech_pedidos_cache_v1";
 
     const STATUS = {
         pendente: {
@@ -338,6 +352,10 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                 </div>
 
                 <div id="pedidosCards" class="pedidos-cards-grid">
+                    <div class="pedidos-loading-card">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Carregando pedidos...</span>
+                    </div>
                 </div>
 
             </div>
@@ -1305,61 +1323,13 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
         }
     };
 
-    function salvarCachePedidos() {
-        try {
-            localStorage.setItem(
-                CACHE_PEDIDOS_KEY,
-                JSON.stringify(pedidos)
-            );
-        } catch (erro) {
-            console.warn("[PEDIDOS] Não foi possível guardar cache:", erro);
-        }
-    }
-
-    function carregarCachePedidos() {
-        try {
-            const bruto = localStorage.getItem(CACHE_PEDIDOS_KEY);
-
-            if (!bruto) return false;
-
-            const cache = JSON.parse(bruto);
-
-            if (!Array.isArray(cache) || !cache.length) {
-                return false;
-            }
-
-            pedidos = cache.map(normalizarPedido);
-
-            console.log(
-                "[PEDIDOS] Cache carregado imediatamente:",
-                pedidos.length
-            );
-
-            atualizarEstatisticas();
-            renderizarPedidos();
-
-            return true;
-
-        } catch (erro) {
-            console.warn("[PEDIDOS] Cache inválido:", erro);
-            return false;
-        }
-    }
-
     window.carregarPedidos = async function () {
         if (carregando) return pedidos;
 
         carregando = true;
 
         try {
-            const interfaceJaMontada =
-                !!el("pedidosCards") &&
-                !!el("pedidosEstatisticas") &&
-                !!el("pedidosFiltroPeriodo");
-
-            if (!interfaceJaMontada) {
-                montarInterface();
-            }
+            montarInterface();
 
             const seletorPeriodo =
                 el("pedidosFiltroPeriodo");
@@ -1368,27 +1338,12 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                 seletorPeriodo.value = periodoAtual;
             }
 
-            /*
-             * A primeira abertura não fica esperando a API para mostrar
-             * os dados. Se existir cache local, ele é renderizado antes
-             * da chamada à API.
-             */
-            if (!primeiraCargaConcluida) {
-                carregarCachePedidos();
-                primeiraCargaConcluida = true;
-            }
-
             const json = await apiGetPedidos();
-
-            const novosPedidos = obterListaResposta(json)
+            pedidos = obterListaResposta(json)
                 .map(normalizarPedido);
 
-            pedidos = novosPedidos;
-
-            salvarCachePedidos();
-
             console.log(
-                "[PEDIDOS] Pedidos recebidos da API:",
+                "[PEDIDOS] Pedidos recebidos:",
                 pedidos.length
             );
 
@@ -1427,6 +1382,7 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
     };
 
     window.atualizarPedidos = async function () {
+        await sincronizarDashboardImediatamente();
         await window.carregarPedidos();
     };
 
@@ -1446,6 +1402,8 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
             }
         }, 2000);
     };
+
+    window.sincronizarPedidosDashboardAgora = sincronizarDashboardImediatamente;
 
     window.PEDIDOS_VERSAO = VERSAO;
 
