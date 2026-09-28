@@ -782,10 +782,49 @@ else {
 }
 
 // ==========================================
-// ATUALIZAÇÃO AUTOMÁTICA
+// ATUALIZAÇÃO AUTOMÁTICA DE VENDAS
 // ==========================================
 
-setInterval(
-    carregarGraficos,
-    10000
-);
+let eventosVendasGraficos = null;
+let timerFallbackGraficos = null;
+
+function iniciarEventosVendasGraficos() {
+    if (eventosVendasGraficos) {
+        try { eventosVendasGraficos.close(); } catch (_) {}
+        eventosVendasGraficos = null;
+    }
+
+    if (typeof EventSource === "undefined") return;
+
+    const credenciais = window.MOZ_CREDENCIAIS_API || {};
+    const apiKey =
+        credenciais.apiKey ||
+        localStorage.getItem("apiKey") ||
+        localStorage.getItem("moz_api_key") ||
+        "";
+
+    if (!apiKey) return;
+
+    try {
+        eventosVendasGraficos = new EventSource(
+            "/api/vendas/events?apiKey=" + encodeURIComponent(apiKey)
+        );
+
+        eventosVendasGraficos.addEventListener("vendas", function () {
+            if (!document.hidden) carregarGraficos();
+        });
+    } catch (_) {
+        eventosVendasGraficos = null;
+    }
+
+    if (timerFallbackGraficos) clearInterval(timerFallbackGraficos);
+    timerFallbackGraficos = setInterval(() => {
+        if (!document.hidden) carregarGraficos();
+    }, 30000);
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", iniciarEventosVendasGraficos, { once: true });
+} else {
+    iniciarEventosVendasGraficos();
+}
