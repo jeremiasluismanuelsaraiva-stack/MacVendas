@@ -872,6 +872,44 @@
         return carregarClientes();
     }
 
+    let eventosVendasCRM = null;
+    let timerFallbackCRM = null;
+
+    function iniciarEventosVendasCRM() {
+        if (eventosVendasCRM) {
+            try { eventosVendasCRM.close(); } catch (_) {}
+            eventosVendasCRM = null;
+        }
+
+        if (typeof EventSource === "undefined") return;
+
+        const credenciais = window.MOZ_CREDENCIAIS_API || {};
+        const apiKey =
+            credenciais.apiKey ||
+            localStorage.getItem("apiKey") ||
+            localStorage.getItem("moz_api_key") ||
+            "";
+
+        if (!apiKey) return;
+
+        try {
+            eventosVendasCRM = new EventSource(
+                "/api/vendas/events?apiKey=" + encodeURIComponent(apiKey)
+            );
+
+            eventosVendasCRM.addEventListener("vendas", function () {
+                if (!document.hidden) carregarClientes();
+            });
+        } catch (_) {
+            eventosVendasCRM = null;
+        }
+
+        if (timerFallbackCRM) clearInterval(timerFallbackCRM);
+        timerFallbackCRM = setInterval(() => {
+            if (!document.hidden) carregarClientes();
+        }, 30000);
+    }
+
     window.carregarClientes = carregarClientes;
     window.abrirCRM = abrirCRM;
     window.iniciarCRM = iniciarCRM;
@@ -881,6 +919,8 @@
     window.atualizarEstatisticasCRM = atualizarEstatisticasCRM;
     window.agruparClientesCRM = agruparClientes;
 
-    console.log("[CRM] CRM limpo carregado.");
+    iniciarEventosVendasCRM();
+
+    console.log("[CRM] CRM limpo carregado — vendas em tempo real.");
 
 })();
