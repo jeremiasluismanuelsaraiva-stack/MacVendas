@@ -11,7 +11,7 @@ window.__MOZ_PEDIDOS_MODULO_INICIADO__ = true;
 
 (function () {
 
-    const VERSAO = "pedidos-leve-15s-hoje-tempo-real-20260928-v8";
+    const VERSAO = "pedidos-leve-15s-compatibilidade-20260928-v9";
 
     let sincronizacaoImediataEmAndamento = false;
 
@@ -199,14 +199,13 @@ window.__MOZ_PEDIDOS_MODULO_INICIADO__ = true;
     }
 
     async function apiGetPedidos() {
-        const periodo = encodeURIComponent(periodoAtual || "hoje");
-        const endpoint = "/pedidos?periodo=" + periodo;
-
+        // Mantém compatibilidade com o backend atual.
+        // O filtro de período continua sendo aplicado no frontend.
         if (window.MOZ_API && typeof window.MOZ_API.get === "function") {
-            return await window.MOZ_API.get(endpoint);
+            return await window.MOZ_API.get("/pedidos");
         }
 
-        const resposta = await fetch("/api/pedidos?periodo=" + periodo, {
+        const resposta = await fetch("/api/pedidos", {
             headers: headersAPI(),
             cache: "no-store"
         });
