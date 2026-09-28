@@ -1459,25 +1459,31 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
     }
 
     window.iniciarPedidos = function () {
-        // Primeira carga é imediata.
+        // Primeira carga imediata.
         window.carregarPedidos();
 
+        // Evita criar vários timers.
         if (timerAtualizacao) {
             clearInterval(timerAtualizacao);
+            timerAtualizacao = null;
         }
 
-        // Atualização normal: somente a cada 15 segundos.
+        /*
+         * Atualização automática:
+         * - Não depende de o painel estar com display:none ou visível.
+         * - Se chegar um pedido novo, ele será buscado automaticamente.
+         * - 5 segundos mantém a página responsiva sem fazer dezenas de
+         *   requisições por segundo.
+         */
         timerAtualizacao = setInterval(() => {
-            if (
-                document.getElementById("panelPedidos") &&
-                document.getElementById("panelPedidos").style.display !== "none"
-            ) {
-                window.carregarPedidos();
-            }
-        }, 15000);
+            if (document.hidden) return;
 
-        // SSE fica desativado nesta versão porque o backend atual
-        // não confirmou a existência de /api/pedidos/events.
+            if (!carregando) {
+                window.carregarPedidos().catch(erro => {
+                    console.error("[PEDIDOS] Atualização automática:", erro);
+                });
+            }
+        }, 5000);
     };
 
     window.sincronizarPedidosDashboardAgora = sincronizarDashboardImediatamente;
