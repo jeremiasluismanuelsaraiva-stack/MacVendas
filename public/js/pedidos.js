@@ -19,7 +19,7 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
 
 (function () {
 
-    const VERSAO = "pedidos-leve-sse-20260928-v11";
+    const VERSAO = "pedidos-leve-vendas-20260928-v12";
 
     let sincronizacaoImediataEmAndamento = false;
 
@@ -1410,15 +1410,6 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
         await window.carregarPedidos();
     };
 
-    function obterApiKeySSE() {
-        return (
-            localStorage.getItem("apiKey") ||
-            localStorage.getItem("moz_api_key") ||
-            localStorage.getItem("API_KEY") ||
-            ""
-        ).trim();
-    }
-
     function iniciarEventosPedidos() {
         if (eventosPedidos) {
             try {
@@ -1427,54 +1418,42 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
             eventosPedidos = null;
         }
 
+        // Se o backend tiver SSE em /api/pedidos/events,
+        // um novo pedido pode aparecer imediatamente, sem esperar os 15 segundos.
         if (typeof EventSource === "undefined") return;
 
-        const apiKey = obterApiKeySSE();
-        if (!apiKey) {
-            console.warn("[PEDIDOS] API Key não encontrada para SSE.");
-            return;
-        }
-
         try {
-            const url =
-                "/api/pedidos/events?apiKey=" +
-                encodeURIComponent(apiKey);
-
-            eventosPedidos = new EventSource(url);
-
-            eventosPedidos.onopen = function () {
-                console.log("[PEDIDOS] SSE conectado.");
-            };
+            eventosPedidos = new EventSource("/api/pedidos/events");
 
             eventosPedidos.onmessage = async function (event) {
                 try {
                     const dados = JSON.parse(event.data || "{}");
 
-                    if (!dados || dados.tipo === "conectado") {
-                        return;
-                    }
-
-                    if ([
-                        "pedido",
-                        "novo_pedido",
-                        "pedido_criado",
-                        "pedido_atualizado",
-                        "pedido_removido"
-                    ].includes(String(dados.tipo || "").toLowerCase())) {
+                    // Aceita eventos de novo pedido ou alteração de pedido.
+                    if (
+                        !dados ||
+                        !dados.tipo ||
+                        [
+                            "pedido",
+                            "novo_pedido",
+                            "pedido_criado",
+                            "pedido_atualizado"
+                        ].includes(String(dados.tipo).toLowerCase())
+                    ) {
                         await window.carregarPedidos();
                     }
                 } catch (_) {
+                    // Se o servidor enviar apenas um evento simples,
+                    // atualizamos mesmo assim.
                     await window.carregarPedidos();
                 }
             };
 
             eventosPedidos.onerror = function () {
-                // EventSource reconecta automaticamente.
-                // O polling de 30s continua como fallback.
-                console.warn("[PEDIDOS] SSE temporariamente indisponível; usando fallback.");
+                // Não fica tentando agressivamente.
+                // O polling de 15s continua funcionando como fallback.
             };
-        } catch (erro) {
-            console.warn("[PEDIDOS] Não foi possível iniciar SSE:", erro.message);
+        } catch (_) {
             eventosPedidos = null;
         }
     }
@@ -1490,12 +1469,12 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
         }
 
         /*
-         * SSE é o mecanismo principal de atualização em tempo real.
-         * O polling fica apenas como fallback para quando o SSE cair.
-         * 30 segundos evita consultas constantes à API.
+         * Atualização automática:
+         * - Não depende de o painel estar com display:none ou visível.
+         * - Se chegar um pedido novo, ele será buscado automaticamente.
+         * - 5 segundos mantém a página responsiva sem fazer dezenas de
+         *   requisições por segundo.
          */
-        iniciarEventosPedidos();
-
         timerAtualizacao = setInterval(() => {
             if (document.hidden) return;
 
@@ -1504,7 +1483,7 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                     console.error("[PEDIDOS] Atualização automática:", erro);
                 });
             }
-        }, 30000);
+        }, 5000);
     };
 
     window.sincronizarPedidosDashboardAgora = sincronizarDashboardImediatamente;
