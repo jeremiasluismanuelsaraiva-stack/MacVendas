@@ -1,25 +1,17 @@
-/* =========================================================
-   MOZ TECH / MACVENDAS
-   PEDIDOS — FILA EM CARDS
-   Estados:
-   PENDENTE
-   PROCESSANDO
-   CONCLUIDO
-   FALHADO
-   CANCELADO
-   ========================================================= */
+/* ========================================================= MOZ TECH /
+MACVENDAS PEDIDOS — FILA EM CARDS Estados: PENDENTE PROCESSANDO
+CONCLUIDO FALHADO CANCELADO
+========================================================= */
 
-"use strict";
+“use strict”;
 
-if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
-    console.warn("[PEDIDOS] Módulo já iniciado. Ignorando segunda inicialização.");
-} else {
-    window.__MOZ_PEDIDOS_MODULO_INICIADO__ = true;
-
+if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) { console.warn(“[PEDIDOS]
+Módulo já iniciado. Ignorando segunda inicialização.”); } else {
+window.__MOZ_PEDIDOS_MODULO_INICIADO__ = true;
 
 (function () {
 
-    const VERSAO = "pedidos-tempo-real-finalizado-imediato-20260928-v7";
+    const VERSAO = "pedidos-leve-15s-hoje-tempo-real-20260928-v8";
 
     let sincronizacaoImediataEmAndamento = false;
 
@@ -39,9 +31,11 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
 
     let pedidos = [];
     let filtroAtual = "todos";
-    let periodoAtual = "todos";
+    let periodoAtual = "hoje";
     let carregando = false;
     let timerAtualizacao = null;
+    let eventosPedidos = null;
+    let ultimoEstadoPedidos = "";
 
     const STATUS = {
         pendente: {
@@ -205,12 +199,16 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
     }
 
     async function apiGetPedidos() {
+        const periodo = encodeURIComponent(periodoAtual || "hoje");
+        const endpoint = "/pedidos?periodo=" + periodo;
+
         if (window.MOZ_API && typeof window.MOZ_API.get === "function") {
-            return await window.MOZ_API.get("/pedidos");
+            return await window.MOZ_API.get(endpoint);
         }
 
-        const resposta = await fetch("/api/pedidos", {
-            headers: headersAPI()
+        const resposta = await fetch("/api/pedidos?periodo=" + periodo, {
+            headers: headersAPI(),
+            cache: "no-store"
         });
 
         if (!resposta.ok) {
@@ -336,7 +334,7 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
                     <select id="pedidosFiltroPeriodo" class="pedidos-periodo-select"
                             onchange="window.filtrarPeriodoPedidos(this.value)">
                         <option value="todos">Todos os períodos</option>
-                        <option value="hoje">Hoje</option>
+                        <option value="hoje" selected>Hoje</option>
                         <option value="ontem">Ontem</option>
                         <option value="semana">Esta semana</option>
                         <option value="mes">Este mês</option>
@@ -1205,11 +1203,13 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
         renderizarPedidos();
     };
 
-    window.filtrarPeriodoPedidos = function (periodo) {
-        periodoAtual = periodo || "todos";
+    window.filtrarPeriodoPedidos = async function (periodo) {
+        periodoAtual = periodo || "hoje";
 
-        atualizarEstatisticas();
-        renderizarPedidos();
+        const seletor = el("pedidosFiltroPeriodo");
+        if (seletor) seletor.value = periodoAtual;
+
+        await window.carregarPedidos();
     };
 
     window.verDetalhesPedido = function (id) {
@@ -1345,13 +1345,26 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
             pedidos = obterListaResposta(json)
                 .map(normalizarPedido);
 
+            const novaAssinatura = pedidos.map(p => [
+                p.id,
+                p.status,
+                p.atualizadoEm,
+                p.criadoEm
+            ].join("|")).join("||");
+
+            const houveAlteracao = novaAssinatura !== ultimoEstadoPedidos;
+            ultimoEstadoPedidos = novaAssinatura;
+
             console.log(
                 "[PEDIDOS] Pedidos recebidos:",
-                pedidos.length
+                pedidos.length,
+                houveAlteracao ? "(alteração)" : "(sem alteração)"
             );
 
-            atualizarEstatisticas();
-            renderizarPedidos();
+            if (houveAlteracao) {
+                atualizarEstatisticas();
+                renderizarPedidos();
+            }
 
             return pedidos;
 
@@ -1389,13 +1402,63 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
         await window.carregarPedidos();
     };
 
+    function iniciarEventosPedidos() {
+        if (eventosPedidos) {
+            try {
+                eventosPedidos.close();
+            } catch (_) {}
+            eventosPedidos = null;
+        }
+
+        // Se o backend tiver SSE em /api/pedidos/events,
+        // um novo pedido pode aparecer imediatamente, sem esperar os 15 segundos.
+        if (typeof EventSource === "undefined") return;
+
+        try {
+            eventosPedidos = new EventSource("/api/pedidos/events");
+
+            eventosPedidos.onmessage = async function (event) {
+                try {
+                    const dados = JSON.parse(event.data || "{}");
+
+                    // Aceita eventos de novo pedido ou alteração de pedido.
+                    if (
+                        !dados ||
+                        !dados.tipo ||
+                        [
+                            "pedido",
+                            "novo_pedido",
+                            "pedido_criado",
+                            "pedido_atualizado"
+                        ].includes(String(dados.tipo).toLowerCase())
+                    ) {
+                        await window.carregarPedidos();
+                    }
+                } catch (_) {
+                    // Se o servidor enviar apenas um evento simples,
+                    // atualizamos mesmo assim.
+                    await window.carregarPedidos();
+                }
+            };
+
+            eventosPedidos.onerror = function () {
+                // Não fica tentando agressivamente.
+                // O polling de 15s continua funcionando como fallback.
+            };
+        } catch (_) {
+            eventosPedidos = null;
+        }
+    }
+
     window.iniciarPedidos = function () {
+        // Primeira carga é imediata.
         window.carregarPedidos();
 
         if (timerAtualizacao) {
             clearInterval(timerAtualizacao);
         }
 
+        // Atualização normal: somente a cada 15 segundos.
         timerAtualizacao = setInterval(() => {
             if (
                 document.getElementById("panelPedidos") &&
@@ -1403,7 +1466,9 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
             ) {
                 window.carregarPedidos();
             }
-        }, 2000);
+        }, 15000);
+
+        iniciarEventosPedidos();
     };
 
     window.sincronizarPedidosDashboardAgora = sincronizarDashboardImediatamente;
