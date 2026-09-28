@@ -1,17 +1,25 @@
-/* ========================================================= MOZ TECH /
-MACVENDAS PEDIDOS — FILA EM CARDS Estados: PENDENTE PROCESSANDO
-CONCLUIDO FALHADO CANCELADO
-========================================================= */
+/* =========================================================
+   MOZ TECH / MACVENDAS
+   PEDIDOS — FILA EM CARDS
+   Estados:
+   PENDENTE
+   PROCESSANDO
+   CONCLUIDO
+   FALHADO
+   CANCELADO
+   ========================================================= */
 
-“use strict”;
+"use strict";
 
-if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) { console.warn(“[PEDIDOS]
-Módulo já iniciado. Ignorando segunda inicialização.”); } else {
-window.__MOZ_PEDIDOS_MODULO_INICIADO__ = true;
+if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
+    console.warn("[PEDIDOS] Módulo já iniciado. Ignorando segunda inicialização.");
+} else {
+    window.__MOZ_PEDIDOS_MODULO_INICIADO__ = true;
+
 
 (function () {
 
-    const VERSAO = "pedidos-leve-15s-compatibilidade-20260928-v9";
+    const VERSAO = "pedidos-leve-15s-compatibilidade-20260928-v10";
 
     let sincronizacaoImediataEmAndamento = false;
 
@@ -199,8 +207,9 @@ window.__MOZ_PEDIDOS_MODULO_INICIADO__ = true;
     }
 
     async function apiGetPedidos() {
-        // Mantém compatibilidade com o backend atual.
-        // O filtro de período continua sendo aplicado no frontend.
+        // Compatibilidade com o backend atual: primeiro usa exatamente
+        // a rota /pedidos que já funcionava antes. O filtro de período
+        // continua sendo aplicado no frontend.
         if (window.MOZ_API && typeof window.MOZ_API.get === "function") {
             return await window.MOZ_API.get("/pedidos");
         }
@@ -1467,7 +1476,8 @@ window.__MOZ_PEDIDOS_MODULO_INICIADO__ = true;
             }
         }, 15000);
 
-        iniciarEventosPedidos();
+        // SSE fica desativado nesta versão porque o backend atual
+        // não confirmou a existência de /api/pedidos/events.
     };
 
     window.sincronizarPedidosDashboardAgora = sincronizarDashboardImediatamente;
