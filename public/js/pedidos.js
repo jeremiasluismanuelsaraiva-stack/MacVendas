@@ -19,7 +19,7 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
 
 (function () {
 
-    const VERSAO = "pedidos-tempo-real-finalizado-imediato-20260927-v6";
+    const VERSAO = "pedidos-tempo-real-finalizado-imediato-20260928-v7";
 
     let sincronizacaoImediataEmAndamento = false;
 
@@ -1010,23 +1010,22 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
             return;
         }
 
+        // Pedidos mais recentes sempre aparecem primeiro.
+        // A ordenação usa a data original de criação e não a data de atualização,
+        // para que um pedido antigo não suba apenas porque mudou de estado.
         const ordenados = [...filtrados].sort((a, b) => {
-            const ordem = {
-                pendente: 1,
-                processando: 2,
-                falhado: 3,
-                concluido: 4,
-                cancelado: 5
-            };
+            const dataA = new Date(a.criadoEm || a.createdAt || a.data || 0).getTime();
+            const dataB = new Date(b.criadoEm || b.createdAt || b.data || 0).getTime();
 
-            const sa = normalizarStatus(a.status);
-            const sb = normalizarStatus(b.status);
-
-            if (ordem[sa] !== ordem[sb]) {
-                return ordem[sa] - ordem[sb];
+            if (Number.isFinite(dataA) && Number.isFinite(dataB) && dataA !== dataB) {
+                return dataB - dataA;
             }
 
-            return new Date(a.criadoEm || 0) - new Date(b.criadoEm || 0);
+            // Desempate estável pelo ID, do mais recente/alto para o mais antigo.
+            return String(b.id || "").localeCompare(String(a.id || ""), "pt", {
+                numeric: true,
+                sensitivity: "base"
+            });
         });
 
         lista.innerHTML = ordenados.map(renderizarCardPedido).join("");
@@ -1329,7 +1328,11 @@ if (window.__MOZ_PEDIDOS_MODULO_INICIADO__) {
         carregando = true;
 
         try {
-            montarInterface();
+            // A interface só é montada uma vez.
+            // Nas atualizações automáticas mantemos filtros, scroll e estado visual.
+            if (!el("pedidosCards") || !el("pedidosEstatisticas") || !el("pedidosFiltros")) {
+                montarInterface();
+            }
 
             const seletorPeriodo =
                 el("pedidosFiltroPeriodo");
