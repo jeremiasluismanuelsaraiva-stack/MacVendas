@@ -10,6 +10,9 @@
     let carregandoDashboard = false;
     let carregandoVendas = false;
     let botaoConfigurado = false;
+    let eventosVendas = null;
+    let ultimaAssinaturaVendas = "";
+    let timerFallbackVendas = null;
 
     function elemento(id) {
         return document.getElementById(id);
@@ -476,7 +479,19 @@
                 vendas = json.data.vendas;
             }
 
-            renderizarVendas(vendas);
+            const assinatura = (Array.isArray(vendas) ? vendas : [])
+                .map(venda => [
+                    venda?.id || "",
+                    venda?.status || "",
+                    venda?.criadoEm || venda?.createdAt || venda?.data || "",
+                    venda?.valor || venda?.preco || venda?.total || ""
+                ].join("|"))
+                .join(";;");
+
+            if (assinatura !== ultimaAssinaturaVendas) {
+                ultimaAssinaturaVendas = assinatura;
+                renderizarVendas(vendas);
+            }
 
             return vendas;
 
@@ -736,6 +751,60 @@
                 .join("");
     }
 
+    async function sincronizarDashboardAgora() {
+        if (document.hidden) return;
+        await Promise.allSettled([
+            carregarDashboard(),
+            carregarVendas()
+        ]);
+    }
+
+    function obterApiKeySSE() {
+        const credenciais = obterCredenciais();
+        return credenciais?.apiKey ||
+            localStorage.getItem("apiKey") ||
+            localStorage.getItem("moz_api_key") ||
+            "";
+    }
+
+    function iniciarEventosVendas() {
+        if (eventosVendas) {
+            try { eventosVendas.close(); } catch (_) {}
+            eventosVendas = null;
+        }
+
+        if (typeof EventSource === "undefined") return;
+
+        const apiKey = obterApiKeySSE();
+        if (!apiKey) return;
+
+        try {
+            eventosVendas = new EventSource(
+                "/api/vendas/events?apiKey=" + encodeURIComponent(apiKey)
+            );
+
+            eventosVendas.addEventListener("vendas", function () {
+                sincronizarDashboardAgora().catch(erro => {
+                    console.warn("[MOZ TECH] SSE vendas:", erro);
+                });
+            });
+
+            eventosVendas.onerror = function () {
+                // EventSource reconecta sozinho; o fallback evita depender apenas dele.
+            };
+        } catch (erro) {
+            console.warn("[MOZ TECH] SSE vendas indisponível:", erro);
+            eventosVendas = null;
+        }
+
+        if (timerFallbackVendas) clearInterval(timerFallbackVendas);
+        timerFallbackVendas = setInterval(() => {
+            if (!document.hidden) sincronizarDashboardAgora();
+        }, 30000);
+    }
+
+    window.sincronizarDashboardAgora = sincronizarDashboardAgora;
+
     async function carregarTudo() {
 
         console.log(
@@ -821,6 +890,7 @@
 
         setTimeout(function () {
             carregarTudo();
+            iniciarEventosVendas();
         }, 300);
     }
 
