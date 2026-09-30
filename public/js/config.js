@@ -620,7 +620,7 @@
 
             alert(
 
-                "A API / Servidor do terminal não é uma URL válida."
+                "A API / Servidor do terminal não é uma URL válida. Use http://, https://, ws:// ou wss://."
 
             );
 
