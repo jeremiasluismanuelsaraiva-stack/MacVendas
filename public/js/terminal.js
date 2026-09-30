@@ -258,7 +258,7 @@
 
                 String(
 
-                    cfg?.metodo || "POST"
+                    cfg?.metodo || "WS"
 
                 )
 
@@ -487,7 +487,15 @@
 
         try {
             const parsed = new URL(urlBase);
-            parsed.protocol = parsed.protocol === "https:" ? "wss:" : "ws:";
+
+            if (parsed.protocol === "http:") {
+                parsed.protocol = "ws:";
+            } else if (parsed.protocol === "https:") {
+                parsed.protocol = "wss:";
+            } else if (parsed.protocol !== "ws:" && parsed.protocol !== "wss:") {
+                throw new Error("Use ws:// ou wss:// no servidor do Terminal.");
+            }
+
             wsUrl = parsed.toString().replace(/\/$/, "");
         } catch (_) {
             atualizarStatus("Erro", false);
@@ -499,8 +507,8 @@
         adicionarLinha(`Conectando ao Terminal: ${wsUrl}`, "info");
         atualizarStatus("Conectando...", false);
 
-        if (!configAtual.token) {
-            adicionarLinha("Token do Terminal não configurado.", "error");
+        if (!String(configAtual.token || "").trim()) {
+            adicionarLinha("Token do Terminal não configurado. Preencha o Token nas Configurações → Terminal e guarde as configurações.", "error");
             atualizarStatus("Token não configurado", false);
             atualizarBotoes(false);
             return;
