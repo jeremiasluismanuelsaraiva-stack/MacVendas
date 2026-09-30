@@ -10,9 +10,7 @@
     let carregandoDashboard = false;
     let carregandoVendas = false;
     let botaoConfigurado = false;
-    let eventosVendas = null;
     let ultimaAssinaturaVendas = "";
-    let timerFallbackVendas = null;
 
     function elemento(id) {
         return document.getElementById(id);
@@ -759,51 +757,26 @@
         ]);
     }
 
-    function obterApiKeySSE() {
-        const credenciais = obterCredenciais();
-        return credenciais?.apiKey ||
-            localStorage.getItem("apiKey") ||
-            localStorage.getItem("moz_api_key") ||
-            "";
-    }
-
     function iniciarEventosVendas() {
-        if (eventosVendas) {
-            try { eventosVendas.close(); } catch (_) {}
-            eventosVendas = null;
-        }
+        window.addEventListener("moz:vendas", function (event) {
+            const dados = event.detail || {};
 
-        if (typeof EventSource === "undefined") return;
-
-        const apiKey = obterApiKeySSE();
-        if (!apiKey) return;
-
-        try {
-            eventosVendas = new EventSource(
-                "/api/vendas/events?apiKey=" + encodeURIComponent(apiKey)
-            );
-
-            eventosVendas.addEventListener("vendas", function () {
+            if (
+                dados.tipo === "vendas" &&
+                !document.hidden
+            ) {
+                // Recarrega apenas quando o servidor avisar que houve alteração.
                 sincronizarDashboardAgora().catch(erro => {
-                    console.warn("[MOZ TECH] SSE vendas:", erro);
+                    console.warn(
+                        "[MOZ TECH] WebSocket vendas:",
+                        erro
+                    );
                 });
-            });
-
-            eventosVendas.onerror = function () {
-                // EventSource reconecta sozinho; o fallback evita depender apenas dele.
-            };
-        } catch (erro) {
-            console.warn("[MOZ TECH] SSE vendas indisponível:", erro);
-            eventosVendas = null;
-        }
-
-        if (timerFallbackVendas) clearInterval(timerFallbackVendas);
-        timerFallbackVendas = setInterval(() => {
-            if (!document.hidden) sincronizarDashboardAgora();
-        }, 30000);
+            }
+        });
     }
 
-    window.sincronizarDashboardAgora = sincronizarDashboardAgora;
+    window.sincronizarDashboardAgora = sincronizarDashboardAgora;    window.sincronizarDashboardAgora = sincronizarDashboardAgora;
 
     async function carregarTudo() {
 

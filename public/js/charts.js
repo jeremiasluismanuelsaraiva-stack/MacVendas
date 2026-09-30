@@ -782,49 +782,28 @@ else {
 }
 
 // ==========================================
-// ATUALIZAÇÃO AUTOMÁTICA DE VENDAS
+// ATUALIZAÇÃO AUTOMÁTICA DE VENDAS — WEBSOCKET
 // ==========================================
 
-let eventosVendasGraficos = null;
-let timerFallbackGraficos = null;
-
 function iniciarEventosVendasGraficos() {
-    if (eventosVendasGraficos) {
-        try { eventosVendasGraficos.close(); } catch (_) {}
-        eventosVendasGraficos = null;
-    }
+    window.addEventListener("moz:vendas", function (event) {
+        const dados = event.detail || {};
 
-    if (typeof EventSource === "undefined") return;
-
-    const credenciais = window.MOZ_CREDENCIAIS_API || {};
-    const apiKey =
-        credenciais.apiKey ||
-        localStorage.getItem("apiKey") ||
-        localStorage.getItem("moz_api_key") ||
-        "";
-
-    if (!apiKey) return;
-
-    try {
-        eventosVendasGraficos = new EventSource(
-            "/api/vendas/events?apiKey=" + encodeURIComponent(apiKey)
-        );
-
-        eventosVendasGraficos.addEventListener("vendas", function () {
-            if (!document.hidden) carregarGraficos();
-        });
-    } catch (_) {
-        eventosVendasGraficos = null;
-    }
-
-    if (timerFallbackGraficos) clearInterval(timerFallbackGraficos);
-    timerFallbackGraficos = setInterval(() => {
-        if (!document.hidden) carregarGraficos();
-    }, 30000);
+        if (
+            dados.tipo === "vendas" &&
+            !document.hidden
+        ) {
+            carregarGraficos();
+        }
+    });
 }
 
 if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", iniciarEventosVendasGraficos, { once: true });
+    document.addEventListener(
+        "DOMContentLoaded",
+        iniciarEventosVendasGraficos,
+        { once: true }
+    );
 } else {
     iniciarEventosVendasGraficos();
 }
